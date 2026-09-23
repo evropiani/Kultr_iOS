@@ -63,6 +63,8 @@ struct MiniPlayer: View {
             let c = theme.colors
             let starred = liveStarred ?? song.isStarred
             let shape = RoundedRectangle(cornerRadius: theme.radii.lg, style: .continuous)
+            let panel: Color = c.elevated.opacity(0.94)
+            let tint: Color = c.accent.opacity(0.10)
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
                     Artwork(coverId: song.artworkId, size: 44)
@@ -104,8 +106,8 @@ struct MiniPlayer: View {
                     .frame(height: 2)
                 }
             }
-            .background(shape.fill(c.elevated.opacity(0.94)))
-            .background(shape.fill(c.accent.opacity(0.10)))
+            .background(shape.fill(panel))
+            .background(shape.fill(tint))
             .overlay(shape.strokeBorder(c.edge, lineWidth: 1))
             .clipShape(shape)
             .contentShape(shape)
