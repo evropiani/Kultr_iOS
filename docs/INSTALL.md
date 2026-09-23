@@ -1,28 +1,41 @@
 # Installing Kultr on your iPhone
 
 This guide assumes you have **never** installed an app from outside the App
-Store before. It takes about 20 minutes the first time and 2 minutes after that.
-Your iPhone does **not** need to be jailbroken, and nothing here voids your
-warranty.
+Store before. The first time takes about 20 minutes. After that it takes 2
+minutes. Your iPhone does **not** need to be jailbroken, and nothing here voids
+your warranty.
+
+**Jump to:** [What you need](#what-you-need) ·
+[1. Download](#1-download-kultr) ·
+[2. Install the tool](#2-install-the-installing-tool-on-your-computer) ·
+[3. Connect](#3-connect-your-iphone) ·
+[4. Install Kultr](#4-install-kultr) ·
+[5. Unlock it on the iPhone](#5-let-the-iphone-open-it) ·
+[6. The 7-day rule](#6-keeping-kultr-working-the-7-day-rule) ·
+[7. Updating](#7-updating-to-a-new-version) ·
+[Troubleshooting](#troubleshooting)
 
 ---
 
 ## What you are about to do, in plain words
 
 Apple only lets iPhones run apps that Apple has signed. The App Store signs
-apps for you, and so does Apple's free developer program: any Apple ID can sign
-an app **for its own iPhone**. That is called *sideloading*.
+apps for you. So does Apple's free developer program: any Apple ID can sign
+an app **for its own iPhone**. Doing this yourself is called *sideloading*.
 
 You will:
 
 1. Download the Kultr app file (`Kultr.ipa`) to a computer.
-2. Use a free program called **Sideloadly** on that computer. It signs the app
-   with your Apple ID and copies it onto your iPhone over a USB cable.
+2. Use a free program on that computer. It signs the app with your Apple ID
+   and copies it onto your iPhone over a USB cable:
+   - **Windows or Mac:** [Sideloadly](https://sideloadly.io)
+   - **Linux:** [Impactor](https://github.com/khcrysalis/PlumeImpactor) (formerly
+     *PlumeImpactor*)
 3. Tell your iPhone that you trust apps signed by your own Apple ID.
 
 There is one catch with a free Apple ID: **the app stops opening after 7 days**
-unless you refresh it. Refreshing takes a minute and keeps all your data. This
-is covered in [Keeping Kultr working](#5-keeping-kultr-working-the-7-day-rule).
+unless you refresh it. Refreshing takes a minute and keeps all your data.
+[Section 6](#6-keeping-kultr-working-the-7-day-rule) explains how.
 
 ---
 
@@ -31,10 +44,9 @@ is covered in [Keeping Kultr working](#5-keeping-kultr-working-the-7-day-rule).
 | | |
 |---|---|
 | An **iPhone or iPad** | running iOS 17 or newer (Settings → General → About → iOS Version) |
-| A **computer** | Windows 10/11 or a Mac. You only need it for installing and refreshing |
-| A **cable** | the one you charge your iPhone with, and it must carry data, not only charge |
+| A **computer** | Windows 10/11, a Mac, or a Linux PC. You only need it for installing and refreshing |
+| A **cable** | the one you charge your iPhone with. It must carry data, not only charge |
 | An **Apple ID** | the one you already use is fine. Some people make a second, free Apple ID just for sideloading. That's optional |
-| A **GitHub account** | with access to this repository, because it is private |
 | A **Navidrome server** | (or any Subsonic-compatible server) with its address, your username and your password |
 
 ---
@@ -43,25 +55,27 @@ is covered in [Keeping Kultr working](#5-keeping-kultr-working-the-7-day-rule).
 
 Do this **on the computer**.
 
-1. Open **https://github.com/evropiani/Kultr_iOS/releases** in a web browser.
-   - The repository is private. If you see a “404 – page not found”, you are
-     either not signed in to GitHub or your account has not been given access.
-     Sign in at the top right (or ask the owner to invite you) and try again.
-2. At the top is the newest release, called **“Kultr for iOS 1.x.x”**. Under
-   **Assets**, click **`Kultr.ipa`**. It downloads to your *Downloads* folder.
-   - Do **not** click “Source code (zip)”. That's the source code, not the app.
+1. Open **https://github.com/evropiani/Kultr_iOS/releases/latest** in a web
+   browser. No GitHub account is needed.
+2. Under **Assets**, click **`Kultr.ipa`**. It downloads to your *Downloads*
+   folder.
+   - Do **not** click “Source code (zip)” or “Source code (tar.gz)”. That's the
+     source code, not the app.
 
-Leave the file where it is. You will drag it into Sideloadly in a moment.
+Leave the file where it is. You'll pick it in the installing tool in a moment.
 
 ---
 
-## 2. Install Sideloadly on the computer
+## 2. Install the installing tool on your computer
+
+Follow the part for your computer: [Windows](#on-windows) ·
+[Mac](#on-a-mac) · [Linux](#on-linux).
 
 ### On Windows
 
 Sideloadly needs Apple's own drivers to talk to your iPhone. They come with
 iTunes and iCloud, but **only the versions from Apple's website work**. The
-versions in the Microsoft Store do **not**.
+Microsoft Store versions do **not**.
 
 1. If you already have iTunes or iCloud from the **Microsoft Store**, uninstall
    them first: Start → Settings → Apps → find *iTunes* / *iCloud* → Uninstall.
@@ -70,9 +84,9 @@ versions in the Microsoft Store do **not**.
    Run the installer and accept the defaults.
 3. Install **iCloud for Windows** from Apple's website. Search for “iCloud for
    Windows download Apple support” and use the link on *support.apple.com*
-   that says *“download iCloud for Windows from Apple's website”*, not the Microsoft
-   Store button. You don't need to sign in to iCloud afterwards; it only has
-   to be installed.
+   that says *“download iCloud for Windows from Apple's website”*. Don't use the
+   Microsoft Store button. You don't need to sign in to iCloud afterwards. It
+   only has to be installed.
 4. Download **Sideloadly** from its official site, **https://sideloadly.io**.
    Pick the Windows version and install it with the defaults.
 5. Restart the computer. It's the easiest way to make sure the Apple drivers load.
@@ -82,7 +96,7 @@ versions in the Microsoft Store do **not**.
 1. Download **Sideloadly** from **https://sideloadly.io** (the macOS version).
 2. Open the downloaded `.dmg` and drag Sideloadly into *Applications*.
 3. Open it from *Applications*. The first time, macOS may ask whether you are
-   sure. Click **Open**. If macOS refuses outright, go to System Settings →
+   sure. Click **Open**. If macOS refuses, go to System Settings →
    Privacy & Security, scroll down, and click **Open Anyway** next to
    Sideloadly.
 4. Sideloadly may ask to install a **Mail plug-in**. Follow its instructions.
@@ -90,6 +104,54 @@ versions in the Microsoft Store do **not**.
 
 > Only ever download Sideloadly from **sideloadly.io**. Sites that offer
 > “Sideloadly” downloads or “free iPhone apps” elsewhere are not safe.
+
+### On Linux
+
+Sideloadly doesn't run on Linux. Use **Impactor** instead. It's free and open
+source and does the same job. You'll need a terminal for two or three commands.
+Copy each one, paste it into the terminal (Ctrl+Shift+V) and press Enter.
+
+**a) Make sure `usbmuxd` is installed.** This small service lets Linux talk to
+iPhones. Most distributions include it already. Installing it again does no
+harm:
+
+| Your distribution | Command |
+|---|---|
+| Ubuntu, Linux Mint, Pop!_OS, Debian, elementary | `sudo apt install usbmuxd libimobiledevice-utils` |
+| Fedora | `sudo dnf install usbmuxd libimobiledevice-utils` |
+| Arch, Manjaro, EndeavourOS | `sudo pacman -S usbmuxd libimobiledevice` |
+| openSUSE | `sudo zypper install usbmuxd libimobiledevice-tools` |
+
+It asks for your computer password. The screen shows nothing while you type
+it; that's normal. Press Enter when done.
+
+**b) Install Impactor from Flathub.** Many distributions (Linux Mint, Fedora,
+Pop!_OS and others) already have **Flatpak**. If yours doesn't, set it up once
+by following the page for your distribution at https://flathub.org/setup.
+Then run:
+
+```sh
+flatpak install flathub dev.khcrysalis.PlumeImpactor
+```
+
+Answer **y** when it asks. On some desktops you can also install it by clicking
+**Install** on https://flathub.org/apps/dev.khcrysalis.PlumeImpactor, which
+opens your software centre.
+
+If you'd rather not use Flatpak, Impactor's
+[releases page](https://github.com/khcrysalis/PlumeImpactor/releases) has
+downloads for Linux too. Pick the newest release and the file for your
+computer.
+
+**c) Open Impactor** from your applications menu (it's called *Impactor*), or
+from the terminal:
+
+```sh
+flatpak run dev.khcrysalis.PlumeImpactor
+```
+
+> Only download Impactor from Flathub or from its GitHub page
+> (github.com/khcrysalis/PlumeImpactor).
 
 ---
 
@@ -99,13 +161,21 @@ versions in the Microsoft Store do **not**.
 2. The iPhone asks **“Trust This Computer?”** Tap **Trust** and enter your
    iPhone passcode.
    - If the question never appears, unplug and plug it back in with the phone
-     unlocked. On Windows, opening iTunes once often triggers it.
-3. On Windows you can check it worked by opening iTunes. A small phone icon
-   should appear near the top left. You can close iTunes again afterwards.
+     unlocked. On Windows, opening iTunes once often triggers it. On Linux, run
+     `idevicepair pair` in the terminal while the phone is unlocked, tap
+     **Trust** on the phone, then run `idevicepair pair` once more.
+3. To check it worked:
+   - **Windows:** open iTunes. A small phone icon should appear near the top
+     left. You can close iTunes again afterwards.
+   - **Linux:** run `idevice_id -l`. It should print a long string of letters
+     and numbers, which is your iPhone's ID. If it prints nothing, see
+     [Troubleshooting](#linux-impactor-doesnt-see-my-iphone).
 
 ---
 
-## 4. Install Kultr with Sideloadly
+## 4. Install Kultr
+
+### With Sideloadly (Windows and Mac)
 
 1. Open **Sideloadly**.
 2. At the top, the **iDevice** box should show your iPhone's name. If it's
@@ -115,17 +185,39 @@ versions in the Microsoft Store do **not**.
    the left of Sideloadly. You can also click the icon and pick the file.
 5. Click **Start**.
 6. Sideloadly asks for your **Apple ID password**. Type it and press OK.
-   - Sideloadly sends it to Apple to create the free signing certificate. It
-     does not go anywhere else.
+   Sideloadly sends it to Apple to create the free signing certificate. It
+   doesn't go anywhere else.
 7. If you use two-factor authentication (most people do), your iPhone or Mac
    shows a **6-digit code**. Type it into the box Sideloadly shows.
-8. Wait. The bottom of the window shows progress, e.g. *“Signing”* and
+8. Wait. The bottom of the window shows progress, such as *“Signing”* and
    *“Installing”*. After about a minute it says **“Done.”**
 
-The Kultr icon (a silver **K**) is now on your iPhone's home screen, but it
-**won't open yet**. Do the next two steps first.
+### With Impactor (Linux)
 
-### Trust your own Apple ID on the iPhone
+1. With the iPhone plugged in and unlocked, open **Impactor**.
+2. **Sign in with your Apple ID** (email and password) when Impactor asks. It
+   uses them to get a free signing certificate from Apple, the same way
+   Apple's own Xcode does.
+3. If you use two-factor authentication, your iPhone shows a **6-digit code**.
+   Type it into Impactor.
+4. Make sure your iPhone is the selected device. Impactor registers it with
+   your Apple ID the first time.
+5. Choose **`Kultr.ipa`** from your *Downloads* folder. You can drag it into
+   the window or use Impactor's button for opening a file.
+6. Start the install and wait. Impactor signs Kultr and copies it to the
+   phone. This takes about a minute.
+
+---
+
+The Kultr icon (a silver **K**) is now on your iPhone's home screen, but it
+**won't open yet**. Do the next section first.
+
+## 5. Let the iPhone open it
+
+These steps are done on the iPhone and are the same whichever computer you
+used.
+
+### Trust your own Apple ID
 
 1. On the iPhone, open **Settings → General → VPN & Device Management**.
    (On some iOS versions it's called *Device Management* or *Profiles & Device
@@ -139,8 +231,9 @@ iPhones need this switched on before they'll open any sideloaded app.
 
 1. Open **Settings → Privacy & Security**.
 2. Scroll all the way down and tap **Developer Mode**.
-   - If there is no *Developer Mode* entry, install the app first (step 4).
-     The option only appears once a sideloaded app is on the phone.
+   - If there is no *Developer Mode* entry, install the app first
+     ([section 4](#4-install-kultr)). The option only appears once a
+     sideloaded app is on the phone.
 3. Turn it **on**. The iPhone asks to restart. Tap **Restart**.
 4. After the restart, unlock the phone. It asks once more whether to turn on
    Developer Mode. Tap **Turn On** and enter your passcode.
@@ -149,7 +242,7 @@ iPhones need this switched on before they'll open any sideloaded app.
 
 Tap the **K** icon. Kultr asks for:
 
-- **Server address**: the web address of your Navidrome, e.g.
+- **Server address**: the web address of your Navidrome, for example
   `https://music.example.com`. Use the same address you open in a browser.
 - **Username** and **Password**: your Navidrome login.
 
@@ -160,20 +253,22 @@ That's it. Kultr is installed. 🎉
 
 ---
 
-## 5. Keeping Kultr working (the 7-day rule)
+## 6. Keeping Kultr working (the 7-day rule)
 
 Apps signed with a **free** Apple ID expire **7 days** after you install them.
-When that happens, Kultr's icon stays on the home screen but it won't open, or
+When that happens, Kultr's icon stays on the home screen, but it won't open or
 it closes straight away. **Your music, downloads and settings are not lost.**
 You just need to sign it again:
 
-1. Plug the iPhone into the computer and open Sideloadly.
-2. Drag the same `Kultr.ipa` (or a newer one) onto it and click **Start**.
+1. Plug the iPhone into the computer and open Sideloadly (or Impactor on
+   Linux).
+2. Install the same `Kultr.ipa` (or a newer one) exactly as in
+   [section 4](#4-install-kultr), with the **same Apple ID**.
 3. Done. Kultr opens again for another 7 days, with everything where you left it.
 
-Tip: refresh it once a week, e.g. every Sunday, **before** it expires.
+Tip: refresh it once a week, for example every Sunday, **before** it expires.
 
-### Letting Sideloadly refresh automatically
+### Letting Sideloadly refresh automatically (Windows and Mac)
 
 Sideloadly can re-sign Kultr for you in the background, over Wi-Fi:
 
@@ -187,6 +282,10 @@ Sideloadly can re-sign Kultr for you in the background, over Wi-Fi:
 3. Leave the computer on, with Sideloadly running in the background, on the
    same Wi-Fi as the iPhone. It re-signs Kultr before the 7 days are up.
 
+On **Linux**, automatic refresh over Wi-Fi isn't available, because Linux's
+iPhone service (`usbmuxd`) only works over the cable. Plug the phone in once
+a week and reinstall as described above. It takes a minute.
+
 ### Limits of a free Apple ID
 
 - At most **3 sideloaded apps** can be installed at the same time.
@@ -199,26 +298,45 @@ and makes installs last a full year. You don't need it to use Kultr.
 
 ---
 
-## 6. Updating to a new version
+## 7. Updating to a new version
 
 1. Download the newer `Kultr.ipa` from the
-   [Releases page](https://github.com/evropiani/Kultr_iOS/releases), as in step 1.
-2. Install it with Sideloadly exactly as in step 4, using the **same Apple ID**.
+   [latest release](https://github.com/evropiani/Kultr_iOS/releases/latest), as
+   in [section 1](#1-download-kultr).
+2. Install it exactly as in [section 4](#4-install-kultr), using the **same
+   Apple ID**.
 
 It installs over the old version and **keeps your servers, library, downloads
-and settings**. Don't delete the old app first. Deleting the app deletes its
-data.
+and settings**. Don't delete the old app first, because deleting the app
+deletes its data.
+
+To hear about new versions, open the
+[repository](https://github.com/evropiani/Kultr_iOS), click **Watch** →
+**Custom** → **Releases** (this needs a free GitHub account).
 
 ---
 
 ## Troubleshooting
 
 ### Sideloadly doesn't see my iPhone
-- Unlock the iPhone and make sure you tapped **Trust** (step 3).
+- Unlock the iPhone and make sure you tapped **Trust**
+  ([section 3](#3-connect-your-iphone)).
 - Try a different cable or USB port. Many cheap cables only charge.
 - **Windows:** make sure iTunes and iCloud came from **Apple's website**, not
-  the Microsoft Store (step 2). Open iTunes once with the phone plugged in, then
-  restart Sideloadly.
+  the Microsoft Store ([section 2](#on-windows)). Open iTunes once with the phone
+  plugged in, then restart Sideloadly.
+
+### Linux: Impactor doesn't see my iPhone
+- Unlock the phone, **plug it in first, then (re)start Impactor.** On some
+  distributions `usbmuxd` stops when no iPhone is connected and only starts
+  again when one is plugged in, so Impactor, if already open, may miss it.
+- Check the connection with `idevice_id -l`. If that prints nothing, try
+  another cable or USB port, then run `sudo systemctl restart usbmuxd` and plug
+  the phone in again.
+- If the phone never asked **“Trust This Computer?”**, run `idevicepair pair`
+  with the phone unlocked and tap **Trust**.
+- Still nothing? Make sure `usbmuxd` is installed
+  ([section 2, Linux](#on-linux)) and restart the computer.
 
 ### “Untrusted Developer” when opening Kultr
 You skipped **Trust your own Apple ID**. Go to Settings → General →
@@ -229,17 +347,17 @@ Turn on **Developer Mode** (Settings → Privacy & Security → Developer Mode) 
 restart the phone.
 
 ### Kultr opened fine for a week, and now it won't
-The 7 days are up. Refresh it with Sideloadly ([section 5](#5-keeping-kultr-working-the-7-day-rule)).
+The 7 days are up. Refresh it ([section 6](#6-keeping-kultr-working-the-7-day-rule)).
 
-### Sideloadly says “maximum number of apps” or “App ID limit reached”
+### “Maximum number of apps” or “App ID limit reached”
 A free Apple ID can have 3 sideloaded apps at once and create 10 app IDs a
 week. Delete a sideloaded app you no longer use, or wait a few days.
 
-### Sideloadly asks for a password again and again, or says the login failed
-- Check that you can sign in at https://appleid.apple.com with the same email
+### The tool asks for my password again and again, or says the login failed
+- Check that you can sign in at https://account.apple.com with the same email
   and password.
-- If you use two-factor authentication, make sure you typed the 6-digit code
-  when it appeared.
+- If you use two-factor authentication, type the 6-digit code as soon as it
+  appears on your iPhone.
 - **Mac:** make sure Sideloadly's Mail plug-in is enabled (Mail → Settings →
   General → Manage Plug-ins), then restart Sideloadly.
 
@@ -247,24 +365,30 @@ week. Delete a sideloaded app you no longer use, or wait a few days.
 - Type the address exactly as you open Navidrome in a browser, including
   `https://`. Try it in Safari on the iPhone first. If Safari can't reach it,
   neither can Kultr.
-- A server at home (e.g. `http://192.168.1.20:4533`) only works while the
-  iPhone is on your home Wi-Fi. If iOS asks whether Kultr may *find devices on
-  your local network*, tap **Allow**.
+- A server at home (for example `http://192.168.1.20:4533`) only works while
+  the iPhone is on your home Wi-Fi. If iOS asks whether Kultr may *find
+  devices on your local network*, tap **Allow**.
 - Tap **Advanced options** on the sign-in screen and try **Plain password** if
   your server sits behind a proxy that rejects token authentication.
 
 ### Music stops when I lock the phone
 It shouldn't. Kultr plays in the background like any music app. Check that
-*Low Power Mode* isn't killing it, and that you are on the latest Kultr release.
+you're on the latest Kultr release, and tell us if it keeps happening.
+
+### Still stuck?
+Open an issue at https://github.com/evropiani/Kultr_iOS/issues, or ask on
+[Discord (@evropiani)](https://discord.com/users/319246364246540288).
 
 ---
 
 ## Other ways to install
 
-- **AltStore (Classic)**: works much like Sideloadly. You install *AltServer* on
-  a computer, which installs the *AltStore* app on your iPhone. AltStore can then
-  refresh Kultr over Wi-Fi by itself while the computer is on. Instructions:
-  https://altstore.io. In AltStore, open the **My Apps** tab, tap **+** and
-  pick `Kultr.ipa` (save it to the iPhone's *Files* app first).
+- **AltStore (Classic)** (Windows and Mac): works much like Sideloadly. You
+  install *AltServer* on a computer, which puts the *AltStore* app on your
+  iPhone. AltStore can then refresh Kultr over Wi-Fi by itself while the
+  computer is on. Instructions: https://altstore.io. In AltStore, open the
+  **My Apps** tab, tap **+** and pick `Kultr.ipa` (save it to the iPhone's
+  *Files* app first).
 - **Xcode on a Mac**: developers can open `Kultr.xcodeproj`, choose their own
   team under *Signing & Capabilities*, and run it on a connected iPhone.
+  See [Building](../README.md#building).

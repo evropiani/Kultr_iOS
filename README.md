@@ -1,65 +1,105 @@
 # Kultr for iOS
 
-A native iPhone client for **Navidrome** and other Subsonic-compatible servers.
-It's the iOS version of [Kultr for Android](https://github.com/evropiani/Kultr_Android),
-with the same look, the same features and the same settings file.
-
-**➡️ New to installing apps outside the App Store? Read the step-by-step
-guide: [docs/INSTALL.md](docs/INSTALL.md).**
-
-Download: [latest release](https://github.com/evropiani/Kultr_iOS/releases/latest) → `Kultr.ipa`.
+A native iPhone client for [Navidrome](https://www.navidrome.org/) and other
+Subsonic-compatible servers. It's the iOS counterpart of the
+[Kultr web client](https://github.com/evropiani/Kultr) and of
+[Kultr for Android](https://github.com/evropiani/Kultr_Android). It keeps
+their behaviour and settings (a settings file exported from one opens in the
+others) and runs as a proper iOS music app: background playback, lock-screen
+and Control Center controls, AirPlay, and downloads for offline listening.
 
 ## Features
 
-- **Your library on the phone.** Kultr syncs a copy of your library into a
-  local database, so browsing is instant and works offline. After the first
-  sync, only changes are fetched.
-- **InjeKt.** Tracks are analysed for tempo, key, energy and structure, and
-  transitions are planned like a DJ would: beat-matched, bar-aligned, with bass
-  swap and harmonic mixing. When the queue runs out, InjeKt keeps going with
-  similar music.
-- **Two-deck playback** with real crossfades (four fade shapes), gapless
-  playback, ReplayGain and a 10-band equaliser.
-- **Offline downloads** for albums, artists, playlists, favourites or
-  everything, with a Wi-Fi-only option and a download queue.
-- **Lock screen and Control Center** controls, **AirPlay**, and **scrobbling**
-  (queued while offline).
-- Lyrics (synced when the server has them), favourites, ratings, playlists,
-  internet radio, listening stats, drag-and-drop onto *Play next*, *Queue*,
-  *Favourite* and *Sync offline*.
-- Several servers, with passwords kept in the iOS Keychain.
-- Settings export/import, compatible with Kultr on Android and the web.
+- **Library mirror.** The whole library is synced into a local database, so
+  browsing and search are instant and work offline. Later syncs fetch only
+  what changed. They run when Kultr starts, and in the background whenever
+  iOS allows it.
+- **Two-deck playback.** Every track plays on one of two players, so Kultr can
+  crossfade (with a choice of curves), play gapless albums seamlessly, or cut.
+- **InjeKt transitions.** Tracks are analysed on the phone (tempo, beat grid,
+  key, energy and intro/outro structure), and transitions are planned from
+  that. You get tempo-matched blends that land on the downbeat, a bass swap, a
+  filter sweep, and key-aware ordering for an endless automatic queue.
+- **Offline.** Download albums, playlists, favourites or the whole library, at
+  a bitrate of your choosing, on Wi-Fi only if you like. A Downloads page shows
+  what is coming down, what is queued or failed, and what is already on the
+  phone. Downloaded tracks play before the network is tried, and a stream
+  cache keeps recent tracks too.
+- **AirPlay** to a HomePod, Apple TV or any AirPlay speaker from the player.
+- **Drag and drop** tracks, albums, artists and playlists onto Play next, Add to
+  queue, Favourite, Sync offline or Delete downloads.
+- **Several servers.** Sign in to more than one server and switch between them.
+  Each has its own library, downloads and history. Passwords are kept in the
+  iOS Keychain.
+- **Home shelves** you choose and reorder: jump back in, recently added, most
+  played, albums at random, favourites, playlists on repeat, internet radio
+  and more.
+- **Audio:** ten-band equaliser with presets, ReplayGain (track or album),
+  per-network streaming bitrate, sleep timer (after minutes or at the end of
+  the track).
+- **Also:** synced and plain lyrics, ratings and favourites, playlist editing,
+  scrobbling with an offline queue, listening stats, internet radio, a
+  now-playing screen tinted by the artwork, and settings backup and restore.
 
-## Differences from Android
+## Getting it
 
-| Android | iOS |
-|---|---|
-| Chromecast | AirPlay |
-| Android Auto | not available |
-| Periodic background sync (WorkManager) | background refresh when iOS allows it; always checks on launch |
-| Opus / Vorbis transcoding | MP3 or AAC. iOS can't stream Opus/Vorbis, so Kultr asks the server for MP3 instead |
+Kultr isn't on the App Store. You install it yourself, a process called
+*sideloading*, which works on any iPhone or iPad running iOS 17 or later
+without jailbreaking. You need a computer (Windows, macOS or Linux) and a
+free Apple ID.
+
+**➡️ Step-by-step guide for first-timers: [docs/INSTALL.md](docs/INSTALL.md)**
+
+In short: download `Kultr.ipa` from the
+[latest release](https://github.com/evropiani/Kultr_iOS/releases/latest),
+then install it with [Sideloadly](https://sideloadly.io) (Windows, macOS),
+[AltStore](https://altstore.io) (Windows, macOS) or
+[Impactor](https://github.com/khcrysalis/PlumeImpactor) (Linux) using your Apple ID. With a
+free Apple ID the app has to be re-signed every 7 days. Your library, downloads
+and settings survive this, and installing a new release over the old one keeps
+them too.
+
+The IPA is unsigned: the tool you install it with signs it for your device.
+Every push to `main` is built by GitHub Actions, and the resulting IPA
+replaces the one on the current release.
 
 ## Building
 
-Requirements: Xcode 16 or newer, iOS 17 SDK.
+Requirements: macOS with Xcode 16 or newer (iOS 17 SDK). Then:
 
 ```sh
-open Kultr.xcodeproj           # pick your team under Signing & Capabilities, then Run
-swift test --package-path KultrCore   # unit tests for the core
+swift test --package-path KultrCore     # core unit tests, no simulator needed
+open Kultr.xcodeproj                    # choose your team under Signing & Capabilities, then Run
 ```
 
-- `KultrCore/`: platform-independent code: Subsonic client, settings, InjeKt
-  (DSP + planner), the playback engine, library sync and the SQLite mirror.
-  The app target compiles these sources directly. The Swift package exists so
-  they can be tested with `swift test`.
-- `Kultr/`: the app: data layer, AVFoundation decks with an audio tap for
-  gain/EQ/filters, and the SwiftUI interface.
+To build the same unsigned IPA the workflow publishes:
 
-CI (`.github/workflows/ios.yml`) runs the core tests and builds on every push.
-Pushes to `main` also build an unsigned `Kultr.ipa` and attach it to the
-GitHub release for the current version.
+```sh
+xcodebuild build -project Kultr.xcodeproj -scheme Kultr -configuration Release \
+  -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+  CODE_SIGNING_ALLOWED=NO
+mkdir -p Payload && cp -R build/Build/Products/Release-iphoneos/Kultr.app Payload/
+zip -qry Kultr.ipa Payload
+```
 
-## Contact
+### Releasing
 
-Questions, ideas, or something broken: [Discord @evropiani](https://discord.com/users/319246364246540288)
-· [kultr.cc](https://kultr.cc/)
+Bump `MARKETING_VERSION` in `Kultr.xcodeproj/project.pbxproj` and push to
+`main`. The **iOS** workflow runs the core tests, builds the IPA and publishes
+it as the GitHub release `v<version>`, creating the release if it doesn't
+exist yet or replacing its IPA if it does. The build number is the workflow's
+run number.
+
+## How it is put together
+
+| Part | What it holds |
+| --- | --- |
+| `KultrCore` | Plain Swift, no UIKit or AVFoundation: the Subsonic API client, the audio analysis (FFT, tempo, key, structure), the InjeKt transition planner, the two-deck playback engine, the library sync, the SQLite library mirror, and the settings model with its import/export. A Swift package, unit-tested with `swift test`. The app compiles the same sources directly. |
+| `Kultr` | The iOS app: a database per server, a download queue, background refresh for sync, a player that drives two AVFoundation decks through the core engine (with an audio tap for fades, EQ and filters), Now Playing and remote-command integration, and the SwiftUI interface. |
+
+No third-party dependencies: SwiftUI, AVFoundation, MediaPlayer, SQLite3,
+CryptoKit, Network and BackgroundTasks from the iOS SDK.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
