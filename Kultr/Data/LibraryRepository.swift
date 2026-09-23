@@ -45,7 +45,7 @@ final class LibraryRepository {
         coalescer.onFlush = { [weak self] changes in self?.apply(changes) }
     }
 
-    static var directory: URL {
+    nonisolated static var directory: URL {
         let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Kultr", isDirectory: true)
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

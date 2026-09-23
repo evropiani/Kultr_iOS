@@ -13,22 +13,17 @@ final class AppGraph {
     let network = NetworkMonitor()
     let auth = AuthRepository()
     let ui = AppUI()
-    private(set) var library: LibraryRepository!
-    private(set) var scrobbles: Scrobbles!
-    private(set) var sync: SyncManager!
-    private(set) var offline: OfflineManager!
-    private(set) var analysis: AnalysisManager!
-    private(set) var player: PlayerController!
-    private(set) var actions: AppActions!
+    // Lazy only so they can be handed `self`; all of them are created in init.
+    private(set) lazy var library = LibraryRepository(graph: self)
+    private(set) lazy var scrobbles = Scrobbles(graph: self)
+    private(set) lazy var sync = SyncManager(graph: self)
+    private(set) lazy var offline = OfflineManager(graph: self)
+    private(set) lazy var analysis = AnalysisManager(graph: self)
+    private(set) lazy var player = PlayerController(graph: self)
+    private(set) lazy var actions = AppActions(graph: self)
 
     private init() {
-        library = LibraryRepository(graph: self)
-        scrobbles = Scrobbles(graph: self)
-        sync = SyncManager(graph: self)
-        offline = OfflineManager(graph: self)
-        analysis = AnalysisManager(graph: self)
-        player = PlayerController(graph: self)
-        actions = AppActions(graph: self)
+        _ = (library, scrobbles, sync, offline, analysis, player, actions)
 
         library.activate(auth.active?.id)
         auth.observeActive { [unowned self] profile in
