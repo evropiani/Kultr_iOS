@@ -208,15 +208,6 @@ extension EmptyState where Action == EmptyView {
     }
 }
 
-extension EmptyState {
-    init(icon: String, title: String, message: String? = nil, @ViewBuilder action: () -> Action) {
-        self.icon = icon
-        self.title = title
-        self.message = message
-        self.action = action()
-    }
-}
-
 struct LoadingView: View {
     @Environment(\.kultr) private var theme
 
