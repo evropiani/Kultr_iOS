@@ -7,6 +7,7 @@ private let WEBSITE = "https://kultr.cc/"
 private let DISCORD = "https://discord.com/users/319246364246540288"
 private let SOURCE = "https://github.com/evropiani/Kultr_iOS"
 
+@MainActor
 private func update(_ change: (inout Settings) -> Void) {
     AppGraph.shared.settings.update(change)
 }
