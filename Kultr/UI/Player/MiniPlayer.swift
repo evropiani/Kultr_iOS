@@ -94,7 +94,7 @@ struct MiniPlayer: View {
                 }
                 .padding(8)
                 .offset(x: swipe)
-                .opacity(1 - min(0.7, abs(swipe) / 300))
+                .opacity(1 - min(0.7, Double(abs(swipe)) / 300))
                 PositionReader(interval: 0.5) { position in
                     GeometryReader { proxy in
                         let fraction = state.durationMs > 0 ? min(1, max(0, Double(position) / Double(state.durationMs))) : 0
