@@ -30,7 +30,10 @@ jobs:
           swift --version
 
       - name: Core tests
-        run: swift test --package-path KultrCore
+        id: tests
+        continue-on-error: true
+        run: swift test --package-path KultrCore 2>&1 | tee tests.log | grep -E "error:|failed|passed|Executed" ; exit ${PIPESTATUS[0]}
+        shell: bash
 
       - name: Build (simulator, debug)
         if: github.ref != 'refs/heads/main'
@@ -69,12 +72,18 @@ jobs:
           (cd out && zip -qry Kultr.ipa Payload)
           ls -lh out/Kultr.ipa
 
+      - name: Fail when core tests failed
+        if: steps.tests.outcome == 'failure'
+        run: exit 1
+
       - name: Upload build log
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-log
-          path: build.log
+          path: |
+            build.log
+            tests.log
           if-no-files-found: ignore
 
       - name: Upload IPA artifact

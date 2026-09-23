@@ -30,7 +30,7 @@ enum ArtworkColor {
             if luma < 28 || luma > 235 { continue }
             let saturation = hi == 0 ? 0.0 : Double(hi - lo) / Double(hi)
             if saturation < 0.12 { continue }
-            let key = (r >> 4 << 8) | (g >> 4 << 4) | (b >> 4)
+            let key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4)
             var bucket = counts[key] ?? Bucket()
             bucket.count += 1
             bucket.r += r
