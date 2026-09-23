@@ -1,0 +1,100 @@
+name: iOS
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Tools
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Core tests
+        run: swift test --package-path KultrCore
+
+      - name: Build (simulator, debug)
+        if: github.ref != 'refs/heads/main'
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Kultr.xcodeproj \
+            -scheme Kultr \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log | grep -E "error:|warning: unre|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Build unsigned IPA (release)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Kultr.xcodeproj \
+            -scheme Kultr \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            | tee build.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build.log
+          mkdir -p out/Payload
+          cp -R build/Build/Products/Release-iphoneos/Kultr.app out/Payload/
+          (cd out && zip -qry Kultr.ipa Payload)
+          ls -lh out/Kultr.ipa
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: Upload IPA artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kultr-ipa
+          path: out/Kultr.ipa
+
+      - name: Publish release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(grep -m1 "MARKETING_VERSION" Kultr.xcodeproj/project.pbxproj | sed -E 's/.*= ([^;]+);/\1/')
+          TAG="v${VERSION}"
+          NOTES="Kultr for iOS ${VERSION} (build ${{ github.run_number }}, commit ${GITHUB_SHA::7}). Unsigned IPA: install it with Sideloadly or AltStore, following docs/INSTALL.md in the repository."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" out/Kultr.ipa --clobber
+            gh release edit "$TAG" --notes "$NOTES"
+          else
+            gh release create "$TAG" out/Kultr.ipa --title "Kultr for iOS ${VERSION}" --notes "$NOTES" --target "$GITHUB_SHA"
+          fi
