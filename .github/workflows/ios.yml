@@ -101,7 +101,7 @@ jobs:
             xcrun simctl shutdown "$UDID" || true
           }
           shoot 26 "" login home library songs album artist mini player search found settings stats sync
-          shoot 18 "ios18-" home mini library album player search found
+          shoot 18 "ios18-" home lens mini library search found
 
       - name: Publish screenshots
         if: always() && github.ref != 'refs/heads/main'

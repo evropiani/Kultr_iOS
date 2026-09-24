@@ -43,6 +43,11 @@ enum ScreenshotDriver {
         }
     }
 
+    /** For the "lens" screenshot: a finger held on the tab bar, between Home and Library. */
+    nonisolated static var lensFinger: CGFloat? {
+        ProcessInfo.processInfo.environment["KULTR_SCREEN"] == "lens" ? 120 : nil
+    }
+
     private static func open(_ screen: String, _ graph: AppGraph) async {
         let actions = graph.actions
         let library = graph.library
@@ -52,6 +57,7 @@ enum ScreenshotDriver {
             actions.selectTab(.home)
             actions.openLibrary(.songs)
         case "search": actions.selectTab(.search)
+        case "lens": actions.selectTab(.home)
         case "found":
             // Search with something typed: the field in the bar, results above it.
             actions.selectTab(.search)

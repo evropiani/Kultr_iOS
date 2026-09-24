@@ -223,7 +223,7 @@ private struct CollapsedTabs: View {
             Image(systemName: tab.icon)
                 .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(theme.colors.ink)
-                .frame(width: 58, height: 58)
+                .frame(width: 62, height: 62)
                 .contentShape(Circle())
         }
         .buttonStyle(PressScaleStyle())
@@ -264,7 +264,7 @@ private struct SearchBar: View {
             }
         }
         .padding(.horizontal, 18)
-        .frame(height: 58)
+        .frame(height: 62)
         .frame(maxWidth: .infinity)
         .contentShape(Capsule())
         .onTapGesture { focused = true }
@@ -280,14 +280,24 @@ private struct SearchBar: View {
 }
 
 /**
- * The tabs as one piece of glass. Touch it and the highlight lifts into a
- * clear lens that follows your finger, magnifying the tabs it passes; let go
- * and it settles on the tab underneath. A plain tap works as usual.
+ * The tabs as one piece of glass, like the iOS 26 bar. The tab you are on
+ * sits in a soft glass pill. Touch the bar and the pill lifts into a clear
+ * lens, bigger than the bar, that follows your finger and magnifies the tabs
+ * underneath it; let go and it shrinks back onto the tab below. A plain tap
+ * works as usual.
  */
 private struct LensTabBar: View {
     @Environment(\.kultr) private var theme
-    @State private var fingerX: CGFloat?
+    @State private var fingerX: CGFloat? = LensTabBar.initialFinger
     @State private var lastSlot: Int?
+
+    #if DEBUG
+    private static var initialFinger: CGFloat? { ScreenshotDriver.lensFinger }
+    #else
+    private static let initialFinger: CGFloat? = nil
+    #endif
+
+    private static let height: CGFloat = 62
 
     var body: some View {
         let ui = AppGraph.shared.ui
@@ -297,40 +307,56 @@ private struct LensTabBar: View {
             let width = proxy.size.width
             let slot = width / CGFloat(tabs.count)
             let selected = tabs.firstIndex(of: ui.tab)
-            let lensWidth = slot - 6
+            let lifted = fingerX != nil
+            let grow = lifted && !theme.reduceMotion
+            let pillWidth = grow ? slot + 14 : slot - 8
+            let pillHeight = grow ? Self.height + 16 : Self.height - 8
             let center: CGFloat? = fingerX.map { min(max($0, slot / 2), width - slot / 2) }
                 ?? selected.map { slot * (CGFloat($0) + 0.5) }
-            let lifted = fingerX != nil
-            ZStack(alignment: .leading) {
+            let lens = Capsule()
+            ZStack(alignment: .topLeading) {
                 if let center {
-                    Capsule()
-                        .fill(lifted ? Color.white.opacity(c.dark ? 0.1 : 0.35) : c.accentSoft)
-                        .overlay(Capsule().strokeBorder(.white.opacity(lifted ? 0.45 : 0.12), lineWidth: lifted ? 1 : 0.5))
-                        .shadow(color: .black.opacity(lifted ? 0.25 : 0), radius: 10, y: 4)
-                        .frame(width: lensWidth, height: proxy.size.height - 8)
-                        .scaleEffect(lifted && !theme.reduceMotion ? 1.14 : 1)
-                        .offset(x: center - lensWidth / 2)
+                    let frameX = center - pillWidth / 2
+                    let frameY = (Self.height - pillHeight) / 2
+                    // The pill behind the tab you are on; it goes clear while lifted.
+                    lens
+                        .fill(.white.opacity(lifted ? 0 : (c.dark ? 0.13 : 0.55)))
+                        .overlay(lens.strokeBorder(.white.opacity(lifted ? 0 : (c.dark ? 0.12 : 0.6)), lineWidth: 0.5))
+                        .frame(width: pillWidth, height: pillHeight)
+                        .offset(x: frameX, y: frameY)
                 }
-                HStack(spacing: 0) {
-                    ForEach(Array(tabs.enumerated()), id: \.element) { index, tab in
-                        let mid = slot * (CGFloat(index) + 0.5)
-                        let near = center.map { max(0, 1 - abs($0 - mid) / slot) } ?? 0
-                        let magnify = lifted && !theme.reduceMotion ? 1 + 0.16 * near : 1
-                        VStack(spacing: 3) {
-                            Image(systemName: tab.icon)
-                                .font(.system(size: 18, weight: .semibold))
-                            Text(tab.label)
-                                .font(.system(size: 10, weight: .semibold))
-                        }
-                        .foregroundStyle(tab == ui.tab ? c.accent : c.ink)
-                        .scaleEffect(magnify)
-                        .frame(width: slot, height: proxy.size.height)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityAddTraits(tab == ui.tab ? [.isButton, .isSelected] : .isButton)
-                        .accessibilityAction { AppGraph.shared.actions.selectTab(tab) }
+                row(tabs, slot: slot, current: ui.tab, lensed: false)
+                if let center {
+                    let frameX = center - pillWidth / 2
+                    let frameY = (Self.height - pillHeight) / 2
+                    // Lifted: a clear lens over the tabs, magnifying what is under it.
+                    ZStack(alignment: .topLeading) {
+                        row(tabs, slot: slot, current: ui.tab, lensed: true)
+                            .frame(width: width, height: Self.height)
+                            .scaleEffect(grow ? 1.28 : 1, anchor: UnitPoint(x: center / width, y: 0.5))
+                            .offset(x: -frameX, y: -frameY)
                     }
+                    .frame(width: pillWidth, height: pillHeight, alignment: .topLeading)
+                    .background(.white.opacity(c.dark ? 0.06 : 0.25))
+                    .clipShape(lens)
+                    .overlay(
+                        lens.strokeBorder(
+                            LinearGradient(
+                                colors: [.white.opacity(0.9), .white.opacity(0.15), .white.opacity(0.5)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.2
+                        )
+                    )
+                    .overlay(lens.stroke(c.accent.opacity(0.25), lineWidth: 3).blur(radius: 3).clipShape(lens))
+                    .shadow(color: .black.opacity(0.3), radius: 12, y: 6)
+                    .offset(x: frameX, y: frameY)
+                    .opacity(lifted ? 1 : 0)
+                    .allowsHitTesting(false)
                 }
             }
+            .frame(width: width, height: Self.height, alignment: .topLeading)
             .contentShape(Capsule())
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -340,7 +366,7 @@ private struct LensTabBar: View {
                             if lastSlot != nil { Haptics.select() }
                             lastSlot = index
                         }
-                        withAnimation(theme.reduceMotion ? nil : .interactiveSpring(response: 0.28, dampingFraction: 0.78)) {
+                        withAnimation(theme.reduceMotion ? nil : .interactiveSpring(response: 0.3, dampingFraction: 0.72)) {
                             fingerX = value.location.x
                         }
                     }
@@ -348,15 +374,37 @@ private struct LensTabBar: View {
                         let index = min(tabs.count - 1, max(0, Int(value.location.x / slot)))
                         lastSlot = nil
                         if tabs[index] != ui.tab { Haptics.select() }
-                        withAnimation(theme.spring) {
+                        withAnimation(theme.reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.7)) {
                             fingerX = nil
                             AppGraph.shared.actions.selectTab(tabs[index])
                         }
                     }
             )
         }
-        .frame(height: 58)
+        .frame(height: Self.height)
         .kultrGlass(Capsule())
+    }
+
+    /** The tab icons and names; under the lens they all light up in the accent. */
+    private func row(_ tabs: [MainTab], slot: CGFloat, current: MainTab, lensed: Bool) -> some View {
+        let c = theme.colors
+        return HStack(spacing: 0) {
+            ForEach(tabs, id: \.self) { tab in
+                VStack(spacing: 3) {
+                    Image(systemName: tab.icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .frame(height: 24)
+                    Text(tab.label)
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                .foregroundStyle(lensed || tab == current ? c.accent : c.ink)
+                .frame(width: slot, height: Self.height)
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(tab == current ? [.isButton, .isSelected] : .isButton)
+                .accessibilityAction { AppGraph.shared.actions.selectTab(tab) }
+            }
+        }
+        .accessibilityHidden(lensed)
     }
 }
 
@@ -373,7 +421,7 @@ private struct SearchOrb: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(on ? theme.colors.accent : theme.colors.ink)
-                .frame(width: 58, height: 58)
+                .frame(width: 62, height: 62)
                 .contentShape(Circle())
         }
         .buttonStyle(PressScaleStyle())
