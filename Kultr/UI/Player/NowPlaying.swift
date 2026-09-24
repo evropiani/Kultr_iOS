@@ -198,9 +198,11 @@ private struct PlayerTopBar: View {
             GlassIconButton(icon: "chevron.down", size: 40, label: "Close player", action: onClose)
             Eyebrow(song.isRadio ? "Internet radio" : (song.album ?? "Now playing"))
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Pill(injektOn ? "InjeKt on" : "InjeKt off", icon: "sparkles", accent: injektOn) {
+            // Lit while InjeKt plans the transitions; tap to switch it off and on.
+            Pill("InjeKt", icon: "sparkles", accent: injektOn) {
                 graph.settings.update { $0.injektEnabled.toggle() }
             }
+            .accessibilityValue(injektOn ? "On" : "Off")
             CastButton(tint: theme.colors.ink)
             Menu {
                 Button { graph.ui.sleepTimer = true } label: { Label("Sleep timer…", systemImage: "moon.fill") }
