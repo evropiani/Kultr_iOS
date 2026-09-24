@@ -125,9 +125,10 @@ struct MiniPlayerContent: View {
                         }
                         .frame(height: 2)
                     }
-                    // Inset, so the line stays clear of the rounded ends.
-                    .padding(.horizontal, 26)
-                    .padding(.bottom, 3)
+                    // Under the title, clear of the artwork and the rounded end.
+                    .padding(.leading, 58)
+                    .padding(.trailing, 24)
+                    .padding(.bottom, 4)
                 }
             }
             .contentShape(Rectangle())
