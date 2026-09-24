@@ -116,7 +116,7 @@ struct NowPlayingScreen: View {
         .offset(y: pull)
         .background {
             Color.black
-                .opacity(0.35 * (1 - min(1, pull / 500)))
+                .opacity(0.35 * Double(1 - min(1, pull / 500)))
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
         }
