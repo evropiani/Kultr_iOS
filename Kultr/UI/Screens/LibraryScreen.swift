@@ -71,6 +71,7 @@ struct LibraryScreen: View {
                     let width = max(1, outer.size.width)
                     pager.progress = min(CGFloat(tabs.count - 1), max(0, -minX / width))
                 }
+                .modifier(PagerTracking(pager: pager, width: outer.size.width, count: tabs.count))
             }
         }
         .animation(theme.ease, value: current == .favourites || current == .downloads)
@@ -84,8 +85,22 @@ struct LibraryScreen: View {
             }
         }
         .onChange(of: page) { _, value in
-            if value != nil { Haptics.select() }
+            guard let value else { return }
+            Haptics.select()
+            // Wherever the scroll reports land, the underline ends on the page you are on.
+            let index = CGFloat(tabs.firstIndex(of: value) ?? 0)
+            if abs(pager.progress - index) > 0.01 {
+                withAnimation(theme.spring) { pager.progress = index }
+            }
         }
+        #if DEBUG
+        .task {
+            // CI screenshot: switch pages the way a tap on the strip does.
+            guard ProcessInfo.processInfo.environment["KULTR_SCREEN"] == "library-switch" else { return }
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            withAnimation(theme.spring ?? .linear(duration: 0)) { page = .playlists }
+        }
+        #endif
     }
 
     @ViewBuilder
@@ -100,6 +115,27 @@ struct LibraryScreen: View {
         case .favourites: FavouritesTab()
         case .downloads: OfflineContent()
         case .radio: RadioTab(query: query)
+        }
+    }
+}
+
+/**
+ * On iOS 18 the pager reports its scroll position directly, so the underline
+ * follows your finger frame by frame; the geometry preference is the fallback
+ * for iOS 17.
+ */
+private struct PagerTracking: ViewModifier {
+    let pager: PagerModel
+    let width: CGFloat
+    let count: Int
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, x in
+                pager.progress = min(CGFloat(count - 1), max(0, x / max(1, width)))
+            }
+        } else {
+            content
         }
     }
 }
@@ -426,28 +462,30 @@ private struct PlaylistsTab: View {
             if let playlists {
                 let shown = needle.isEmpty ? playlists : playlists.filter { matches(needle, $0.name) }
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: theme.settings.gridSize.minCell), spacing: 0, alignment: .top)], spacing: 0) {
-                        Section {
-                            if shown.isEmpty {
-                                EmptyState(icon: "square.stack.fill", title: "No playlists", message: "Create one, or add tracks to a new playlist from any track's menu.")
+                    VStack(spacing: 0) {
+                        HStack(spacing: 8) {
+                            Pill("New playlist", icon: "plus", accent: true) {
+                                newName = ""
+                                creating = true
                             }
-                            ForEach(shown) { PlaylistCard(playlist: $0) }
-                        } header: {
-                            HStack(spacing: 8) {
-                                Pill("New playlist", icon: "plus", accent: true) {
-                                    newName = ""
-                                    creating = true
+                            Pill(refreshing ? "Refreshing…" : "Refresh", icon: "arrow.clockwise", enabled: !refreshing) {
+                                refreshing = true
+                                Task {
+                                    if let error = await graph.library.refreshPlaylists() { graph.messages.error(error) }
+                                    refreshing = false
                                 }
-                                Pill(refreshing ? "Refreshing…" : "Refresh", icon: "arrow.clockwise", enabled: !refreshing) {
-                                    refreshing = true
-                                    Task {
-                                        if let error = await graph.library.refreshPlaylists() { graph.messages.error(error) }
-                                        refreshing = false
-                                    }
-                                }
-                                Spacer()
                             }
-                            .padding(6)
+                            Spacer()
+                        }
+                        .padding(6)
+                        if shown.isEmpty {
+                            // Across the whole page, not in the grid's first column.
+                            EmptyState(icon: "square.stack.fill", title: "No playlists", message: "Create one, or add tracks to a new playlist from any track's menu.")
+                                .padding(.top, 24)
+                        } else {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: theme.settings.gridSize.minCell), spacing: 0, alignment: .top)], spacing: 0) {
+                                ForEach(shown) { PlaylistCard(playlist: $0) }
+                            }
                         }
                     }
                     .padding(10)
