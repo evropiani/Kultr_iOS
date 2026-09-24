@@ -326,6 +326,19 @@ private struct LensTabBar: View {
                         .offset(x: frameX, y: frameY)
                 }
                 row(tabs, slot: slot, current: ui.tab, lensed: false)
+                    .mask {
+                        // Under the lens only the magnified copy shows.
+                        Rectangle()
+                            .overlay(alignment: .topLeading) {
+                                if let center, lifted {
+                                    lens
+                                        .frame(width: pillWidth, height: pillHeight)
+                                        .offset(x: center - pillWidth / 2, y: (Self.height - pillHeight) / 2)
+                                        .blendMode(.destinationOut)
+                                }
+                            }
+                            .compositingGroup()
+                    }
                 if let center {
                     let frameX = center - pillWidth / 2
                     let frameY = (Self.height - pillHeight) / 2
@@ -333,7 +346,7 @@ private struct LensTabBar: View {
                     ZStack(alignment: .topLeading) {
                         row(tabs, slot: slot, current: ui.tab, lensed: true)
                             .frame(width: width, height: Self.height)
-                            .scaleEffect(grow ? 1.28 : 1, anchor: UnitPoint(x: center / width, y: 0.5))
+                            .scaleEffect(grow ? 1.2 : 1, anchor: UnitPoint(x: center / width, y: 0.5))
                             .offset(x: -frameX, y: -frameY)
                     }
                     .frame(width: pillWidth, height: pillHeight, alignment: .topLeading)
