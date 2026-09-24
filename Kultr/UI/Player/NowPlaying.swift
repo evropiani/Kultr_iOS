@@ -23,7 +23,7 @@ private struct TopOffsetKey: PreferenceKey {
 struct NowPlayingScreen: View {
     @Environment(\.kultr) private var theme
     @State private var tab: PlayerTab = .queue
-    @State private var pull: CGFloat = 0
+    @State private var pull: CGFloat = NowPlayingScreen.initialPull
     @State private var topOffset: CGFloat = 0
     @State private var pulling = false
     @State private var live: Song?
@@ -62,6 +62,9 @@ struct NowPlayingScreen: View {
                     .padding(.bottom, 32)
                 }
                 .coordinateSpace(name: "player")
+                // Once the pull has started the list stops scrolling, so the whole
+                // card moves with your finger instead of the list sliding inside it.
+                .scrollDisabled(pulling)
                 .onPreferenceChange(TopOffsetKey.self) { topOffset = $0 }
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 15)
@@ -100,13 +103,35 @@ struct NowPlayingScreen: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background { ArtworkBackdrop(coverId: state.current?.artworkId) }
+        // Pulled down, the player is a card: rounded like the screen, with a
+        // shadow, over the dimmed app behind it.
+        .mask {
+            RoundedRectangle(cornerRadius: pull > 0 ? Self.cardRadius : 0, style: .continuous)
+                .ignoresSafeArea()
+        }
+        .shadow(color: .black.opacity(pull > 0 ? 0.35 : 0), radius: 24, y: -4)
+        .scaleEffect(1 - min(1, pull / 900) * 0.08, anchor: .top)
         .offset(y: pull)
-        .scaleEffect(1 - min(1, pull / 900) * 0.08)
+        .background {
+            Color.black
+                .opacity(0.35 * (1 - min(1, pull / 500)))
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+        }
     }
 
+    #if DEBUG
+    private static var initialPull: CGFloat { ProcessInfo.processInfo.environment["KULTR_SCREEN"] == "pull" ? 220 : 0 }
+    #else
+    private static let initialPull: CGFloat = 0
+    #endif
+
+    /** About the corner radius of a modern iPhone's screen. */
+    private static let cardRadius: CGFloat = 44
+
     private func close() {
+        // The pull is kept, so the card carries on down from where you let go.
         AppGraph.shared.actions.closePlayer()
-        pull = 0
     }
 
     @ViewBuilder

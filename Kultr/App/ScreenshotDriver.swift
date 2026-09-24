@@ -75,12 +75,12 @@ enum ScreenshotDriver {
             if let artist = artists.first(where: { ($0.albumCount ?? 0) > 1 }) ?? artists.first {
                 actions.openArtist(artist.id)
             }
-        case "player", "mini":
+        case "player", "mini", "pull":
             if let album = await library.recentlyAdded(3).last {
                 let songs = await library.songsOfAlbumNow(album.id)
                 actions.play(songs)
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
-                if screen == "player" { actions.openPlayer() }
+                if screen != "mini" { actions.openPlayer() }
             }
         default:
             actions.selectTab(.home)

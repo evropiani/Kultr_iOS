@@ -102,8 +102,8 @@ jobs:
           }
           shoot 26 "" login home library library-switch songs album artist mini player search found settings stats sync
           shoot 18 "ios18-" home lens mini library library-switch search found
-          LOOK=light shoot 26 "light-" mini found
-          LOOK=light shoot 18 "ios18-light-" mini lens
+          LOOK=light shoot 26 "light-" mini found pull
+          LOOK=light shoot 18 "ios18-light-" mini lens pull
 
       - name: Publish screenshots
         if: always() && github.ref != 'refs/heads/main'
