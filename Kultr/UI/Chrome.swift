@@ -265,7 +265,7 @@ private struct SearchOrb: View {
                 .contentShape(Circle())
         }
         .buttonStyle(PressScaleStyle())
-        .kultrGlass(Circle(), tint: on ? theme.colors.accent : nil)
+        .kultrGlass(Circle(), tint: on ? theme.colors.accent.opacity(0.35) : nil)
         .accessibilityLabel("Search")
         .accessibilityAddTraits(on ? .isSelected : [])
     }

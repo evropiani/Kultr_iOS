@@ -37,7 +37,7 @@ private struct GlassSurface<S: InsettableShape>: ViewModifier {
     @available(iOS 26.0, *)
     private var glass: Glass {
         var glass = Glass.regular
-        if let tint { glass = glass.tint(tint.opacity(0.35)) }
+        if let tint { glass = glass.tint(tint) }
         if interactive { glass = glass.interactive() }
         return glass
     }

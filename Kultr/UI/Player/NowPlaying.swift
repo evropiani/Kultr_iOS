@@ -33,7 +33,6 @@ struct NowPlayingScreen: View {
         let state = graph.player.state
         let settings = theme.settings
         ZStack {
-            ArtworkBackdrop(coverId: state.current?.artworkId)
             if let song = state.current {
                 let current = live?.id == song.id ? live! : song
                 ScrollView {
@@ -99,6 +98,8 @@ struct NowPlayingScreen: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { ArtworkBackdrop(coverId: state.current?.artworkId) }
         .offset(y: pull)
         .scaleEffect(1 - min(1, pull / 900) * 0.08)
     }

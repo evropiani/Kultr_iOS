@@ -343,14 +343,20 @@ struct ArtworkBackdrop: View {
         ZStack {
             theme.colors.background
             if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .interpolation(.medium)
-                    .scaledToFill()
-                    .scaleEffect(1.2)
-                    .opacity(theme.colors.dark ? 0.6 : 0.5)
-                    .transition(.opacity)
-                    .id(url)
+                // Sized to the space it is given: a square image filled to a
+                // tall screen is wider than the screen, and must not widen it.
+                GeometryReader { proxy in
+                    Image(uiImage: image)
+                        .resizable()
+                        .interpolation(.medium)
+                        .scaledToFill()
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .scaleEffect(1.2)
+                        .clipped()
+                }
+                .opacity(theme.colors.dark ? 0.6 : 0.5)
+                .transition(.opacity)
+                .id(url)
             }
             LinearGradient(
                 colors: [theme.colors.background.opacity(0.3), theme.colors.accent.opacity(0.1), theme.colors.background.opacity(0.9)],

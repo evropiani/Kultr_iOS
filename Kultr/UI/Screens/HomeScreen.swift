@@ -151,7 +151,9 @@ private struct HomeShelf: View {
         let graph = AppGraph.shared
         let playing = graph.player.state.current?.id
         let downloaded = graph.offline.downloadedIds
-        Group {
+        // A stack, not a Group: a Group with nothing in it yet is no view at
+        // all, and its .task would never run to fill it.
+        VStack(alignment: .leading, spacing: 0) {
             switch tile.kind {
             case .songs:
                 if !songs.isEmpty {

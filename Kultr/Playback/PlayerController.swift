@@ -170,7 +170,9 @@ final class PlayerController: EngineHost {
     // --------------------------------------------------------- restore --
 
     private func restore() {
-        guard graph.settings.current.resumeOnStart else { return }
+        // Without a client (the saved password could not be read) the decks
+        // could not load it, and would only report an error.
+        guard graph.settings.current.resumeOnStart, graph.auth.client != nil else { return }
         _ = loadSavedSession()
     }
 
