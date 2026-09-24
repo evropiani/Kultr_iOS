@@ -10,6 +10,11 @@ and Control Center controls, AirPlay, and downloads for offline listening.
 
 ## Features
 
+- **Liquid glass.** On iOS 26 the tab bar is the system's own liquid glass
+  bar, with the lens that follows your finger, a round search button, and
+  the mini player riding on it; on iOS 17 and 18 Kultr draws a floating
+  glass bar that behaves the same way. Every tab keeps its own pages with
+  iOS's navigation bar, and Settings is a list of native pages.
 - **Library mirror.** The whole library is synced into a local database, so
   browsing and search are instant and work offline. Later syncs fetch only
   what changed. They run when Kultr starts, and in the background whenever
@@ -26,8 +31,13 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   phone. Downloaded tracks play before the network is tried, and a stream
   cache keeps recent tracks too.
 - **AirPlay** to a HomePod, Apple TV or any AirPlay speaker from the player.
-- **Drag and drop** tracks, albums, artists and playlists onto Play next, Add to
-  queue, Favourite, Sync offline or Delete downloads.
+- **Long-press menus and swipes.** Long-press a track, album, artist or
+  playlist to play it next, queue it, favourite, download or remove it;
+  swipe a track to play it next or add it to the queue.
+- **Listening on your server.** Every play is sent to Navidrome with the time
+  it happened (offline plays go later, exactly once), and plays from your
+  other devices come back, so "played recently" and "played the most" are the
+  same everywhere.
 - **Several servers.** Sign in to more than one server and switch between them.
   Each has its own library, downloads and history. Passwords are kept in the
   iOS Keychain.
@@ -84,8 +94,8 @@ zip -qry Kultr.ipa Payload
 
 ### Releasing
 
-Bump `MARKETING_VERSION` in `Kultr.xcodeproj/project.pbxproj` and push to
-`main`. The **iOS** workflow runs the core tests, builds the IPA and publishes
+Bump `MARKETING_VERSION` in `Kultr.xcodeproj/project.pbxproj`, add notes as
+`.github/release-notes/v<version>.md`, and push to `main`. The **iOS** workflow runs the core tests, builds the IPA and publishes
 it as the GitHub release `v<version>`, creating the release if it doesn't
 exist yet or replacing its IPA if it does. The build number is the workflow's
 run number.

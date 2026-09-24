@@ -145,10 +145,21 @@ jobs:
         run: |
           VERSION=$(grep -m1 "MARKETING_VERSION" Kultr.xcodeproj/project.pbxproj | sed -E 's/.*= ([^;]+);/\1/')
           TAG="v${VERSION}"
-          NOTES="Kultr for iOS ${VERSION} (build ${{ github.run_number }}, commit ${GITHUB_SHA::7}). Unsigned IPA: install it with Sideloadly or AltStore, following docs/INSTALL.md in the repository."
+          NOTES_FILE=".github/release-notes/v${VERSION}.md"
+          if [ ! -f "$NOTES_FILE" ]; then
+            NOTES_FILE=$(mktemp)
+            printf '%s\n' \
+              "Kultr for iOS ${VERSION}." \
+              "" \
+              "## Install" \
+              "" \
+              "Download **Kultr.ipa** below and install it with Sideloadly (Windows, Mac), AltStore (Windows, Mac) or Impactor (Linux). New to this? Follow the step-by-step guide: https://github.com/${GITHUB_REPOSITORY}/blob/main/docs/INSTALL.md" \
+              > "$NOTES_FILE"
+          fi
+          printf '\n_Build %s, commit %s._\n' "${{ github.run_number }}" "${GITHUB_SHA::7}" >> "$NOTES_FILE"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" out/Kultr.ipa --clobber
-            gh release edit "$TAG" --notes "$NOTES"
+            gh release edit "$TAG" --notes-file "$NOTES_FILE"
           else
-            gh release create "$TAG" out/Kultr.ipa --title "Kultr for iOS ${VERSION}" --notes "$NOTES" --target "$GITHUB_SHA"
+            gh release create "$TAG" out/Kultr.ipa --title "Kultr for iOS ${VERSION}" --notes-file "$NOTES_FILE" --target "$GITHUB_SHA"
           fi
