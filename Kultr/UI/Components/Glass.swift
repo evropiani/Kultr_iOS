@@ -16,21 +16,32 @@ private struct GlassSurface<S: InsettableShape>: ViewModifier {
         if #available(iOS 26.0, *) {
             content.glassEffect(glass, in: shape)
         } else {
+            // As close to liquid glass as a material gets: a thin, see-through
+            // frost so the colours behind show, a bright rim where light
+            // catches the edge, and a soft shadow.
             let dark = theme.colors.dark
             content
-                .background(dark ? Material.ultraThinMaterial : Material.regularMaterial, in: shape)
-                .background(shape.fill((tint ?? theme.colors.accent).opacity(tint == nil ? 0.05 : 0.18)))
+                .background(
+                    LinearGradient(
+                        colors: [.white.opacity(dark ? 0.10 : 0.45), .white.opacity(dark ? 0.02 : 0.15)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    in: shape
+                )
+                .background(tint.map { $0.opacity(0.18) } ?? .clear, in: shape)
+                .background(Material.ultraThinMaterial, in: shape)
                 .overlay(
                     shape.strokeBorder(
                         LinearGradient(
-                            colors: [.white.opacity(dark ? 0.28 : 0.7), .white.opacity(dark ? 0.06 : 0.25)],
+                            colors: [.white.opacity(dark ? 0.45 : 0.95), .white.opacity(dark ? 0.08 : 0.3), .white.opacity(dark ? 0.2 : 0.6)],
                             startPoint: .top,
                             endPoint: .bottom
                         ),
-                        lineWidth: 0.75
+                        lineWidth: 1
                     )
                 )
-                .shadow(color: .black.opacity(shadow ? (dark ? 0.35 : 0.14) : 0), radius: 18, y: 8)
+                .shadow(color: .black.opacity(shadow ? (dark ? 0.3 : 0.1) : 0), radius: 14, y: 6)
         }
     }
 

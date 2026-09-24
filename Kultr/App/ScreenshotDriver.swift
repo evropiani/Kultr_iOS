@@ -15,6 +15,8 @@ enum ScreenshotDriver {
         let screen = env["KULTR_SCREEN"] ?? "home"
         Task { @MainActor in
             let graph = AppGraph.shared
+            let look: ThemeMode = env["KULTR_LOOK"] == "light" ? .light : .dark
+            if graph.settings.settings.theme != look { graph.settings.update { $0.theme = look } }
             if screen == "login" {
                 // The very first launch: nothing signed in yet.
                 try? await Task.sleep(nanoseconds: 2_500_000_000)
