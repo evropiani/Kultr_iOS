@@ -67,7 +67,9 @@ struct NowPlayingScreen: View {
                 .scrollDisabled(pulling)
                 .onPreferenceChange(TopOffsetKey.self) { topOffset = $0 }
                 .simultaneousGesture(
-                    DragGesture(minimumDistance: 15)
+                    // Measured against the screen: measured inside the player, the
+                    // player's own movement fed back into the pull and it shook.
+                    DragGesture(minimumDistance: 15, coordinateSpace: .global)
                         .onChanged { value in
                             if !pulling {
                                 // Only a downward pull that starts with the list at its top.
