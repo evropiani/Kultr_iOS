@@ -209,6 +209,19 @@ final class AuthRepository {
         if !enabled && active?.id == id { signOut() }
     }
 
+    /** Give a server a new name; an empty name goes back to its address. */
+    func rename(_ id: String, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        saveProfiles(profiles.map { profile in
+            var copy = profile
+            if copy.id == id { copy.label = trimmed.isEmpty ? hostLabel(copy.serverUrl) : trimmed }
+            return copy
+        })
+        if let current = active, current.id == id, let updated = profiles.first(where: { $0.id == id }) {
+            active = updated
+        }
+    }
+
     /** Forget a server entirely. Returns the removed profile so its data can be wiped. */
     @discardableResult
     func remove(_ id: String) -> ServerProfile? {

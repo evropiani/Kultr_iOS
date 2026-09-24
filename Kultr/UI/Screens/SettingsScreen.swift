@@ -73,7 +73,10 @@ struct SettingsScreen: View {
             }
             Section {
                 link("Offline and cache", "arrow.down.circle.fill", .green) { OfflineSettings() }
-                link("Servers", "server.rack", .indigo) { ServerSettings() }
+                // Signed in, the server card at the top already opens Servers.
+                if auth.active == nil {
+                    link("Servers", "server.rack", .indigo) { ServerSettings() }
+                }
                 link("Backup and reset", "externaldrive.fill", .gray) { BackupSettings() }
             }
             Section {
@@ -717,6 +720,8 @@ private struct OfflineSettings: View {
 private struct ServerSettings: View {
     @Environment(\.kultr) private var theme
     @State private var forget: ServerProfile?
+    @State private var renaming: ServerProfile?
+    @State private var newName = ""
 
     var body: some View {
         let graph = AppGraph.shared
@@ -755,13 +760,16 @@ private struct ServerSettings: View {
                     .opacity(profile.enabled ? 1 : 0.55)
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) { forget = profile } label: { Label("Forget", systemImage: "trash") }
+                        Button { rename(profile) } label: { Label("Rename", systemImage: "pencil") }
+                            .tint(.orange)
                     }
                     .contextMenu {
+                        Button { rename(profile) } label: { Label("Rename", systemImage: "pencil") }
                         Button(role: .destructive) { forget = profile } label: { Label("Forget \(profile.label)", systemImage: "trash") }
                     }
                 }
             } footer: {
-                Text("Swipe a server to forget it. A server that is switched off keeps its password and library but cannot be connected to.")
+                Text("Swipe a server or touch and hold it to rename or forget it. A server that is switched off keeps its password and library but cannot be connected to.")
             }
             Section {
                 Button { graph.ui.login = LoginRequest() } label: { Label("Add a server", systemImage: "plus") }
@@ -779,6 +787,17 @@ private struct ServerSettings: View {
         .navigationBarTitleDisplayMode(.inline)
         .settingsPage()
         .alert(
+            "Rename server",
+            isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } }),
+            presenting: renaming
+        ) { profile in
+            TextField(hostLabel(profile.serverUrl), text: $newName)
+            Button("Cancel", role: .cancel) {}
+            Button("Rename") { auth.rename(profile.id, to: newName) }
+        } message: { profile in
+            Text("A name for \(hostLabel(profile.serverUrl)). Leave it empty to use the address.")
+        }
+        .alert(
             "Forget \(forget?.label ?? "")?",
             isPresented: Binding(get: { forget != nil }, set: { if !$0 { forget = nil } }),
             presenting: forget
@@ -792,6 +811,13 @@ private struct ServerSettings: View {
         } message: { _ in
             Text("Its saved password, synced library, downloads and listening history on this phone are deleted. Nothing changes on the server.")
         }
+    }
+}
+
+extension ServerSettings {
+    fileprivate func rename(_ profile: ServerProfile) {
+        newName = profile.label
+        renaming = profile
     }
 }
 
