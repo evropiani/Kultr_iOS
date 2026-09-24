@@ -34,6 +34,7 @@ struct LoginScreen: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 96, height: 96)
+                        .shadow(color: .black.opacity(0.35), radius: 16, y: 8)
                     Text("Kultr")
                         .font(KFont.headlineLarge)
                         .foregroundStyle(c.ink)
@@ -72,14 +73,18 @@ struct LoginScreen: View {
                             if let error {
                                 Text(error).font(KFont.bodyMedium).foregroundStyle(c.danger)
                             }
-                            HStack(spacing: 8) {
-                                Pill(
-                                    busy ? "Connecting…" : "Connect",
-                                    accent: true,
+                            HStack(spacing: 10) {
+                                if let onCancel {
+                                    WideGlassButton(title: "Cancel", icon: "xmark", prominent: false, action: onCancel)
+                                }
+                                WideGlassButton(
+                                    title: busy ? "Connecting…" : "Connect",
+                                    icon: busy ? "hourglass" : "arrow.right.circle.fill",
+                                    prominent: true,
                                     enabled: !busy && !url.trimmingCharacters(in: .whitespaces).isEmpty && !user.trimmingCharacters(in: .whitespaces).isEmpty
                                 ) { submit() }
-                                if let onCancel { Pill("Cancel", action: onCancel) }
                             }
+                            .padding(.top, 4)
                         }
                     }
                     .frame(maxWidth: 480)

@@ -51,8 +51,8 @@ struct DetailHeader<Subtitle: View>: View {
             if play != nil || shuffle != nil {
                 GlassGroup(spacing: 12) {
                     HStack(spacing: 12) {
-                        if let play { WideButton(title: "Play", icon: "play.fill", prominent: true, action: play) }
-                        if let shuffle { WideButton(title: "Shuffle", icon: "shuffle", prominent: false, action: shuffle) }
+                        if let play { WideGlassButton(title: "Play", icon: "play.fill", prominent: true, action: play) }
+                        if let shuffle { WideGlassButton(title: "Shuffle", icon: "shuffle", prominent: false, action: shuffle) }
                     }
                 }
                 .padding(.top, 18)
@@ -61,40 +61,6 @@ struct DetailHeader<Subtitle: View>: View {
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 20)
         .padding(.bottom, 12)
-    }
-}
-
-/** Play / Shuffle: half the width each, glass on iOS 26. */
-private struct WideButton: View {
-    @Environment(\.kultr) private var theme
-    let title: String
-    let icon: String
-    let prominent: Bool
-    let action: () -> Void
-
-    var body: some View {
-        let c = theme.colors
-        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
-        Button {
-            Haptics.tap()
-            action()
-        } label: {
-            Label(title, systemImage: icon)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(prominent ? c.onAccent : c.accent)
-                .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .contentShape(shape)
-        }
-        .buttonStyle(PressScaleStyle())
-        .background(shape.fill(prominent && !Self.glassTints ? c.accent : .clear))
-        .kultrGlass(shape, tint: prominent ? c.accent : nil, interactive: true, shadow: false)
-    }
-
-    /** On iOS 26 the glass itself carries the accent; before, the button is filled with it. */
-    private static var glassTints: Bool {
-        if #available(iOS 26.0, *) { return true }
-        return false
     }
 }
 

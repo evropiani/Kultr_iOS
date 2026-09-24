@@ -53,45 +53,55 @@ jobs:
       - name: Screenshots in the simulator
         if: github.ref != 'refs/heads/main'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
           set -x
           mkdir -p shots
-          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          xcrun simctl list runtimes > shots/runtimes.txt || true
+          curl -sS -m 20 "https://demo.navidrome.org/rest/ping?u=demo&p=demo&v=1.16.1&c=kultr-ci&f=json" > shots/ping.txt 2>&1 || true
+          # An iPhone Pro on the newest runtime whose name contains $1.
+          pick() {
+            xcrun simctl list devices available -j | python3 -c "
           import json, sys
           devices = json.load(sys.stdin)['devices']
-          runtimes = sorted((k for k in devices if 'iOS' in k), reverse=True)
+          runtimes = sorted((k for k in devices if 'iOS-' + sys.argv[1] in k), reverse=True)
           for runtime in runtimes:
               phones = [d for d in devices[runtime] if d['name'].startswith('iPhone') and 'Pro' in d['name'] and 'Max' not in d['name']]
               if phones:
                   print(phones[0]['udid']); break
-          ")
-          test -n "$UDID"
-          echo "$UDID" > shots/udid.txt
-          xcrun simctl boot "$UDID" || true
-          xcrun simctl bootstatus "$UDID" -b
-          xcrun simctl ui "$UDID" appearance dark || true
-          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
-          xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/Kultr.app
-          xcrun simctl list devices | grep "$UDID" > shots/device.txt || true
-          xcrun simctl list runtimes > shots/runtimes.txt || true
-          curl -sS -m 20 "https://demo.navidrome.org/rest/ping?u=demo&p=demo&v=1.16.1&c=kultr-ci&f=json" > shots/ping.txt 2>&1 || true
-          for screen in login home library songs album artist mini player search settings stats sync; do
-            xcrun simctl terminate "$UDID" app.kultr.ios || true
-            # Home is the first screen that signs in and syncs the demo library, so it gets longer.
-            if [ "$screen" = "home" ]; then wait=300; else wait=60; fi
-            DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data 2>/dev/null || true)
-            [ -n "$DATA" ] && rm -f "$DATA/Documents/kultr-ready-$screen"
-            SIMCTL_CHILD_KULTR_DEMO_SERVER=https://demo.navidrome.org SIMCTL_CHILD_KULTR_SCREEN=$screen xcrun simctl launch "$UDID" app.kultr.ios
-            DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data)
-            for i in $(seq 1 $wait); do
-              [ -f "$DATA/Documents/kultr-ready-$screen" ] && break
-              sleep 1
+          " "$1"
+          }
+          # shoot <runtime> <prefix> <screens...>
+          shoot() {
+            local runtime=$1 prefix=$2; shift 2
+            local UDID; UDID=$(pick "$runtime")
+            [ -n "$UDID" ] || { echo "no iOS $runtime iPhone" > "shots/${prefix}missing.txt"; return 0; }
+            xcrun simctl boot "$UDID" || true
+            xcrun simctl bootstatus "$UDID" -b
+            xcrun simctl ui "$UDID" appearance dark || true
+            xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
+            xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/Kultr.app
+            xcrun simctl list devices | grep "$UDID" > "shots/${prefix}device.txt" || true
+            for screen in "$@"; do
+              # Home is the first screen that signs in and syncs the demo library, so it gets longer.
+              if [ "$screen" = "home" ]; then wait=300; else wait=60; fi
+              xcrun simctl terminate "$UDID" app.kultr.ios || true
+              DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data 2>/dev/null || true)
+              [ -n "$DATA" ] && rm -f "$DATA/Documents/kultr-ready-$screen"
+              SIMCTL_CHILD_KULTR_DEMO_SERVER=https://demo.navidrome.org SIMCTL_CHILD_KULTR_SCREEN=$screen xcrun simctl launch "$UDID" app.kultr.ios
+              DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data)
+              for i in $(seq 1 $wait); do
+                [ -f "$DATA/Documents/kultr-ready-$screen" ] && break
+                sleep 1
+              done
+              cat "$DATA/Documents/kultr-ready-$screen" > "shots/$prefix$screen.txt" 2>/dev/null || echo "timed out" > "shots/$prefix$screen.txt"
+              xcrun simctl io "$UDID" screenshot "shots/$prefix$screen.png" || true
             done
-            cat "$DATA/Documents/kultr-ready-$screen" > "shots/$screen.txt" 2>/dev/null || echo "timed out" > "shots/$screen.txt"
-            xcrun simctl io "$UDID" screenshot "shots/$screen.png" || true
-          done
-          xcrun simctl spawn "$UDID" log show --last 15m --style compact --predicate 'process == "Kultr"' > shots/log.txt 2>&1 || true
+            xcrun simctl spawn "$UDID" log show --last 20m --style compact --predicate 'process == "Kultr"' > "shots/${prefix}log.txt" 2>&1 || true
+            xcrun simctl shutdown "$UDID" || true
+          }
+          shoot 26 "" login home library songs album artist mini player search settings stats sync
+          shoot 18 "ios18-" home mini library album player search
 
       - name: Publish screenshots
         if: always() && github.ref != 'refs/heads/main'
