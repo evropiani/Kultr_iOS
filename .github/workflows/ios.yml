@@ -53,11 +53,10 @@ jobs:
       - name: Screenshots in the simulator
         if: github.ref != 'refs/heads/main'
         continue-on-error: true
-        timeout-minutes: 15
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        timeout-minutes: 20
         run: |
           set -x
+          mkdir -p shots
           UDID=$(xcrun simctl list devices available -j | python3 -c "
           import json, sys
           devices = json.load(sys.stdin)['devices']
@@ -68,26 +67,39 @@ jobs:
                   print(phones[0]['udid']); break
           ")
           test -n "$UDID"
+          echo "$UDID" > shots/udid.txt
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl ui "$UDID" appearance dark || true
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
           xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/Kultr.app
-          mkdir -p shots
           xcrun simctl list devices | grep "$UDID" > shots/device.txt || true
+          curl -sS -m 20 "https://demo.navidrome.org/rest/ping?u=demo&p=demo&v=1.16.1&c=kultr-ci&f=json" > shots/ping.txt 2>&1 || true
+          # The first screen signs in and syncs the demo library, so it gets longer.
+          wait=240
           for screen in home library songs album artist mini player search settings stats; do
             xcrun simctl terminate "$UDID" app.kultr.ios || true
             DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data 2>/dev/null || true)
             [ -n "$DATA" ] && rm -f "$DATA/Documents/kultr-ready-$screen"
             SIMCTL_CHILD_KULTR_DEMO_SERVER=https://demo.navidrome.org SIMCTL_CHILD_KULTR_SCREEN=$screen xcrun simctl launch "$UDID" app.kultr.ios
             DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data)
-            for i in $(seq 1 150); do
+            for i in $(seq 1 $wait); do
               [ -f "$DATA/Documents/kultr-ready-$screen" ] && break
-              sleep 2
+              sleep 1
             done
             cat "$DATA/Documents/kultr-ready-$screen" > "shots/$screen.txt" 2>/dev/null || echo "timed out" > "shots/$screen.txt"
-            xcrun simctl io "$UDID" screenshot "shots/$screen.png"
+            xcrun simctl io "$UDID" screenshot "shots/$screen.png" || true
+            wait=45
           done
+          xcrun simctl spawn "$UDID" log show --last 15m --style compact --predicate 'process == "Kultr"' > shots/log.txt 2>&1 || true
+
+      - name: Publish screenshots
+        if: always() && github.ref != 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ -d shots ] || exit 0
           cd shots
           git init -q
           git checkout -q -b ci-screenshots
