@@ -41,6 +41,26 @@ private struct GlassSurface<S: InsettableShape>: ViewModifier {
                         lineWidth: 1
                     )
                 )
+                // The thickness: light gathers in the rounded edge all the way round,
+                // brightest along the top, like a slab of glass lying on the screen.
+                .overlay(
+                    shape
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [.white.opacity(dark ? 0.35 : 0.9), .white.opacity(dark ? 0.1 : 0.35), .white.opacity(dark ? 0.22 : 0.6)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 5
+                        )
+                        .blur(radius: 4)
+                        .clipShape(shape)
+                        .allowsHitTesting(false)
+                )
+                .overlay(
+                    // A faint dark line outside the rim, so the edge reads against light content too.
+                    shape.stroke(.black.opacity(dark ? 0.35 : 0.08), lineWidth: 0.5).allowsHitTesting(false)
+                )
                 .shadow(color: .black.opacity(shadow ? (dark ? 0.3 : 0.1) : 0), radius: 14, y: 6)
         }
     }
