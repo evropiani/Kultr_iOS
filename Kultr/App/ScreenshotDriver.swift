@@ -15,6 +15,12 @@ enum ScreenshotDriver {
         let screen = env["KULTR_SCREEN"] ?? "home"
         Task { @MainActor in
             let graph = AppGraph.shared
+            if screen == "login" {
+                // The very first launch: nothing signed in yet.
+                try? await Task.sleep(nanoseconds: 2_500_000_000)
+                mark(screen, "ok")
+                return
+            }
             if graph.auth.client == nil {
                 let input = AuthRepository.LoginInput(
                     serverUrl: server,

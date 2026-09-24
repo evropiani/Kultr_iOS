@@ -78,7 +78,7 @@ jobs:
           curl -sS -m 20 "https://demo.navidrome.org/rest/ping?u=demo&p=demo&v=1.16.1&c=kultr-ci&f=json" > shots/ping.txt 2>&1 || true
           # The first screen signs in and syncs the demo library, so it gets longer.
           wait=240
-          for screen in home library songs album artist mini player search settings stats sync; do
+          for screen in login home library songs album artist mini player search settings stats sync; do
             xcrun simctl terminate "$UDID" app.kultr.ios || true
             DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data 2>/dev/null || true)
             [ -n "$DATA" ] && rm -f "$DATA/Documents/kultr-ready-$screen"
