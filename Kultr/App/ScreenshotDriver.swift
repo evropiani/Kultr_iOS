@@ -52,6 +52,10 @@ enum ScreenshotDriver {
             actions.selectTab(.home)
             actions.openLibrary(.songs)
         case "search": actions.selectTab(.search)
+        case "found":
+            // Search with something typed: the field in the bar, results above it.
+            actions.selectTab(.search)
+            graph.ui.searchQuery = "love"
         case "settings": actions.selectTab(.settings)
         case "stats": actions.navigate(.stats)
         case "sync": actions.navigate(.sync)

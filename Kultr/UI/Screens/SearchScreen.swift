@@ -3,7 +3,6 @@ import SwiftUI
 struct SearchScreen: View {
     @Environment(\.kultr) private var theme
     @State private var counts = LibraryCounts()
-    @State private var query = ""
     @State private var serverSearch = false
     @State private var results = SearchResults()
     @State private var loading = false
@@ -14,7 +13,8 @@ struct SearchScreen: View {
         let graph = AppGraph.shared
         let c = theme.colors
         let useServer = serverSearch || counts.songs == 0
-        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        // The field itself lives in the tab bar (see Chrome), where it expands out of the search button.
+        let trimmed = graph.ui.searchQuery.trimmingCharacters(in: .whitespaces)
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text(counts.songs == 0 ? "Searching your server (the library is not synced yet)" : "Search on the server instead")
@@ -58,9 +58,6 @@ struct SearchScreen: View {
             .scrollDismissesKeyboard(.immediately)
         }
         .navigationTitle("Search")
-        .searchable(text: $query, prompt: "Artists, albums, tracks")
-        .autocorrectionDisabled()
-        .textInputAutocapitalization(.never)
         .kultrScreen()
         .task(id: graph.library.version) { counts = await graph.library.counts() }
         .task(id: "\(trimmed)|\(useServer)") {

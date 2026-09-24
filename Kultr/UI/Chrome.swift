@@ -76,20 +76,38 @@ struct MainUI: View {
 @available(iOS 26.0, *)
 private struct SystemTabs: View {
     @Environment(\.kultr) private var theme
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         let graph = AppGraph.shared
-        let ui = graph.ui
+        @Bindable var ui = graph.ui
         let selection = Binding<MainTab>(get: { ui.tab }, set: { graph.actions.selectTab($0) })
         TabView(selection: selection) {
             Tab(MainTab.home.label, systemImage: MainTab.home.icon, value: MainTab.home) { TabStack(tab: .home) }
             Tab(MainTab.library.label, systemImage: MainTab.library.icon, value: MainTab.library) { TabStack(tab: .library) }
             Tab(MainTab.settings.label, systemImage: MainTab.settings.icon, value: MainTab.settings) { TabStack(tab: .settings) }
-            Tab(MainTab.search.label, systemImage: MainTab.search.icon, value: MainTab.search, role: .search) { TabStack(tab: .search) }
+            Tab(MainTab.search.label, systemImage: MainTab.search.icon, value: MainTab.search, role: .search) {
+                // On the tab's stack rather than inside it: then the field lives in the
+                // tab bar, growing out of the search button while the other tabs fold
+                // into one, and rides up above the keyboard while you type.
+                TabStack(tab: .search)
+                    .searchable(text: $ui.searchQuery, prompt: "Artists, albums, tracks")
+                    .searchFocused($searchFocused)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+            }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .modifier(PlayerAccessory(enabled: graph.player.state.current != nil))
         .tint(theme.colors.accent)
+        .onChange(of: ui.tab) { _, tab in
+            // Choosing Search goes straight to typing, unless there is a search to come back to.
+            guard tab == .search, ui.searchQuery.isEmpty else { return }
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 350_000_000)
+                if AppGraph.shared.ui.tab == .search { searchFocused = true }
+            }
+        }
     }
 }
 
@@ -135,7 +153,9 @@ private struct FloatingTabs: View {
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if !keyboardOpen { FloatingChrome() }
+            // While typing in search, the bar stays and rides up above the keyboard;
+            // any other keyboard gets the screen to itself.
+            if !keyboardOpen || ui.tab == .search { FloatingChrome(typing: keyboardOpen) }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in keyboardOpen = true }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in keyboardOpen = false }
@@ -144,26 +164,118 @@ private struct FloatingTabs: View {
 
 private struct FloatingChrome: View {
     @Environment(\.kultr) private var theme
+    var typing = false
+    @Namespace private var glass
 
     var body: some View {
         let graph = AppGraph.shared
+        let ui = graph.ui
         let playing = graph.player.state.current != nil
+        let searching = ui.tab == .search
         VStack(spacing: 8) {
-            if !graph.ui.onDownloadsPage { DownloadIndicator(floating: true) }
-            if playing {
-                MiniPlayerContent(compact: false)
-                    .frame(height: 56)
-                    .kultrGlass(Capsule(), interactive: true)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            if !typing {
+                if !ui.onDownloadsPage { DownloadIndicator(floating: true) }
+                if playing {
+                    MiniPlayerContent(compact: false)
+                        .frame(height: 56)
+                        .kultrGlass(Capsule(), interactive: true)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
             HStack(spacing: 10) {
-                LensTabBar()
-                SearchOrb()
+                if searching {
+                    // The tabs fold into one round button that goes back where you came from...
+                    CollapsedTabs(tab: ui.previousTab)
+                        .matchedGeometryEffect(id: "tabs", in: glass)
+                        .transition(.opacity)
+                    // ...and the search button grows to the left into the field.
+                    SearchBar()
+                        .matchedGeometryEffect(id: "search", in: glass)
+                        .transition(.opacity)
+                } else {
+                    LensTabBar()
+                        .matchedGeometryEffect(id: "tabs", in: glass)
+                        .transition(.opacity)
+                    SearchOrb()
+                        .matchedGeometryEffect(id: "search", in: glass)
+                        .transition(.opacity)
+                }
             }
         }
         .padding(.horizontal, 14)
-        .padding(.bottom, 2)
+        .padding(.bottom, typing ? 8 : 2)
         .animation(theme.spring, value: playing)
+        .animation(theme.spring, value: searching)
+        .animation(theme.spring, value: typing)
+    }
+}
+
+/** The tab bar folded into a single round button while searching: back to the tab you were on. */
+private struct CollapsedTabs: View {
+    @Environment(\.kultr) private var theme
+    let tab: MainTab
+
+    var body: some View {
+        Button {
+            Haptics.select()
+            withAnimation(theme.spring) { AppGraph.shared.actions.selectTab(tab) }
+        } label: {
+            Image(systemName: tab.icon)
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundStyle(theme.colors.ink)
+                .frame(width: 58, height: 58)
+                .contentShape(Circle())
+        }
+        .buttonStyle(PressScaleStyle())
+        .kultrGlass(Circle())
+        .accessibilityLabel("Back to \(tab.label)")
+    }
+}
+
+/** The search field the search button becomes: in the bar, within reach of your thumb. */
+private struct SearchBar: View {
+    @Environment(\.kultr) private var theme
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        @Bindable var ui = AppGraph.shared.ui
+        let c = theme.colors
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(c.ink2)
+            TextField("", text: $ui.searchQuery, prompt: Text("Artists, albums, tracks").foregroundStyle(c.ink3))
+                .focused($focused)
+                .foregroundStyle(c.ink)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .submitLabel(.search)
+                .onSubmit { focused = false }
+            if !ui.searchQuery.isEmpty {
+                Button {
+                    ui.searchQuery = ""
+                    focused = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(c.ink3)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear")
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .padding(.horizontal, 18)
+        .frame(height: 58)
+        .frame(maxWidth: .infinity)
+        .contentShape(Capsule())
+        .onTapGesture { focused = true }
+        .kultrGlass(Capsule())
+        .animation(theme.ease, value: ui.searchQuery.isEmpty)
+        .task {
+            // Choosing Search goes straight to typing, unless there is a search to come back to.
+            guard ui.searchQuery.isEmpty else { return }
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            focused = true
+        }
     }
 }
 

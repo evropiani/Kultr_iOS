@@ -76,6 +76,10 @@ final class AppUI {
     /** Each tab keeps its own stack of pages, like any iOS app. */
     var paths: [MainTab: [Route]] = [:]
     var playerOpen = false
+    /** What is typed in the search field, kept while you look at other tabs. */
+    var searchQuery = ""
+    /** The tab you came to search from; the collapsed tab bar goes back to it. */
+    var previousTab: MainTab = .home
     var login: LoginRequest?
     var addToPlaylist: [Song]?
     var rate: Song?
@@ -143,6 +147,7 @@ final class AppActions {
         if ui.tab == tab {
             ui.setPath([], for: tab)
         } else {
+            if tab == .search { ui.previousTab = ui.tab }
             ui.tab = tab
         }
     }
