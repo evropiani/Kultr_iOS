@@ -204,9 +204,9 @@ private struct AppearanceSettings: View {
         Form {
             Section {
                 Picker("Theme", selection: setting({ $0.theme }, { $0.theme = $1 })) {
-                    Text("Dark").tag(ThemeMode.dark)
-                    Text("Light").tag(ThemeMode.light)
                     Text("System").tag(ThemeMode.system)
+                    Text("Light").tag(ThemeMode.light)
+                    Text("Dark").tag(ThemeMode.dark)
                 }
                 .pickerStyle(.segmented)
                 .listRowBackground(Color.clear)

@@ -95,7 +95,7 @@ let EQ_PRESETS: [String: [Double]] = Dictionary(uniqueKeysWithValues: EQ_PRESET_
  */
 struct Settings: Codable, Hashable {
     // ---- appearance
-    var theme: ThemeMode = .dark
+    var theme: ThemeMode = .system
     var accentMode: AccentMode = .artwork
     var accent: String = "#7c8cff"
     /** How strongly `accent` is mixed into the colour taken from the artwork, 0–100. */

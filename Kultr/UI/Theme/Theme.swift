@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 extension Color {
     /** An opaque colour from packed 0xRRGGBB (or 0xAARRGGBB, alpha ignored). */
@@ -40,7 +41,10 @@ struct KultrColors: Equatable {
     var accentSoft: Color { accent.opacity(0.18) }
     var accentGlow: Color { accent.opacity(0.35) }
 
-    static func make(dark: Bool, accent argb: UInt32, settings: Settings) -> KultrColors {
+    static func make(dark: Bool, accent picked: UInt32, settings: Settings) -> KultrColors {
+        // A pale colour from the artwork washes out on the light background, so
+        // in light mode it is darkened just enough to stay readable.
+        let argb = dark ? picked : readableOnLight(picked)
         let accent = Color(argb: argb)
         let scale = Double(min(200, max(0, settings.surfaceOpacity))) / 100
         let edgeBase: Color = settings.surfaceBorder == .accent ? accent : (dark ? .white : Color(argb: 0x0A0A10))
@@ -79,6 +83,35 @@ struct KultrColors: Equatable {
             edge: edgeBase.opacity(edgeAlpha),
             line: inkBase.opacity(0.08)
         )
+    }
+}
+
+extension KultrColors {
+    /**
+     * The colour darkened until its luminance is at most 0.22, so it reads as
+     * text on the light background. Hue stays, and pale colours gain a little
+     * saturation so they turn deeper rather than grey.
+     */
+    static func readableOnLight(_ argb: UInt32) -> UInt32 {
+        let target = 0.22
+        guard ArtworkColor.luminance(argb) > target else { return argb }
+        var h: CGFloat = 0, s: CGFloat = 0, v: CGFloat = 0, a: CGFloat = 0
+        UIColor(
+            red: CGFloat((argb >> 16) & 0xff) / 255,
+            green: CGFloat((argb >> 8) & 0xff) / 255,
+            blue: CGFloat(argb & 0xff) / 255,
+            alpha: 1
+        ).getHue(&h, saturation: &s, brightness: &v, alpha: &a)
+        if s > 0.05 { s = min(1, max(s, 0.45) * 1.1) }
+        var color = argb
+        while v > 0.3 {
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0
+            UIColor(hue: h, saturation: s, brightness: v, alpha: 1).getRed(&r, green: &g, blue: &b, alpha: &a)
+            color = (UInt32(r * 255) << 16) | (UInt32(g * 255) << 8) | UInt32(b * 255)
+            if ArtworkColor.luminance(color) <= target { break }
+            v -= 0.02
+        }
+        return color
     }
 }
 
