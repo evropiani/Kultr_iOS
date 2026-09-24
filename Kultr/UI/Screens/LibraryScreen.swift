@@ -8,73 +8,174 @@ private enum SongSort: String, CaseIterable {
     case title = "Title", artist = "Artist", album = "Album", added = "Recently added", plays = "Most played", rating = "Rating"
 }
 
+/** Where the Library pager is, for the tab strip's underline: 2.5 is halfway between the third and fourth tab. */
+@MainActor
+@Observable
+private final class PagerModel {
+    var progress: CGFloat = 0
+}
+
+private struct PagerOffsetKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+
+/**
+ * Albums, artists, songs, playlists, genres, favourites, downloads and radio
+ * as pages you swipe through. The underline follows your finger, and each
+ * page keeps its own filter.
+ */
 struct LibraryScreen: View {
     @Environment(\.kultr) private var theme
     let initialTab: LibraryTab
-    @State private var tab: LibraryTab?
-    @State private var query = ""
+    var isRoot = false
+    @State private var page: LibraryTab?
+    @State private var filters: [LibraryTab: String] = [:]
+    @State private var pager = PagerModel()
+
+    var body: some View {
+        let current = page ?? initialTab
+        let tabs = LibraryTab.allCases
+        VStack(spacing: 0) {
+            LibraryTabStrip(current: current, pager: pager) { tab in
+                withAnimation(theme.spring ?? .linear(duration: 0)) { page = tab }
+            }
+            if current != .favourites && current != .downloads {
+                FilterField(
+                    text: Binding(get: { filters[current] ?? "" }, set: { filters[current] = $0 }),
+                    placeholder: "Filter \(current.label.lowercased())"
+                )
+                .transition(.opacity)
+            }
+            GeometryReader { outer in
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: 0) {
+                        ForEach(tabs, id: \.self) { tab in
+                            pageView(tab)
+                                .frame(width: outer.size.width, height: outer.size.height, alignment: .top)
+                                .id(tab)
+                        }
+                    }
+                    .scrollTargetLayout()
+                    .background(
+                        GeometryReader { inner in
+                            Color.clear.preference(key: PagerOffsetKey.self, value: inner.frame(in: .named("pager")).minX)
+                        }
+                    )
+                }
+                .scrollIndicators(.hidden)
+                .scrollTargetBehavior(.paging)
+                .scrollPosition(id: $page)
+                .coordinateSpace(name: "pager")
+                .onPreferenceChange(PagerOffsetKey.self) { minX in
+                    let width = max(1, outer.size.width)
+                    pager.progress = min(CGFloat(tabs.count - 1), max(0, -minX / width))
+                }
+            }
+        }
+        .animation(theme.ease, value: current == .favourites || current == .downloads)
+        .navigationTitle("Library")
+        .navigationBarTitleDisplayMode(isRoot ? .large : .inline)
+        .kultrScreen()
+        .onAppear {
+            if page == nil {
+                page = initialTab
+                pager.progress = CGFloat(tabs.firstIndex(of: initialTab) ?? 0)
+            }
+        }
+        .onChange(of: page) { _, value in
+            if value != nil { Haptics.select() }
+        }
+    }
+
+    @ViewBuilder
+    private func pageView(_ tab: LibraryTab) -> some View {
+        let query = filters[tab] ?? ""
+        switch tab {
+        case .albums: AlbumsTab(query: query)
+        case .artists: ArtistsTab(query: query)
+        case .songs: SongsTab(query: query)
+        case .playlists: PlaylistsTab(query: query)
+        case .genres: GenresTab(query: query)
+        case .favourites: FavouritesTab()
+        case .downloads: OfflineContent()
+        case .radio: RadioTab(query: query)
+        }
+    }
+}
+
+private struct TabFramesKey: PreferenceKey {
+    static let defaultValue: [LibraryTab: CGRect] = [:]
+    static func reduce(value: inout [LibraryTab: CGRect], nextValue: () -> [LibraryTab: CGRect]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
+/** The page names, with an underline that slides between them as the pages move. */
+private struct LibraryTabStrip: View {
+    @Environment(\.kultr) private var theme
+    let current: LibraryTab
+    let pager: PagerModel
+    let onPick: (LibraryTab) -> Void
+    @State private var frames: [LibraryTab: CGRect] = [:]
 
     var body: some View {
         let c = theme.colors
-        let current = tab ?? initialTab
-        VStack(spacing: 0) {
-            Text("Library")
-                .font(KFont.headlineMedium)
-                .tracking(-0.3)
-                .foregroundStyle(c.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 4)
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 0) {
-                        ForEach(LibraryTab.allCases, id: \.self) { entry in
-                            let on = entry == current
-                            Button {
-                                tab = entry
-                                query = ""
-                            } label: {
-                                VStack(spacing: 8) {
-                                    Text(entry.label)
-                                        .font(KFont.titleSmall)
-                                        .foregroundStyle(on ? c.accent : c.ink2)
-                                    Capsule()
-                                        .fill(on ? c.accent : .clear)
-                                        .frame(height: 3)
-                                }
-                                .padding(.horizontal, 14)
-                                .padding(.top, 10)
+        let tabs = LibraryTab.allCases
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(tabs, id: \.self) { entry in
+                        let on = entry == current
+                        Button { onPick(entry) } label: {
+                            Text(entry.label)
+                                .font(.system(size: 15, weight: on ? .semibold : .medium))
+                                .foregroundStyle(on ? c.ink : c.ink3)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
                                 .fixedSize()
-                            }
-                            .buttonStyle(PressableStyle())
-                            .id(entry)
+                                .contentShape(Rectangle())
                         }
+                        .buttonStyle(PressScaleStyle())
+                        .background(
+                            GeometryReader { g in
+                                Color.clear.preference(key: TabFramesKey.self, value: [entry: g.frame(in: .named("strip"))])
+                            }
+                        )
+                        .id(entry)
+                        .accessibilityAddTraits(on ? .isSelected : [])
                     }
-                    .padding(.horizontal, 8)
                 }
-                .overlay(alignment: .bottom) { Rule() }
-                .onAppear { proxy.scrollTo(current, anchor: .center) }
+                .padding(.horizontal, 6)
+                .overlay(alignment: .topLeading) { underline(tabs) }
+                .coordinateSpace(name: "strip")
+                .onPreferenceChange(TabFramesKey.self) { frames = $0 }
             }
-            if current != .favourites && current != .downloads {
-                FilterField(text: $query, placeholder: "Filter \(current.label.lowercased())")
+            .onChange(of: current) { _, value in
+                withAnimation(theme.spring) { proxy.scrollTo(value, anchor: .center) }
             }
-            Group {
-                switch current {
-                case .albums: AlbumsTab(query: query)
-                case .artists: ArtistsTab(query: query)
-                case .songs: SongsTab(query: query)
-                case .playlists: PlaylistsTab(query: query)
-                case .genres: GenresTab(query: query)
-                case .favourites: FavouritesTab()
-                case .downloads: OfflineContent()
-                case .radio: RadioTab(query: query)
-                }
-            }
-            .frame(maxHeight: .infinity, alignment: .top)
+            .onAppear { proxy.scrollTo(current, anchor: .center) }
         }
-        .kultrScreen()
-        .onChange(of: initialTab) { _, value in tab = value }
+        .overlay(alignment: .bottom) { Rule().opacity(0.6) }
+    }
+
+    /** Between the tabs the pager is between, as far along as it is. */
+    private func underline(_ tabs: [LibraryTab]) -> some View {
+        let progress = pager.progress
+        let lower = min(tabs.count - 1, max(0, Int(progress.rounded(.down))))
+        let upper = min(tabs.count - 1, lower + 1)
+        let t = progress - CGFloat(lower)
+        let a = frames[tabs[lower]] ?? .zero
+        let b = frames[tabs[upper]] ?? a
+        let x = a.minX + (b.minX - a.minX) * t + 12
+        let width = max(0, a.width + (b.width - a.width) * t - 24)
+        let y = max(a.maxY, b.maxY) - 3
+        return Capsule()
+            .fill(theme.colors.accent)
+            .frame(width: width, height: 3)
+            .offset(x: x, y: y)
+            .opacity(frames.isEmpty ? 0 : 1)
+            .allowsHitTesting(false)
     }
 }
 
@@ -96,6 +197,7 @@ private struct SortMenu<Option: Hashable>: View {
         } label: {
             PillLabel(text: label(current), icon: "arrow.up.arrow.down")
         }
+        .menuOrder(.fixed)
     }
 }
 
@@ -115,8 +217,7 @@ struct PillLabel: View {
         .foregroundStyle(theme.colors.ink)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Capsule().fill(theme.colors.glass))
-        .overlay(Capsule().strokeBorder(theme.colors.edge, lineWidth: 1))
+        .kultrGlass(Capsule(), interactive: true, shadow: false)
     }
 }
 
@@ -242,25 +343,29 @@ private struct SongsTab: View {
                     EmptyLibrary()
                 } else {
                     VStack(spacing: 0) {
-                        if selection.active { SelectionBar(selection: selection, songs: shown) }
-                        ScrollView {
-                            LazyVStack(spacing: 0) {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 8) {
-                                        Pill("Play", icon: "play.fill", accent: true) { graph.actions.play(Array(shown.prefix(1000))) }
-                                        Pill("Shuffle", icon: "shuffle") { graph.actions.shuffle(Array(shown.shuffled().prefix(1000))) }
-                                        SortMenu(current: sort, options: SongSort.allCases, label: { $0.rawValue }) { sort = $0 }
-                                        Text(Format.count(shown.count, "track")).foregroundStyle(theme.colors.ink3)
-                                    }
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 4)
+                        SelectionBar(selection: selection, songs: shown)
+                        // A List recycles its rows, so ten thousand tracks scroll as smoothly as ten.
+                        List {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    Pill("Play", icon: "play.fill", accent: true) { graph.actions.play(Array(shown.prefix(1000))) }
+                                    Pill("Shuffle", icon: "shuffle") { graph.actions.shuffle(Array(shown.shuffled().prefix(1000))) }
+                                    SortMenu(current: sort, options: SongSort.allCases, label: { $0.rawValue }) { sort = $0 }
+                                    Text(Format.count(shown.count, "track")).font(KFont.bodySmall).foregroundStyle(theme.colors.ink3)
                                 }
-                                SongRows(songs: shown, selection: selection) { index in
-                                    graph.actions.playWindow(shown, index)
-                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 6)
                             }
-                            .padding(.bottom, 24)
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            SongRows(songs: shown, selection: selection) { index in
+                                graph.actions.playWindow(shown, index)
+                            }
                         }
+                        .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                        .environment(\.defaultMinListRowHeight, 1)
                     }
                 }
             } else {
@@ -268,31 +373,38 @@ private struct SongsTab: View {
             }
         }
         .task(id: graph.library.version) { songs = await graph.library.songs() }
-        .task(id: "\(songs?.count ?? -1):\(query):\(sort.rawValue):\(graph.library.version)") { refresh() }
+        .task(id: "\(songs?.count ?? -1):\(query):\(sort.rawValue):\(graph.library.version)") {
+            let all = songs ?? []
+            let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
+            let sort = self.sort
+            // Sorting a big library takes a moment; never on the main thread.
+            let result = await Task.detached(priority: .userInitiated) { Self.arrange(all, needle, sort) }.value
+            if !Task.isCancelled { shown = result }
+        }
     }
 
-    private func refresh() {
-        let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
-        let filtered = (songs ?? []).filter { matches(needle, $0.title, $0.artist, $0.album) }
+    nonisolated private static func arrange(_ songs: [Song], _ needle: String, _ sort: SongSort) -> [Song] {
+        let filtered = needle.isEmpty ? songs : songs.filter { matches(needle, $0.title, $0.artist, $0.album) }
         switch sort {
-        case .title: shown = filtered
+        case .title:
+            return filtered
         case .artist:
-            shown = filtered.sorted {
+            return filtered.sorted {
                 let a = Format.sortKey($0.artist), b = Format.sortKey($1.artist)
                 if a != b { return a < b }
                 if ($0.album ?? "") != ($1.album ?? "") { return ($0.album ?? "") < ($1.album ?? "") }
                 return ($0.track ?? 0) < ($1.track ?? 0)
             }
         case .album:
-            shown = filtered.sorted {
+            return filtered.sorted {
                 let a = Format.sortKey($0.album), b = Format.sortKey($1.album)
                 if a != b { return a < b }
                 if ($0.discNumber ?? 1) != ($1.discNumber ?? 1) { return ($0.discNumber ?? 1) < ($1.discNumber ?? 1) }
                 return ($0.track ?? 0) < ($1.track ?? 0)
             }
-        case .added: shown = filtered.sorted { ($0.created ?? "") > ($1.created ?? "") }
-        case .plays: shown = filtered.sorted { ($0.playCount ?? 0) > ($1.playCount ?? 0) }
-        case .rating: shown = filtered.sorted { ($0.userRating ?? 0) > ($1.userRating ?? 0) }
+        case .added: return filtered.sorted { ($0.created ?? "") > ($1.created ?? "") }
+        case .plays: return filtered.sorted { ($0.playCount ?? 0) > ($1.playCount ?? 0) }
+        case .rating: return filtered.sorted { ($0.userRating ?? 0) > ($1.userRating ?? 0) }
         }
     }
 }
@@ -425,7 +537,7 @@ private struct FavouritesTab: View {
                 EmptyState(icon: "heart", title: "No favourites yet", message: "Heart a track, album or artist and it shows up here.")
             } else {
                 VStack(spacing: 0) {
-                    if selection.active { SelectionBar(selection: selection, songs: songs) }
+                    SelectionBar(selection: selection, songs: songs)
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 0) {
                             let missing = graph.offline.missing(songs)

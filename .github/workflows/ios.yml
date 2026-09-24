@@ -2,7 +2,7 @@ name: iOS
 
 on:
   push:
-    branches: ["**"]
+    branches: ["**", "!ci-screenshots"]
     tags-ignore: ["**"]
   workflow_dispatch:
 
@@ -49,6 +49,51 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | tee build.log | grep -E "error:|warning: unre|BUILD (SUCCEEDED|FAILED)" || true
           grep -q "BUILD SUCCEEDED" build.log
+
+      - name: Screenshots in the simulator
+        if: github.ref != 'refs/heads/main'
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -x
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          runtimes = sorted((k for k in devices if 'iOS' in k), reverse=True)
+          for runtime in runtimes:
+              phones = [d for d in devices[runtime] if d['name'].startswith('iPhone') and 'Pro' in d['name'] and 'Max' not in d['name']]
+              if phones:
+                  print(phones[0]['udid']); break
+          ")
+          test -n "$UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl ui "$UDID" appearance dark || true
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
+          xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/Kultr.app
+          mkdir -p shots
+          xcrun simctl list devices | grep "$UDID" > shots/device.txt || true
+          for screen in home library songs album artist mini player search settings stats; do
+            xcrun simctl terminate "$UDID" app.kultr.ios || true
+            DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data 2>/dev/null || true)
+            [ -n "$DATA" ] && rm -f "$DATA/Documents/kultr-ready-$screen"
+            SIMCTL_CHILD_KULTR_DEMO_SERVER=https://demo.navidrome.org SIMCTL_CHILD_KULTR_SCREEN=$screen xcrun simctl launch "$UDID" app.kultr.ios
+            DATA=$(xcrun simctl get_app_container "$UDID" app.kultr.ios data)
+            for i in $(seq 1 150); do
+              [ -f "$DATA/Documents/kultr-ready-$screen" ] && break
+              sleep 2
+            done
+            cat "$DATA/Documents/kultr-ready-$screen" > "shots/$screen.txt" 2>/dev/null || echo "timed out" > "shots/$screen.txt"
+            xcrun simctl io "$UDID" screenshot "shots/$screen.png"
+          done
+          cd shots
+          git init -q
+          git checkout -q -b ci-screenshots
+          git add .
+          git -c user.name="Kultr CI" -c user.email="ci@kultr.invalid" commit -qm "Screenshots for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-screenshots
 
       - name: Build unsigned IPA (release)
         if: github.ref == 'refs/heads/main'

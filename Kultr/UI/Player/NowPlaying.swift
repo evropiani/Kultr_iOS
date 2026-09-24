@@ -45,14 +45,14 @@ struct NowPlayingScreen: View {
                                 }
                             )
                         header(current, state: state, settings: settings)
-                        HStack(spacing: 8) {
+                        Picker("Show", selection: Binding(get: { tab }, set: { value in withAnimation(theme.ease) { tab = value } })) {
                             ForEach(PlayerTab.allCases.filter { $0 != .lyrics || settings.showLyrics }, id: \.self) { entry in
-                                Pill(entry.label, accent: tab == entry) { tab = entry }
+                                Text(entry.label).tag(entry)
                             }
-                            Spacer()
                         }
+                        .pickerStyle(.segmented)
                         .padding(.horizontal, 20)
-                        .padding(.top, 12)
+                        .padding(.top, 18)
                         .padding(.bottom, 12)
                         switch tab {
                         case .queue: QueueList(state: state)
@@ -186,8 +186,15 @@ private struct PlayerTopBar: View {
         let graph = AppGraph.shared
         let injektOn = theme.settings.injektEnabled
         let downloaded = graph.offline.downloadedIds.contains(song.id)
-        HStack(spacing: 0) {
-            IconButton(icon: "chevron.down", label: "Close player", action: onClose)
+        VStack(spacing: 6) {
+            // The grabber says "pull me down", as on any sheet.
+            Capsule()
+                .fill(theme.colors.ink3.opacity(0.6))
+                .frame(width: 38, height: 5)
+                .padding(.top, 6)
+                .accessibilityHidden(true)
+        HStack(spacing: 8) {
+            GlassIconButton(icon: "chevron.down", size: 40, label: "Close player", action: onClose)
             Eyebrow(song.isRadio ? "Internet radio" : (song.album ?? "Now playing"))
                 .frame(maxWidth: .infinity, alignment: .leading)
             Pill(injektOn ? "InjeKt on" : "InjeKt off", icon: "sparkles", accent: injektOn) {
@@ -215,10 +222,14 @@ private struct PlayerTopBar: View {
                 } label: { Label("Stop and clear queue", systemImage: "xmark") }
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(theme.colors.ink)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 40, height: 40)
+                    .kultrGlass(Circle(), interactive: true, shadow: false)
             }
+            .accessibilityLabel("More")
+        }
+        .padding(.horizontal, 12)
         }
     }
 }
@@ -265,20 +276,24 @@ private struct Transport: View {
                 Spacer()
                 IconButton(icon: "backward.end.fill", size: 30, label: "Previous") { player.previous() }
                 Spacer()
-                Button { player.toggle() } label: {
+                Button {
+                    Haptics.tap()
+                    player.toggle()
+                } label: {
                     ZStack {
-                        Circle().fill(c.ink)
                         if state.buffering && state.playWhenReady {
-                            ProgressView().tint(c.background).controlSize(.large)
+                            ProgressView().tint(c.ink).controlSize(.large)
                         } else {
                             Image(systemName: state.playWhenReady && !state.ended ? "pause.fill" : "play.fill")
-                                .font(.system(size: 34, weight: .bold))
-                                .foregroundStyle(c.background)
+                                .font(.system(size: 46, weight: .bold))
+                                .foregroundStyle(c.ink)
+                                .contentTransition(.symbolEffect(.replace))
                         }
                     }
-                    .frame(width: 76, height: 76)
+                    .frame(width: 84, height: 84)
+                    .contentShape(Circle())
                 }
-                .buttonStyle(PressableStyle())
+                .buttonStyle(PressScaleStyle())
                 .accessibilityLabel(state.playWhenReady ? "Pause" : "Play")
                 Spacer()
                 IconButton(icon: "forward.end.fill", size: 30, label: "Next") { player.next() }

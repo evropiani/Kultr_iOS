@@ -29,7 +29,7 @@ final class AppGraph {
         auth.observeActive { [unowned self] profile in
             self.library.activate(profile?.id)
             self.offline.reload()
-            self.ui.path = []
+            self.ui.resetPaths()
         }
         offline.start()
         player.start()

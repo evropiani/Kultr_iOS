@@ -24,19 +24,7 @@ struct HomeScreen: View {
         let tiles = resolveHomeTiles(theme.settings.homeTiles)
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(spacing: 0) {
-                        Text(Format.greeting(hour))
-                            .font(KFont.headlineMedium)
-                            .tracking(-0.3)
-                            .foregroundStyle(c.ink)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        CastButton()
-                        IconButton(icon: "chart.bar.fill", tint: c.ink2, label: "Listening stats") { graph.actions.navigate(.stats) }
-                        IconButton(icon: "arrow.triangle.2.circlepath", tint: sync.running ? c.accent : c.ink2, label: "Sync") {
-                            graph.actions.navigate(.sync)
-                        }
-                    }
+                VStack(alignment: .leading, spacing: 14) {
                     Text(
                         sync.running
                             ? (sync.progress?.message ?? "Syncing…")
@@ -45,6 +33,7 @@ struct HomeScreen: View {
                     .font(KFont.bodySmall)
                     .foregroundStyle(c.ink3)
                     .lineLimit(1)
+                    .contentTransition(.opacity)
                     if counts.songs > 0 {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
@@ -53,13 +42,14 @@ struct HomeScreen: View {
                                 }
                                 Pill("Start an InjeKt set", icon: "sparkles", accent: true) { graph.actions.startInjektSet() }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 4)
                         }
-                        .padding(.top, 14)
+                        .padding(.horizontal, -16)
                     }
                 }
-                .padding(.leading, 16)
-                .padding(.trailing, 4)
-                .padding(.top, 12)
+                .padding(.horizontal, 16)
+                .padding(.top, 2)
                 .padding(.bottom, 8)
 
                 if loaded && counts.albums == 0 {
@@ -86,6 +76,29 @@ struct HomeScreen: View {
                 }
             }
             .padding(.bottom, 24)
+        }
+        .navigationTitle(Format.greeting(hour))
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                CastButton(tint: c.ink)
+                Button { graph.actions.navigate(.stats) } label: {
+                    Image(systemName: "chart.bar.fill")
+                }
+                .accessibilityLabel("Listening")
+                Button { graph.actions.navigate(.sync) } label: {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .symbolEffect(.pulse, options: .repeating, isActive: sync.running)
+                }
+                .accessibilityLabel("Sync")
+            }
+        }
+        .refreshable {
+            // Pull down to look for changes on the server, and exchange plays.
+            if syncState.lastCheck == nil {
+                sync.start(.full)
+            } else {
+                await sync.runNow(.check, quiet: true)
+            }
         }
         .kultrScreen()
         .task(id: graph.library.version) {
@@ -150,7 +163,6 @@ private struct HomeShelf: View {
                                 isCurrent: song.id == playing,
                                 downloaded: downloaded.contains(song.id),
                                 compact: theme.settings.compactRows,
-                                dragPayload: { DragPayload(label: song.title, coverId: song.artworkId) { [song] } },
                                 onTap: { graph.actions.play(Array(songs.prefix(10)), index) }
                             )
                         }
@@ -184,7 +196,19 @@ private struct HomeShelf: View {
     private var header: some View {
         SectionHeader(tile.title, icon: tileIcon(tile.id)) {
             if let tab = seeAllTab {
-                Pill("See all") { AppGraph.shared.actions.openLibrary(tab) }
+                Button {
+                    AppGraph.shared.actions.openLibrary(tab)
+                } label: {
+                    HStack(spacing: 3) {
+                        Text("See all")
+                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                    }
+                    .font(KFont.labelLarge)
+                    .foregroundStyle(theme.colors.accent)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(PressScaleStyle())
             }
         }
         .padding(.top, 12)

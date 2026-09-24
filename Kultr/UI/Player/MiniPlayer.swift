@@ -48,99 +48,144 @@ private struct RoutePicker: UIViewRepresentable {
 }
 
 /**
- * The strip above the tab bar: what is playing, previous, play/pause and
- * next. Swipe it left for the next track and right for the previous one.
+ * What is playing, on the tab bar: artwork, title and artist, play/pause and
+ * next. Tap it for the full player; swipe it left for the next track and
+ * right for the previous one. [compact] is the slim version shown beside a
+ * shrunken tab bar.
  */
-struct MiniPlayer: View {
+struct MiniPlayerContent: View {
     @Environment(\.kultr) private var theme
+    let compact: Bool
     @State private var swipe: CGFloat = 0
-    @State private var liveStarred: Bool?
 
     var body: some View {
         let graph = AppGraph.shared
         let state = graph.player.state
+        let c = theme.colors
         if let song = state.current {
-            let c = theme.colors
-            let starred = liveStarred ?? song.isStarred
-            let shape = RoundedRectangle(cornerRadius: theme.radii.lg, style: .continuous)
-            let panel: Color = c.elevated.opacity(0.94)
-            let tint: Color = c.accent.opacity(0.10)
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    Artwork(coverId: song.artworkId, size: 44)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(song.title)
-                            .font(KFont.bodyLarge.weight(.semibold))
-                            .foregroundStyle(c.ink)
-                            .lineLimit(1)
-                        Text(song.artist ?? "")
-                            .font(KFont.bodySmall)
+            let playing = state.playWhenReady && !state.ended
+            HStack(spacing: 10) {
+                Artwork(coverId: song.artworkId, size: compact ? 30 : 38, label: song.album ?? song.title)
+                    .clipShape(RoundedRectangle(cornerRadius: compact ? 7 : 9, style: .continuous))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(song.title)
+                        .font(.system(size: compact ? 14 : 15, weight: .semibold))
+                        .foregroundStyle(c.ink)
+                        .lineLimit(1)
+                    if !compact, let artist = song.artist {
+                        Text(artist)
+                            .font(.system(size: 13))
                             .foregroundStyle(c.ink3)
                             .lineLimit(1)
                     }
-                    .padding(.leading, 12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    if !song.isRadio {
-                        IconButton(icon: starred ? "heart.fill" : "heart", tint: starred ? c.accent : c.ink2, size: 18, label: starred ? "Remove from favourites" : "Add to favourites") {
-                            liveStarred = !starred
-                            graph.actions.setFavourite(song, !starred)
-                        }
-                    }
-                    IconButton(icon: "backward.end.fill", size: 18, label: "Previous") { graph.player.previous() }
-                    IconButton(icon: state.playWhenReady && !state.ended ? "pause.fill" : "play.fill", size: 22, label: state.playWhenReady ? "Pause" : "Play") {
-                        graph.player.toggle()
-                    }
-                    IconButton(icon: "forward.end.fill", size: 18, label: "Next") { graph.player.next() }
                 }
-                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .offset(x: swipe)
-                .opacity(1 - min(0.7, Double(abs(swipe)) / 300))
-                PositionReader(interval: 0.5) { position in
-                    GeometryReader { proxy in
-                        let fraction = state.durationMs > 0 ? min(1, max(0, Double(position) / Double(state.durationMs))) : 0
-                        ZStack(alignment: .leading) {
-                            Rectangle().fill(c.ink4)
-                            Rectangle().fill(c.accent).frame(width: proxy.size.width * fraction)
-                        }
+                .opacity(1 - min(0.8, Double(abs(swipe)) / 240))
+                Button {
+                    Haptics.tap()
+                    graph.player.toggle()
+                } label: {
+                    Image(systemName: playing ? "pause.fill" : "play.fill")
+                        .font(.system(size: compact ? 18 : 21, weight: .semibold))
+                        .foregroundStyle(c.ink)
+                        .contentTransition(.symbolEffect(.replace))
+                        .frame(width: 40, height: 40)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressScaleStyle())
+                .accessibilityLabel(playing ? "Pause" : "Play")
+                if !compact {
+                    Button {
+                        Haptics.tap()
+                        graph.player.next()
+                    } label: {
+                        Image(systemName: "forward.fill")
+                            .font(.system(size: 19, weight: .semibold))
+                            .foregroundStyle(c.ink)
+                            .frame(width: 40, height: 40)
+                            .contentShape(Rectangle())
                     }
-                    .frame(height: 2)
+                    .buttonStyle(PressScaleStyle())
+                    .accessibilityLabel("Next")
                 }
             }
-            .background(shape.fill(panel))
-            .background(shape.fill(tint))
-            .overlay(shape.strokeBorder(c.edge, lineWidth: 1))
-            .clipShape(shape)
-            .contentShape(shape)
-            .onTapGesture { graph.actions.openPlayer() }
-            .gesture(
-                DragGesture(minimumDistance: 12)
-                    .onChanged { value in
-                        if abs(value.translation.width) > abs(value.translation.height) { swipe = value.translation.width }
-                    }
-                    .onEnded { value in
-                        let travelled = value.translation.width
-                        guard abs(travelled) >= 72 else {
-                            withAnimation(.spring()) { swipe = 0 }
-                            return
+            .padding(.leading, compact ? 8 : 10)
+            .padding(.trailing, 6)
+            .frame(maxHeight: .infinity)
+            .overlay(alignment: .bottom) {
+                if !compact && !song.isRadio {
+                    PositionReader(interval: 0.5) { position in
+                        let fraction = state.durationMs > 0 ? min(1, max(0, Double(position) / Double(state.durationMs))) : 0
+                        GeometryReader { proxy in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(c.ink4)
+                                Capsule().fill(c.accent).frame(width: proxy.size.width * fraction)
+                            }
                         }
-                        // Slide out the way the finger went, change track, then
-                        // bring the new one in from the other side.
-                        let direction: CGFloat = travelled < 0 ? -1 : 1
-                        withAnimation(.easeIn(duration: 0.14)) { swipe = direction * 400 }
-                        Task { @MainActor in
-                            try? await Task.sleep(nanoseconds: 140_000_000)
-                            if direction < 0 { graph.player.next() } else { graph.player.previous() }
-                            swipe = -direction * 200
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { swipe = 0 }
-                        }
+                        .frame(height: 2)
                     }
-            )
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .onChange(of: song.id) { _, _ in liveStarred = nil }
-            .task(id: "\(song.id):\(graph.library.version)") {
-                if let live = await graph.library.song(song.id) { liveStarred = live.isStarred }
+                    // Inset, so the line stays clear of the rounded ends.
+                    .padding(.horizontal, 26)
+                    .padding(.bottom, 3)
+                }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { graph.actions.openPlayer() }
+            .simultaneousGesture(swipeGesture)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Now playing: \(song.title)")
+            .accessibilityAction(named: "Open the player") { graph.actions.openPlayer() }
+        } else {
+            // Nothing loaded (iOS 26.0 keeps the bar's player even then): offer to pick up where you left off.
+            HStack(spacing: 10) {
+                Image(systemName: "music.note")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(c.ink3)
+                    .frame(width: 30, height: 30)
+                Text("Not playing")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(c.ink2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button {
+                    graph.player.resume()
+                } label: {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(c.ink)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(PressScaleStyle())
+                .accessibilityLabel("Resume")
+            }
+            .padding(.horizontal, 10)
+            .frame(maxHeight: .infinity)
         }
+    }
+
+    private var swipeGesture: some Gesture {
+        DragGesture(minimumDistance: 14)
+            .onChanged { value in
+                if abs(value.translation.width) > abs(value.translation.height) { swipe = value.translation.width }
+            }
+            .onEnded { value in
+                let player = AppGraph.shared.player
+                let travelled = value.translation.width
+                guard abs(travelled) >= 64 else {
+                    withAnimation(theme.spring ?? .default) { swipe = 0 }
+                    return
+                }
+                // Slide out the way the finger went, change track, then bring
+                // the new one in from the other side.
+                let direction: CGFloat = travelled < 0 ? -1 : 1
+                Haptics.tap()
+                withAnimation(.easeIn(duration: 0.12)) { swipe = direction * 260 }
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 120_000_000)
+                    if direction < 0 { player.next() } else { player.previous() }
+                    swipe = -direction * 160
+                    withAnimation(theme.spring ?? .default) { swipe = 0 }
+                }
+            }
     }
 }

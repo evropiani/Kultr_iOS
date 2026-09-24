@@ -31,12 +31,16 @@ struct AlbumCard: View {
         .padding(6)
         .contentShape(Rectangle())
         .onTapGesture { AppGraph.shared.actions.openAlbum(album.id) }
-        .dragSource({
-            let album = album
-            return DragPayload(label: album.name, coverId: album.coverArt ?? album.id) {
-                await AppGraph.shared.library.songsOfAlbumNow(album.id)
+        .contextMenu {
+            CollectionMenuItems(name: album.name) { await AppGraph.shared.library.songsOfAlbumNow(album.id) }
+            Divider()
+            Button { AppGraph.shared.actions.setAlbumFavourite(album, !album.isStarred) } label: {
+                Label(album.isStarred ? "Remove from favourites" : "Add to favourites", systemImage: album.isStarred ? "heart.slash" : "heart")
             }
-        })
+            if album.artistId != nil {
+                Button { AppGraph.shared.actions.openArtist(album.artistId) } label: { Label("Go to artist", systemImage: "person.fill") }
+            }
+        }
     }
 }
 
@@ -63,12 +67,13 @@ struct ArtistCard: View {
         .padding(6)
         .contentShape(Rectangle())
         .onTapGesture { AppGraph.shared.actions.openArtist(artist.id) }
-        .dragSource({
-            let artist = artist
-            return DragPayload(label: artist.name, coverId: artist.coverArt) {
-                await AppGraph.shared.actions.artistSongs(artist)
+        .contextMenu {
+            CollectionMenuItems(name: artist.name) { await AppGraph.shared.actions.artistSongs(artist) }
+            Divider()
+            Button { AppGraph.shared.actions.setArtistFavourite(artist, !artist.isStarred) } label: {
+                Label(artist.isStarred ? "Remove from favourites" : "Add to favourites", systemImage: artist.isStarred ? "heart.slash" : "heart")
             }
-        })
+        }
     }
 }
 
@@ -95,12 +100,9 @@ struct PlaylistCard: View {
         .padding(6)
         .contentShape(Rectangle())
         .onTapGesture { AppGraph.shared.actions.openPlaylist(playlist.id) }
-        .dragSource({
-            let playlist = playlist
-            return DragPayload(label: playlist.name, coverId: playlist.coverArt) {
-                await AppGraph.shared.actions.playlistSongs(playlist)
-            }
-        })
+        .contextMenu {
+            CollectionMenuItems(name: playlist.name) { await AppGraph.shared.actions.playlistSongs(playlist) }
+        }
     }
 }
 
@@ -125,6 +127,40 @@ struct StationCard: View {
             }
             .padding(6)
         }
-        .buttonStyle(PressableStyle())
+        .buttonStyle(PressScaleStyle())
+    }
+}
+
+/**
+ * The long-press menu of an album, artist or playlist: what the web and
+ * Android apps offer as drop targets, in iOS's own menu. [songs] is only
+ * called when an entry is chosen, so opening the menu loads nothing.
+ */
+struct CollectionMenuItems: View {
+    let name: String
+    let songs: @MainActor () async -> [Song]
+
+    var body: some View {
+        let actions = AppGraph.shared.actions
+        Button { run { actions.play($0) } } label: { Label("Play", systemImage: "play.fill") }
+        Button { run { actions.shuffle($0) } } label: { Label("Shuffle", systemImage: "shuffle") }
+        Button { run { actions.playNext($0) } } label: { Label("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") }
+        Button { run { actions.enqueue($0) } } label: { Label("Add to queue", systemImage: "text.line.last.and.arrowtriangle.forward") }
+        Button { run { actions.addToPlaylist($0) } } label: { Label("Add to playlist…", systemImage: "text.badge.plus") }
+        Button { run { actions.download($0, name) } } label: { Label("Download", systemImage: "arrow.down.circle") }
+        Button(role: .destructive) { run { actions.removeDownloads($0) } } label: { Label("Remove downloads", systemImage: "trash") }
+    }
+
+    private func run(_ body: @escaping @MainActor ([Song]) -> Void) {
+        let songs = self.songs
+        let name = self.name
+        Task { @MainActor in
+            let list = await songs().filter { !$0.isRadio }
+            if list.isEmpty {
+                AppGraph.shared.messages.show("“\(name)” has no tracks here yet.")
+            } else {
+                body(list)
+            }
+        }
     }
 }

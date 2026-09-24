@@ -25,8 +25,12 @@ enum DownloadsPage: String, CaseIterable, Hashable {
     var label: String { self == .now ? "Downloading" : "On this phone" }
 }
 
+/** The tabs. Search is last: iOS 26 shows it as its own round button beside the bar. */
 enum MainTab: String, CaseIterable, Hashable {
-    case home, library, search, settings
+    case home, library, settings, search
+
+    /** The tabs inside the bar; search sits beside it. */
+    static let bar: [MainTab] = [.home, .library, .settings]
 
     var label: String {
         switch self {
@@ -69,26 +73,31 @@ struct LoginRequest: Equatable {
 @Observable
 final class AppUI {
     var tab: MainTab = .home
-    var path: [Route] = []
+    /** Each tab keeps its own stack of pages, like any iOS app. */
+    var paths: [MainTab: [Route]] = [:]
     var playerOpen = false
     var login: LoginRequest?
     var addToPlaylist: [Song]?
     var rate: Song?
     var sleepTimer = false
-    let drag = DragDropState()
 
-    /** The Downloads page shows everything the download strip would. */
+    /** The pages open on top of the current tab's start page. */
+    var path: [Route] {
+        get { paths[tab] ?? [] }
+        set { paths[tab] = newValue }
+    }
+
+    func path(for tab: MainTab) -> [Route] { paths[tab] ?? [] }
+
+    func setPath(_ path: [Route], for tab: MainTab) { paths[tab] = path }
+
+    /** Forget every open page, in every tab (a different server has a different library). */
+    func resetPaths() { paths = [:] }
+
+    /** The Downloads page shows everything the floating download strip would. */
     var onDownloadsPage: Bool {
         if case .downloads = path.last { return true }
         return false
-    }
-
-    /** The tab the bar lights up: the Library tab while a library page is open on top. */
-    var highlightedTab: MainTab {
-        for route in path.reversed() {
-            if case .library = route { return .library }
-        }
-        return tab
     }
 }
 
@@ -111,7 +120,8 @@ final class AppActions {
     // --------------------------------------------------------- navigation --
 
     func navigate(_ route: Route) {
-        ui.playerOpen = false
+        if ui.playerOpen { closePlayer() }
+        // Search is for finding things; what it finds opens there too.
         if ui.path.last == route { return }
         ui.path.append(route)
     }
@@ -128,11 +138,13 @@ final class AppActions {
         withAnimation(.easeIn(duration: 0.26)) { ui.playerOpen = false }
     }
 
-    /** A tab always opens at its own start page. */
+    /** Switch tabs; choosing the tab you are on goes back to its start page. */
     func selectTab(_ tab: MainTab) {
-        if ui.tab == tab && ui.path.isEmpty { return }
-        ui.tab = tab
-        ui.path = []
+        if ui.tab == tab {
+            ui.setPath([], for: tab)
+        } else {
+            ui.tab = tab
+        }
     }
 
     func openAlbum(_ id: String?) {
@@ -235,42 +247,6 @@ final class AppActions {
             let rest = await AutoQueue(graph: graph).build(seed: start, recent: [], count: 24)
             play([start] + rest, 0)
             openPlayer()
-        }
-    }
-
-    /** Something dragged onto the drop zone: resolve it to tracks and do what the target says. */
-    func drop(_ payload: DragPayload, _ action: DropAction) {
-        Task {
-            let songs = await payload.resolve().filter { !$0.isRadio }
-            if songs.isEmpty {
-                messages.show("“\(payload.label)” has no tracks here yet.")
-                return
-            }
-            switch action {
-            case .playNext:
-                playNext(songs)
-            case .queue:
-                enqueue(songs)
-            case .favourite:
-                let missing = songs.filter { !$0.isStarred }
-                if missing.isEmpty {
-                    messages.show("Already in your favourites.")
-                } else {
-                    report(
-                        await graph.library.setStarred(missing, true),
-                        "Favourited \(missing.count) track\(missing.count == 1 ? "" : "s")"
-                    )
-                }
-            case .download:
-                await graph.offline.download(songs, label: payload.label)
-            case .remove:
-                let removed = await graph.offline.remove(songs.map { $0.id })
-                messages.show(
-                    removed > 0
-                        ? "Removed \(removed) download\(removed == 1 ? "" : "s")."
-                        : "Nothing from “\(payload.label)” was downloaded."
-                )
-            }
         }
     }
 

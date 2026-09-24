@@ -1,3 +1,4 @@
+import CoreImage
 import ImageIO
 import SwiftUI
 import UIKit
@@ -51,6 +52,33 @@ final class ImageLoader: @unchecked Sendable {
         ]
         guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
         return UIImage(cgImage: cg)
+    }
+
+    private let blurContext = CIContext(options: [.cacheIntermediates: false])
+
+    /**
+     * A small, heavily blurred copy of the artwork, made once and cached, for
+     * the background behind the pages. Drawing a ready-blurred image costs
+     * nothing per frame, unlike blurring a live one while the page scrolls.
+     */
+    func blurred(_ url: URL) async -> UIImage? {
+        let cacheKey = "blur|\(url.absoluteString)" as NSString
+        if let hit = memory.object(forKey: cacheKey) { return hit }
+        guard let source = await image(url, pixelSize: 96), let cg = source.cgImage else { return nil }
+        let input = CIImage(cgImage: cg)
+        guard let filter = CIFilter(name: "CIGaussianBlur") else { return nil }
+        filter.setValue(input.clampedToExtent(), forKey: kCIInputImageKey)
+        filter.setValue(9.0, forKey: kCIInputRadiusKey)
+        guard let output = filter.outputImage?.cropped(to: input.extent),
+              let rendered = blurContext.createCGImage(output, from: input.extent)
+        else { return nil }
+        let image = UIImage(cgImage: rendered)
+        memory.setObject(image, forKey: cacheKey, cost: rendered.width * rendered.height * 4)
+        return image
+    }
+
+    func cachedBlur(_ url: URL) -> UIImage? {
+        memory.object(forKey: "blur|\(url.absoluteString)" as NSString)
     }
 
     /** The accent colour taken from an image, as ARGB. */

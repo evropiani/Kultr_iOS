@@ -117,9 +117,9 @@ struct SongRow: View {
     var selecting = false
     var compact = false
     var extra: [MenuAction] = []
-    var dragPayload: (() -> DragPayload?)?
     let onTap: () -> Void
-    var onLongPress: (() -> Void)?
+    /** Starts multi-select with this track; offered in its long-press menu. */
+    var onSelect: (() -> Void)?
 
     var body: some View {
         let c = theme.colors
@@ -190,26 +190,32 @@ struct SongRow: View {
         }
         .padding(.leading, 16)
         .padding(.trailing, 4)
-        .padding(.vertical, compact ? 4 : 8)
+        .padding(.vertical, compact ? 4 : 7)
         .background(selected ? c.accentSoft : Color.clear)
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
+        .animation(theme.ease, value: selecting)
 
-        if let dragPayload, !song.isRadio {
-            row.dragSource(dragPayload, onLongPress: onLongPress)
-        } else if let onLongPress {
-            row.onLongPressGesture(perform: onLongPress)
-        } else {
+        if selecting {
             row
+        } else {
+            row.contextMenu {
+                if let onSelect {
+                    Button(action: onSelect) { Label("Select", systemImage: "checkmark.circle") }
+                    Divider()
+                }
+                SongMenuItems(song: song, downloaded: downloaded, extra: extra)
+            }
         }
     }
 }
 
 /**
  * Track rows for a list. Tapping plays the list from that track (or toggles
- * selection while selecting); long-press starts selecting, or drags.
+ * selection while selecting); long-press opens its menu, swipe to queue it.
  */
 struct SongRows: View {
+    @Environment(\.kultr) private var theme
     let songs: [Song]
     var selection: SongSelection?
     var numbered = false
@@ -234,16 +240,6 @@ struct SongRows: View {
                 selecting: selecting,
                 compact: compact,
                 extra: extra(index, song),
-                dragPayload: {
-                    // Dragging a selected track takes the whole selection with it.
-                    if let selection, selection.active, selection.contains(song.id) {
-                        let picked = selection.picked(songs)
-                        if picked.count > 1 {
-                            return DragPayload(label: "\(picked.count) tracks", coverId: picked[0].artworkId) { picked }
-                        }
-                    }
-                    return DragPayload(label: song.title, coverId: song.artworkId) { [song] }
-                },
                 onTap: {
                     if let selection, selection.active {
                         selection.toggle(song.id)
@@ -251,9 +247,29 @@ struct SongRows: View {
                         onPlay(index)
                     }
                 },
-                onLongPress: selection.map { sel -> () -> Void in { sel.toggle(song.id) } }
+                onSelect: selection.map { sel -> () -> Void in { sel.toggle(song.id) } }
             )
             .id("\(keyPrefix):\(index):\(song.id)")
+            // Inside a List: edge to edge, no separators, and swipe to queue.
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                Button {
+                    AppGraph.shared.actions.playNext([song])
+                } label: {
+                    Label("Play next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                }
+                .tint(theme.colors.accent)
+            }
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button {
+                    AppGraph.shared.actions.enqueue([song])
+                } label: {
+                    Label("Add to queue", systemImage: "text.line.last.and.arrowtriangle.forward")
+                }
+                .tint(.indigo)
+            }
         }
     }
 }
@@ -265,9 +281,18 @@ struct SelectionBar: View {
     let songs: [Song]
 
     var body: some View {
+        ZStack {
+            if selection.active {
+                bar.transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(theme.spring, value: selection.active)
+    }
+
+    private var bar: some View {
         let actions = AppGraph.shared.actions
         let picked = selection.picked(songs)
-        GlassPanel(strong: true, padding: 4) {
+        return GlassGroup {
             HStack(spacing: 2) {
                 iconButton("xmark", "Clear selection") { selection.clear() }
                 Text("\(picked.count) selected")
@@ -291,19 +316,24 @@ struct SelectionBar: View {
                         .frame(width: 44, height: 44)
                 }
             }
+            .padding(.horizontal, 4)
+            .kultrGlass(Capsule())
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
     }
 
     private func iconButton(_ icon: String, _ label: String, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
             Image(systemName: icon)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(theme.colors.ink)
                 .frame(width: 44, height: 44)
         }
-        .buttonStyle(PressableStyle())
+        .buttonStyle(PressScaleStyle())
         .accessibilityLabel(label)
     }
 }

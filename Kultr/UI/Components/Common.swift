@@ -49,33 +49,51 @@ struct Pill: View {
 
     var body: some View {
         let c = theme.colors
-        let content = accent ? c.onAccent : c.ink
-        Button(action: action) {
-            HStack(spacing: 8) {
-                if let icon {
-                    Image(systemName: icon)
-                        .font(.system(size: 15, weight: .semibold))
-                        .frame(width: 18, height: 18)
-                }
-                Text(text)
-                    .font(KFont.labelLarge)
-                    .lineLimit(1)
-                if let badge {
-                    Text(badge)
-                        .font(.system(size: 11, weight: .bold))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 1)
-                        .background(Capsule().fill(accent ? c.onAccent.opacity(0.18) : c.accentSoft))
-                }
+        let label = HStack(spacing: 7) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(width: 18, height: 18)
             }
-            .foregroundStyle(content.opacity(enabled ? 1 : 0.5))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(Capsule().fill(accent ? c.accent.opacity(enabled ? 1 : 0.5) : c.glass))
-            .overlay(Capsule().strokeBorder(accent ? Color.clear : c.edge, lineWidth: 1))
+            Text(text)
+                .font(KFont.labelLarge)
+                .lineLimit(1)
+            if let badge {
+                Text(badge)
+                    .font(.system(size: 11, weight: .bold).monospacedDigit())
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(accent ? Color.white.opacity(0.22) : c.accentSoft))
+            }
         }
-        .buttonStyle(PressableStyle())
-        .disabled(!enabled)
+        if #available(iOS 26.0, *) {
+            if accent {
+                Button(action: tapped) { label.foregroundStyle(.white) }
+                    .buttonStyle(.glassProminent)
+                    .tint(c.accent)
+                    .disabled(!enabled)
+            } else {
+                Button(action: tapped) { label.foregroundStyle(c.ink.opacity(enabled ? 1 : 0.45)) }
+                    .buttonStyle(.glass)
+                    .disabled(!enabled)
+            }
+        } else {
+            Button(action: tapped) {
+                label
+                    .foregroundStyle((accent ? c.onAccent : c.ink).opacity(enabled ? 1 : 0.5))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(accent ? c.accent.opacity(enabled ? 1 : 0.5) : c.glass))
+                    .overlay(Capsule().strokeBorder(accent ? Color.clear : c.edge, lineWidth: 1))
+            }
+            .buttonStyle(PressScaleStyle())
+            .disabled(!enabled)
+        }
+    }
+
+    private func tapped() {
+        Haptics.tap()
+        action()
     }
 }
 
@@ -318,24 +336,42 @@ struct PlainBackdrop: View {
 struct ArtworkBackdrop: View {
     @Environment(\.kultr) private var theme
     let coverId: String?
+    @State private var image: UIImage?
 
     var body: some View {
+        let url = artworkUrl(coverId, 96)
         ZStack {
             theme.colors.background
-            if let url = artworkUrl(coverId, 200) {
-                RemoteImage(url: url, pixelSize: 200)
-                    .blur(radius: 60)
-                    .opacity(theme.colors.dark ? 0.55 : 0.45)
-                    .scaleEffect(1.3)
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .interpolation(.medium)
+                    .scaledToFill()
+                    .scaleEffect(1.2)
+                    .opacity(theme.colors.dark ? 0.6 : 0.5)
+                    .transition(.opacity)
+                    .id(url)
             }
             LinearGradient(
-                colors: [theme.colors.background.opacity(0.35), theme.colors.accent.opacity(0.12), theme.colors.background.opacity(0.92)],
+                colors: [theme.colors.background.opacity(0.3), theme.colors.accent.opacity(0.1), theme.colors.background.opacity(0.9)],
                 startPoint: .top,
                 endPoint: .bottom
             )
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
+        .task(id: url) {
+            guard let url else {
+                image = nil
+                return
+            }
+            if let hit = ImageLoader.shared.cachedBlur(url) {
+                image = hit
+                return
+            }
+            let next = await ImageLoader.shared.blurred(url)
+            withAnimation(theme.reduceMotion ? nil : .easeInOut(duration: 0.6)) { image = next }
+        }
     }
 }
 
@@ -354,12 +390,11 @@ struct AppBackdrop: View {
 }
 
 extension View {
-    /** A page in the navigation stack: Kultr's own background, no system bar. */
+    /** A page in a tab's navigation stack: Kultr's own background behind iOS's navigation bar. */
     func kultrScreen() -> some View {
         self
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background { AppBackdrop() }
-            .toolbar(.hidden, for: .navigationBar)
     }
 }
 

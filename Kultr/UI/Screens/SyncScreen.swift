@@ -16,7 +16,6 @@ struct SyncScreen: View {
         ZStack(alignment: .top) {
             AccentWash()
             VStack(spacing: 0) {
-                BackBar(title: "Sync")
                 ScrollView {
                     VStack(spacing: 16) {
                         GlassPanel {
@@ -136,6 +135,9 @@ struct SyncScreen: View {
                 }
             }
         }
+        .navigationTitle("Sync")
+        .navigationBarTitleDisplayMode(.inline)
+        .refreshable { await graph.sync.runNow(.check, quiet: true) }
         .kultrScreen()
         .task(id: graph.library.version) {
             counts = await graph.library.counts()

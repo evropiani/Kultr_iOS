@@ -16,31 +16,26 @@ struct DownloadsScreen: View {
             case .idle: return 0
             }
         }()
-        ZStack(alignment: .top) {
-            AccentWash()
-            VStack(spacing: 0) {
-                BackBar(title: "Downloads")
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        Pill(DownloadsPage.now.label, icon: "arrow.down.circle", accent: current == .now, badge: pending > 0 ? "\(pending)" : nil) {
-                            page = .now
-                        }
-                        Pill(DownloadsPage.offline.label, icon: "checkmark.circle", accent: current == .offline, badge: usage.count > 0 ? "\(usage.count)" : nil) {
-                            page = .offline
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
-                }
-                Group {
-                    switch current {
-                    case .now: DownloadQueue()
-                    case .offline: OfflineContent()
-                    }
-                }
-                .frame(maxHeight: .infinity, alignment: .top)
+        VStack(spacing: 0) {
+            Picker("Downloads", selection: Binding(get: { current }, set: { value in withAnimation(theme.ease) { page = value } })) {
+                Text(pending > 0 ? "\(DownloadsPage.now.label) (\(pending))" : DownloadsPage.now.label).tag(DownloadsPage.now)
+                Text(usage.count > 0 ? "\(DownloadsPage.offline.label) (\(usage.count))" : DownloadsPage.offline.label).tag(DownloadsPage.offline)
             }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            Group {
+                switch current {
+                case .now: DownloadQueue()
+                case .offline: OfflineContent()
+                }
+            }
+            .frame(maxHeight: .infinity, alignment: .top)
+            .transition(.opacity)
         }
+        .background(alignment: .top) { AccentWash() }
+        .navigationTitle("Downloads")
+        .navigationBarTitleDisplayMode(.inline)
         .kultrScreen()
         .onChange(of: initialPage) { _, value in page = value }
         .task(id: "\(graph.library.downloadsVersion):\(graph.offline.downloadedIds.count)") { usage = graph.offline.usage() }
@@ -268,14 +263,14 @@ struct OfflineContent: View {
         let graph = AppGraph.shared
         let c = theme.colors
         VStack(spacing: 0) {
-            if selection.active { SelectionBar(selection: selection, songs: songs) }
+            SelectionBar(selection: selection, songs: songs)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("\(Format.count(usage.count, "track")) on this phone · \(Format.bytes(usage.bytes))")
                             .font(KFont.titleMedium)
                             .foregroundStyle(c.ink)
-                        DownloadIndicator(inline: true)
+                        DownloadIndicator()
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 Pill("Play", icon: "play.fill", accent: true, enabled: !songs.isEmpty) { graph.actions.play(songs) }
@@ -349,58 +344,66 @@ struct OfflineContent: View {
 
 /**
  * A strip that shows while anything is downloading or waiting to. Tapping it
- * opens the Downloads page. [inline] drops the outer margins for use inside
- * a page.
+ * opens the Downloads page. [floating] makes it a piece of glass over the
+ * pages, beside the mini player and tab bar; otherwise it is a card in a page.
  */
 struct DownloadIndicator: View {
     @Environment(\.kultr) private var theme
-    var inline = false
+    var floating = false
 
     var body: some View {
         let graph = AppGraph.shared
         let offline = graph.offline
         let c = theme.colors
         let status = offline.status
-        if status != .idle {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 10) {
-                    Group {
-                        if case .waiting(_, let forWifi) = status {
-                            Image(systemName: forWifi ? "wifi" : "icloud.slash").foregroundStyle(c.warning)
-                        } else {
-                            Image(systemName: "arrow.down.circle").foregroundStyle(c.accent)
-                        }
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    Text(label(status, offline.active))
-                        .font(KFont.bodyMedium)
-                        .foregroundStyle(c.ink)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(c.ink3)
-                }
-                if case .running(let p, _) = status {
-                    if let p, p.total > 0 {
-                        let fractions = offline.active.values.map { $0.fraction }
-                        let within = fractions.isEmpty ? 0 : fractions.reduce(0, +) / Double(fractions.count)
-                        ProgressBar(value: min(1, max(0, (Double(p.done + p.failed) + within * Double(min(1, offline.active.count))) / Double(p.total))), height: 3)
+        ZStack {
+            if status != .idle {
+                content(status, offline)
+                    .padding(.horizontal, floating ? 16 : 12)
+                    .padding(.vertical, floating ? 10 : 8)
+                    .modifier(IndicatorSurface(floating: floating))
+                    .contentShape(Rectangle())
+                    .onTapGesture { graph.actions.openDownloads(.now) }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityHint("Opens Downloads")
+            }
+        }
+        .animation(theme.spring, value: status == .idle)
+        .foregroundStyle(c.ink)
+    }
+
+    private func content(_ status: DownloadStatus, _ offline: OfflineManager) -> some View {
+        let c = theme.colors
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                Group {
+                    if case .waiting(_, let forWifi) = status {
+                        Image(systemName: forWifi ? "wifi" : "icloud.slash").foregroundStyle(c.warning)
                     } else {
-                        ProgressBar(value: nil, height: 3)
+                        Image(systemName: "arrow.down.circle.fill")
+                            .foregroundStyle(c.accent)
+                            .symbolEffect(.pulse, options: .repeating, isActive: !theme.reduceMotion)
                     }
+                }
+                .font(.system(size: 16, weight: .semibold))
+                Text(label(status, offline.active))
+                    .font(KFont.bodyMedium.weight(.medium))
+                    .foregroundStyle(c.ink)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(c.ink3)
+            }
+            if case .running(let p, _) = status {
+                if let p, p.total > 0 {
+                    let fractions = offline.active.values.map { $0.fraction }
+                    let within = fractions.isEmpty ? 0 : fractions.reduce(0, +) / Double(fractions.count)
+                    ProgressBar(value: min(1, max(0, (Double(p.done + p.failed) + within * Double(min(1, offline.active.count))) / Double(p.total))), height: 3)
+                } else {
+                    ProgressBar(value: nil, height: 3)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: theme.radii.md, style: .continuous)
-                    .fill(c.elevated.opacity(0.94))
-                    .overlay(RoundedRectangle(cornerRadius: theme.radii.md, style: .continuous).fill(c.accent.opacity(0.08)))
-            )
-            .contentShape(Rectangle())
-            .onTapGesture { graph.actions.openDownloads(.now) }
-            .padding(.horizontal, inline ? 0 : 8)
-            .padding(.vertical, inline ? 0 : 2)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
 
@@ -415,6 +418,22 @@ struct DownloadIndicator: View {
             return forWifi ? "\(Format.count(queued, "download")) waiting for Wi-Fi" : "\(Format.count(queued, "download")) waiting for a connection"
         case .idle:
             return ""
+        }
+    }
+}
+
+private struct IndicatorSurface: ViewModifier {
+    @Environment(\.kultr) private var theme
+    let floating: Bool
+
+    func body(content: Content) -> some View {
+        if floating {
+            content.kultrGlass(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        } else {
+            let shape = RoundedRectangle(cornerRadius: theme.radii.md, style: .continuous)
+            content
+                .background(shape.fill(theme.colors.glass))
+                .overlay(shape.strokeBorder(theme.colors.edge, lineWidth: 1))
         }
     }
 }

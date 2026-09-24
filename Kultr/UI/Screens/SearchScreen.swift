@@ -9,7 +9,6 @@ struct SearchScreen: View {
     @State private var loading = false
     @State private var error: String?
     @State private var selection = SongSelection()
-    @FocusState private var focused: Bool
 
     var body: some View {
         let graph = AppGraph.shared
@@ -17,12 +16,6 @@ struct SearchScreen: View {
         let useServer = serverSearch || counts.songs == 0
         let trimmed = query.trimmingCharacters(in: .whitespaces)
         VStack(alignment: .leading, spacing: 0) {
-            Text("Search")
-                .font(KFont.headlineMedium)
-                .foregroundStyle(c.ink)
-                .padding(.leading, 16)
-                .padding(.top, 12)
-            FilterField(text: $query, placeholder: "Artists, albums, tracks", focused: $focused)
             HStack {
                 Text(counts.songs == 0 ? "Searching your server (the library is not synced yet)" : "Search on the server instead")
                     .font(KFont.bodySmall)
@@ -33,8 +26,8 @@ struct SearchScreen: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 4)
-            if selection.active { SelectionBar(selection: selection, songs: results.songs) }
+            .padding(.vertical, 4)
+            SelectionBar(selection: selection, songs: results.songs)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     if trimmed.count < 2 {
@@ -64,6 +57,10 @@ struct SearchScreen: View {
             }
             .scrollDismissesKeyboard(.immediately)
         }
+        .navigationTitle("Search")
+        .searchable(text: $query, prompt: "Artists, albums, tracks")
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
         .kultrScreen()
         .task(id: graph.library.version) { counts = await graph.library.counts() }
         .task(id: "\(trimmed)|\(useServer)") {
@@ -92,9 +89,6 @@ struct SearchScreen: View {
                 results = SearchResults()
             }
             loading = false
-        }
-        .onAppear {
-            if query.isEmpty { focused = true }
         }
     }
 }
