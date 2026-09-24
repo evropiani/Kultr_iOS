@@ -237,6 +237,41 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         XCTAssertLessThan(abs(engine.positionMs - 7_000), 100, "position \(engine.positionMs)")
     }
 
+    func testPlansWhenATrackStartsButLoadsTheNextOnlyNearTheMix() async {
+        await start(["1", "2"], seconds: 300)
+        await advance(1_000)
+        // The plan is ready (and showing) within a second of the track starting...
+        XCTAssertEqual(engine.currentPlan?.type, .crossfade)
+        // ...but no stream is opened for a mix four and a half minutes away.
+        XCTAssertNil(b.item)
+
+        await advance(262_000, step: 100) // 263s: the fade starts at 294s, 31s away
+        XCTAssertNil(b.item)
+        await advance(2_000) // 265s: within 30s of it
+        XCTAssertEqual(b.item?.song.id, "2")
+        XCTAssertFalse(b.isPlaying)
+
+        await advance(30_000, step: 50)
+        XCTAssertEqual(engine.index, 1)
+        XCTAssertTrue(engine.isTransitioning)
+    }
+
+    func testAQueueEditWhilePlanningPlansAgain() async {
+        var planned: [String] = []
+        planOverride = { [unowned self] current, next, context in
+            planned.append(next.id)
+            // Something is queued to play next while the first plan is being made.
+            if planned.count == 1 { self.engine.addItems(at: self.engine.index + 1, self.engine.newItems(self.songs(["late"]))) }
+            return planTransition(current: current, next: next, context: context, settings: self.settingsValue, analysisA: nil, analysisB: nil)
+        }
+        await start(["1", "2"])
+        await advance(1_000)
+        XCTAssertEqual(planned, ["2", "late"])
+        await advance(54_000, step: 50)
+        XCTAssertEqual(started.last?.0, "late")
+        XCTAssertEqual(started.last?.1, .transition)
+    }
+
     func testGaplessLetsTheDeckJoinTheTracks() async {
         settingsValue.crossfadeEnabled = false
         settingsValue.gapless = true

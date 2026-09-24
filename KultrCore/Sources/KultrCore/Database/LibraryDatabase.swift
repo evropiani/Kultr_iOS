@@ -53,6 +53,12 @@ struct DownloadRow: Hashable {
     var error: String?
 }
 
+struct ArtistPlays: Hashable, Sendable {
+    var name: String?
+    var artistId: String?
+    var plays: Int64
+}
+
 struct DownloadUsage: Hashable {
     var count: Int
     var bytes: Int64
@@ -63,7 +69,11 @@ enum LibraryChange: Hashable {
 }
 
 final class LibraryDatabase: @unchecked Sendable {
-    private static let schemaVersion = 1
+    /**
+     * 2: albums remember when they were last played, to notice plays from
+     * other devices, and songs are indexed by when they were last played.
+     */
+    private static let schemaVersion = 2
 
     private let db: SQLiteConnection
 
@@ -92,7 +102,18 @@ final class LibraryDatabase: @unchecked Sendable {
     private func migrate() throws {
         let version = try db.scalarInt("PRAGMA user_version")
         if version == Self.schemaVersion { return }
-        // The mirror can always be rebuilt from the server.
+        // History, analysis and downloads are kept across versions...
+        if version == 1 {
+            try db.executeScript(
+                """
+                ALTER TABLE albums ADD COLUMN played TEXT;
+                CREATE INDEX IF NOT EXISTS idx_songs_played ON songs(played);
+                PRAGMA user_version = 2;
+                """
+            )
+            return
+        }
+        // ...and for anything unforeseen, the mirror can be rebuilt from the server.
         try db.executeScript(
             """
             DROP TABLE IF EXISTS songs; DROP TABLE IF EXISTS albums; DROP TABLE IF EXISTS artists;
@@ -111,10 +132,11 @@ final class LibraryDatabase: @unchecked Sendable {
             CREATE INDEX idx_songs_starred ON songs(starred);
             CREATE INDEX idx_songs_created ON songs(created);
             CREATE INDEX idx_songs_sortTitle ON songs(sortTitle);
+            CREATE INDEX idx_songs_played ON songs(played);
             CREATE TABLE albums (
                 id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, sortName TEXT NOT NULL, artist TEXT, artistId TEXT,
                 coverArt TEXT, songCount INTEGER, duration INTEGER, playCount INTEGER, created TEXT, changed TEXT,
-                starred TEXT, year INTEGER, genre TEXT, userRating INTEGER, isCompilation INTEGER
+                starred TEXT, year INTEGER, genre TEXT, userRating INTEGER, isCompilation INTEGER, played TEXT
             );
             CREATE INDEX idx_albums_artistId ON albums(artistId);
             CREATE INDEX idx_albums_starred ON albums(starred);
@@ -213,12 +235,12 @@ final class LibraryDatabase: @unchecked Sendable {
 
     private static let albumInsert =
         "INSERT OR REPLACE INTO albums (id, name, sortName, artist, artistId, coverArt, songCount, duration, playCount, created, " +
-        "changed, starred, year, genre, userRating, isCompilation) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+        "changed, starred, year, genre, userRating, isCompilation, played) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 
     private static func albumArgs(_ a: Album) -> [SQLiteBindable] {
         [
             a.id, a.name, Format.sortKey(a.sortName ?? a.name), a.artist, a.artistId, a.coverArt, a.songCount, a.duration,
-            a.playCount, a.created, a.changed, a.starred, a.year, a.genre, a.userRating, a.isCompilation,
+            a.playCount, a.created, a.changed, a.starred, a.year, a.genre, a.userRating, a.isCompilation, a.played,
         ]
     }
 
@@ -232,6 +254,7 @@ final class LibraryDatabase: @unchecked Sendable {
             songCount: r.int(6),
             duration: r.int(7),
             playCount: r.int64(8),
+            played: r.string(16),
             created: r.string(9),
             changed: r.string(10),
             starred: r.string(11),
@@ -459,8 +482,8 @@ final class LibraryDatabase: @unchecked Sendable {
 
     func albumStamps() -> [String: AlbumStamp] {
         var out: [String: AlbumStamp] = [:]
-        for row in read("SELECT id, songCount, changed, duration FROM albums", [], { r in
-            (r.text(0), AlbumStamp(songCount: r.int(1), changed: r.string(2), duration: r.int(3)))
+        for row in read("SELECT id, songCount, changed, duration, playCount, played FROM albums", [], { r in
+            (r.text(0), AlbumStamp(songCount: r.int(1), changed: r.string(2), duration: r.int(3), playCount: r.int64(4), played: r.string(5)))
         }) {
             out[row.0] = row.1
         }
@@ -577,6 +600,26 @@ final class LibraryDatabase: @unchecked Sendable {
 
     func mostPlayedSongs(_ limit: Int) -> [Song] {
         read("SELECT * FROM songs WHERE playCount > 0 ORDER BY playCount DESC LIMIT ?", [limit], Self.song)
+    }
+
+    /** Tracks by when they were last played, as the server (and this phone) last recorded it. */
+    func recentlyPlayedSongs(_ limit: Int) -> [Song] {
+        read("SELECT * FROM songs WHERE played IS NOT NULL AND played != '' ORDER BY played DESC LIMIT ?", [limit], Self.song)
+    }
+
+    /** Artists by the summed play counts of their tracks. */
+    func artistPlays(_ limit: Int) -> [ArtistPlays] {
+        read(
+            "SELECT COALESCE(artists.name, p.artist) AS name, p.artistId, p.plays FROM " +
+                "(SELECT artistId, MAX(artist) AS artist, SUM(COALESCE(playCount, 0)) AS plays FROM songs GROUP BY artistId) p " +
+                "LEFT JOIN artists ON artists.id = p.artistId WHERE p.plays > 0 ORDER BY p.plays DESC LIMIT ?",
+            [limit]
+        ) { r in ArtistPlays(name: r.string(0), artistId: r.string(1), plays: r.int64(2) ?? 0) }
+    }
+
+    /** All plays the server has counted, across the library. */
+    func totalPlays() -> Int64 {
+        read("SELECT COALESCE(SUM(playCount), 0) FROM songs") { $0.int64(0) ?? 0 }.first ?? 0
     }
 
     func mostPlayedAlbums(_ limit: Int) -> [Album] {
@@ -699,10 +742,21 @@ final class LibraryDatabase: @unchecked Sendable {
 
     func markSubmitted(_ id: Int64) throws {
         try db.execute("UPDATE history SET submitted = 1 WHERE id = ?", [id])
+        changed([.history])
     }
 
+    /** Plays still waiting to reach the server. */
+    func pendingPlays() -> Int {
+        read("SELECT COUNT(*) FROM history WHERE submitted = 0") { $0.int(0) ?? 0 }.first ?? 0
+    }
+
+    /**
+     * Forget the history on this phone, except plays still waiting to be
+     * sent: those are the queue for the server, and clearing them would lose
+     * them for good.
+     */
     func clearHistory() throws {
-        try db.execute("DELETE FROM history")
+        try db.execute("DELETE FROM history WHERE submitted = 1")
         changed([.history])
     }
 

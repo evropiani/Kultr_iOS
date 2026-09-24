@@ -190,12 +190,34 @@ final class LibraryRepository {
     }
 
     /** Tracks played most recently, newest first, without repeats. */
+    /**
+     * Tracks played most recently, newest first, one entry each. Two sources,
+     * merged: each track's last-played time as the server keeps it (plays from
+     * every device, and it survives a fresh install), and this phone's own
+     * history (exact, and all a server without last-played times offers).
+     * Whichever is later wins for each track.
+     */
     func recentlyPlayed(_ limit: Int) async -> [Song] {
-        let entries = await history(limit * 4)
-        var seen = Set<String>()
-        let ids = entries.map { $0.songId }.filter { seen.insert($0).inserted }.prefix(limit)
-        return await songsByIds(Array(ids))
+        let ids: [String] = await read([]) { db in
+            var latest: [String: Int64] = [:]
+            for song in db.recentlyPlayedSongs(limit * 2) {
+                if let at = Format.isoMs(song.played) { latest[song.id] = at }
+            }
+            for entry in db.recentHistory(limit * 4) where (latest[entry.songId] ?? 0) < entry.playedAt {
+                latest[entry.songId] = entry.playedAt
+            }
+            return latest.sorted { $0.value > $1.value }.prefix(limit).map { $0.key }
+        }
+        return await songsByIds(ids)
     }
+
+    func artistPlays(_ limit: Int) async -> [ArtistPlays] { await read([]) { $0.artistPlays(limit) } }
+
+    /** All plays the server has counted, across the library. */
+    func totalPlays() async -> Int64 { await read(0) { $0.totalPlays() } }
+
+    /** Plays on this phone still waiting to reach the server. */
+    func pendingPlays() async -> Int { await read(0) { $0.pendingPlays() } }
 
     func search(_ query: String, limit: Int = 60) async -> SearchResults {
         let q = query.trimmingCharacters(in: .whitespaces)

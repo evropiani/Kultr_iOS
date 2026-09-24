@@ -329,7 +329,11 @@ private struct PlaybackSettings: View {
         SettingToggle("Also fade when you skip", s.crossfadeOnSkip, hint: "A short fade instead of a hard cut on next and previous.") { v in update { $0.crossfadeOnSkip = v } }
         SettingToggle("Gapless playback", s.gapless, hint: "With crossfade off, the next track starts the instant this one ends.") { v in update { $0.gapless = v } }
         SettingToggle("Resume where you left off", s.resumeOnStart, hint: "Restores the queue and position when Kultr opens.") { v in update { $0.resumeOnStart = v } }
-        SettingToggle("Scrobble plays", s.scrobble, hint: "Tells your server what you listened to. Plays made offline are sent later.") { v in update { $0.scrobble = v } }
+        SettingToggle(
+            "Send plays to Navidrome",
+            s.scrobble,
+            hint: "Counts each play on your server, so recently and most played are the same on every device and survive reinstalling. Plays made offline are sent, with their real time, once you are back."
+        ) { v in update { $0.scrobble = v } }
     }
 }
 
@@ -372,7 +376,12 @@ private struct InjektSettings: View {
         SettingToggle("Keep playing similar music", s.injektAutoQueue, hint: "When the queue runs out, continue with tracks chosen by tempo, key and energy.") { v in
             update { $0.injektAutoQueue = v }
         }
-        SettingToggle("Analyse ahead", s.injektAnalyseAhead, hint: "Measure the next track while this one plays.", enabled: on) { v in update { $0.injektAnalyseAhead = v } }
+        SettingToggle(
+            "Analyse ahead",
+            s.injektAnalyseAhead,
+            hint: "The current and next track are always analysed when a track starts. This also measures the one after, so skipping ahead lands on a transition that is ready too.",
+            enabled: on
+        ) { v in update { $0.injektAnalyseAhead = v } }
         SettingToggle("Analyse on Wi-Fi only", s.injektAnalyseOnWifiOnly, hint: "Never spend mobile data on analysis.", enabled: on) { v in
             update { $0.injektAnalyseOnWifiOnly = v }
         }

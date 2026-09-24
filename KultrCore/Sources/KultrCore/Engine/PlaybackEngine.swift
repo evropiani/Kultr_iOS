@@ -59,7 +59,11 @@ private func ms(_ seconds: Double) -> Int64 {
  */
 @MainActor
 final class PlaybackEngine: DeckListener {
-    static let prepareLeadMs: Int64 = 35_000
+    /**
+     * How long before a hand-over the next track's audio is loaded. The
+     * hand-over itself is planned as soon as the current track starts.
+     */
+    static let primeLeadMs: Int64 = 30_000
     static let incomingStartTimeoutMs: Int64 = 5_000
     static let bassCutDb = -26.0
     static let sweepFromHz = 20.0
@@ -107,6 +111,8 @@ final class PlaybackEngine: DeckListener {
     private final class Pending {
         let item: QueueItem
         let plan: TransitionPlan
+        /** Whether the next track's audio has been loaded for it yet (see [primeLeadMs]). */
+        var primed = false
         init(item: QueueItem, plan: TransitionPlan) {
             self.item = item
             self.plan = plan
@@ -483,6 +489,10 @@ final class PlaybackEngine: DeckListener {
         let duration = durationMs
         if duration <= 0 { return }
         if let p = pending {
+            if !p.primed {
+                if dueMs(p, duration) - position > Self.primeLeadMs { return }
+                prime(p)
+            }
             if p.plan.type == .gapless || p.plan.type == .cut { return }
             let startMs = min(ms(p.plan.startAt), duration - 50)
             let rampMs = ms(p.plan.outgoingRamp)
@@ -491,8 +501,18 @@ final class PlaybackEngine: DeckListener {
                 approach = Approach(deck: deck, rate: p.plan.outgoingRate, fromMs: position, toMs: startMs)
             }
             if position >= startMs { executeTransition(p) }
-        } else if duration - position <= Self.prepareLeadMs && preparedFor != item.uid && !pauseAtEndOfTrack {
+        } else if preparedFor != item.uid && !pauseAtEndOfTrack {
+            // Plan as soon as the track plays: the planner then has the whole
+            // track to choose a mix-out point from, and the plan shows at once.
             prepareNext()
+        }
+    }
+
+    /** Where in the current track the hand-over in [p] happens. */
+    private func dueMs(_ p: Pending, _ duration: Int64) -> Int64 {
+        switch p.plan.type {
+        case .gapless, .cut: return duration
+        default: return min(ms(p.plan.startAt), duration - 50)
         }
     }
 
@@ -605,7 +625,12 @@ final class PlaybackEngine: DeckListener {
                 if Task.isCancelled { return }
                 plan = self.fallbackPlan(context.durationA)
             }
-            guard !Task.isCancelled, self.currentItem?.uid == current.uid, self.peekNext()?.uid == next.uid else { return }
+            guard !Task.isCancelled, self.currentItem?.uid == current.uid else { return }
+            if self.peekNext()?.uid != next.uid {
+                // The queue changed while this was being planned: plan again.
+                self.preparedFor = nil
+                return
+            }
             self.setPending(next, plan)
         }
     }
@@ -634,14 +659,23 @@ final class PlaybackEngine: DeckListener {
     }
 
     private func setPending(_ item: QueueItem, _ plan: TransitionPlan) {
-        pending = Pending(item: item, plan: plan)
+        let p = Pending(item: item, plan: plan)
+        pending = p
         if let current = currentItem { lastPlan = (current.uid, plan) }
-        switch plan.type {
-        case .gapless: active.setNext(item)
-        case .cut: primeIdle(item, 0)
-        default: primeIdle(item, ms(plan.inStartOffset))
-        }
+        // Load the next track now only if the hand-over is close; otherwise
+        // tick() does it nearer the time, so no stream is held open for minutes.
+        let duration = durationMs
+        if duration <= 0 || dueMs(p, duration) - active.positionMs <= Self.primeLeadMs { prime(p) }
         host.onStateChanged()
+    }
+
+    private func prime(_ p: Pending) {
+        p.primed = true
+        switch p.plan.type {
+        case .gapless: active.setNext(p.item)
+        case .cut: primeIdle(p.item, 0)
+        default: primeIdle(p.item, ms(p.plan.inStartOffset))
+        }
     }
 
     private func primeIdle(_ item: QueueItem, _ startMs: Int64) {

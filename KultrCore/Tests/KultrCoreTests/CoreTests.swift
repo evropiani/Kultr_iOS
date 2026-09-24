@@ -2,6 +2,14 @@ import XCTest
 @testable import KultrCore
 
 final class UtilTests: XCTestCase {
+    func testReadsServerTimesWithAndWithoutFractions() {
+        XCTAssertEqual(Format.isoMs("2026-09-24T10:00:00Z"), 1_790_244_000_000)
+        XCTAssertEqual(Format.isoMs("2026-09-24T10:00:00.123456789Z"), 1_790_244_000_000)
+        XCTAssertEqual(Format.isoMs("2026-09-24T12:00:00+02:00"), 1_790_244_000_000)
+        XCTAssertNil(Format.isoMs(""))
+        XCTAssertNil(Format.isoMs(nil))
+    }
+
     func testFormatsTimes() {
         XCTAssertEqual(Format.time(nil), "0:00")
         XCTAssertEqual(Format.time(187.9), "3:07")
@@ -489,8 +497,9 @@ final class DatabaseTests: XCTestCase {
     }
 }
 
-/** A map-backed store, to exercise the sync logic without SQLite. */
-final class MemoryStore: LibraryStore {
+/** A map-backed store, to exercise the sync logic without SQLite. Safe to call from parallel readers. */
+final class MemoryStore: LibraryStore, @unchecked Sendable {
+    private let lock = NSLock()
     var artists: [String: Artist] = [:]
     var albums: [String: Album] = [:]
     var songs: [String: Song] = [:]
@@ -499,81 +508,192 @@ final class MemoryStore: LibraryStore {
     var state = SyncState()
 
     func albumStamps() async throws -> [String: AlbumStamp] {
-        albums.mapValues { AlbumStamp(songCount: $0.songCount, changed: $0.changed, duration: $0.duration) }
-    }
-    func putArtists(_ artists: [Artist]) async throws { for a in artists { self.artists[a.id] = a } }
-    func putAlbums(_ albums: [Album]) async throws { for a in albums { self.albums[a.id] = a } }
-    func replaceAlbumSongs(_ songsByAlbum: [String: [Song]]) async throws {
-        for (albumId, list) in songsByAlbum {
-            songs = songs.filter { $0.value.albumId != albumId }
-            for s in list { songs[s.id] = s }
-        }
-    }
-    func replacePlaylists(_ playlists: [Playlist]) async throws { self.playlists = playlists }
-    func replaceGenres(_ genres: [Genre]) async throws { self.genres = genres }
-    func deleteAlbumsNotIn(_ keep: Set<String>) async throws -> Int {
-        let gone = albums.keys.filter { !keep.contains($0) }
-        gone.forEach { albums[$0] = nil }
-        return gone.count
-    }
-    func deleteArtistsNotIn(_ keep: Set<String>) async throws -> Int {
-        let gone = artists.keys.filter { !keep.contains($0) }
-        gone.forEach { artists[$0] = nil }
-        return gone.count
-    }
-    func deleteSongsOutsideAlbums(_ albumIds: Set<String>) async throws -> Int {
-        let gone = songs.values.filter { $0.albumId == nil || !albumIds.contains($0.albumId!) }.map { $0.id }
-        gone.forEach { songs[$0] = nil }
-        return gone.count
-    }
-    func counts() async throws -> LibraryCounts {
-        LibraryCounts(artists: artists.count, albums: albums.count, songs: songs.count, playlists: playlists.count, genres: genres.count)
-    }
-    func syncState() async throws -> SyncState { state }
-    func setSyncState(_ state: SyncState) async throws { self.state = state }
-}
-
-final class LibrarySyncTests: XCTestCase {
-    override func setUp() {
-        MockURLProtocol.handler = { request in
-            let components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
-            let id = components.queryItems?.first(where: { $0.name == "id" })?.value ?? ""
-            let head = #"{"subsonic-response":{"status":"ok","version":"1.16.1""#
-            switch components.path.split(separator: "/").last.map(String.init) {
-            case "ping": return (200, head + "}}")
-            case "getArtists": return (200, head + #","artists":{"index":[{"name":"A","artist":[{"id":"ar1","name":"A"}]}]}}}"#)
-            case "getAlbumList2":
-                return (200, head + #","albumList2":{"album":[{"id":"al1","name":"One","songCount":2,"created":"2024"},{"id":"al2","name":"Two","songCount":1,"created":"2025"}]}}}"#)
-            case "getAlbum":
-                let songs = id == "al1"
-                    ? #"[{"id":"s1","albumId":"al1"},{"id":"s2","albumId":"al1"}]"#
-                    : #"[{"id":"s3","albumId":"al2"}]"#
-                return (200, head + #","album":{"id":""# + id + #"","song":"# + songs + "}}}")
-            case "getPlaylists": return (200, head + #","playlists":{"playlist":[{"id":"p1","name":"Mix"}]}}}"#)
-            case "getPlaylist": return (200, head + #","playlist":{"id":"p1","name":"Mix","entry":[{"id":"s1"}]}}}"#)
-            case "getGenres": return (200, head + #","genres":{"genre":[{"value":"Rock","songCount":3}]}}}"#)
-            default: return (404, "")
+        lock.withLock {
+            albums.mapValues {
+                AlbumStamp(songCount: $0.songCount, changed: $0.changed, duration: $0.duration, playCount: $0.playCount, played: $0.played)
             }
         }
     }
+    func putArtists(_ artists: [Artist]) async throws { lock.withLock { for a in artists { self.artists[a.id] = a } } }
+    func putAlbums(_ albums: [Album]) async throws {
+        lock.withLock {
+            for a in albums {
+                var copy = a
+                copy.song = nil
+                self.albums[a.id] = copy
+            }
+        }
+    }
+    func replaceAlbumSongs(_ songsByAlbum: [String: [Song]]) async throws {
+        lock.withLock {
+            for (albumId, list) in songsByAlbum {
+                songs = songs.filter { $0.value.albumId != albumId }
+                for s in list { songs[s.id] = s }
+            }
+        }
+    }
+    func replacePlaylists(_ playlists: [Playlist]) async throws { lock.withLock { self.playlists = playlists } }
+    func replaceGenres(_ genres: [Genre]) async throws { lock.withLock { self.genres = genres } }
+    func deleteAlbumsNotIn(_ keep: Set<String>) async throws -> Int {
+        lock.withLock {
+            let gone = albums.keys.filter { !keep.contains($0) }
+            gone.forEach { albums[$0] = nil }
+            return gone.count
+        }
+    }
+    func deleteArtistsNotIn(_ keep: Set<String>) async throws -> Int {
+        lock.withLock {
+            let gone = artists.keys.filter { !keep.contains($0) }
+            gone.forEach { artists[$0] = nil }
+            return gone.count
+        }
+    }
+    func deleteSongsOutsideAlbums(_ albumIds: Set<String>) async throws -> Int {
+        lock.withLock {
+            let gone = songs.values.filter { $0.albumId == nil || !albumIds.contains($0.albumId!) }.map { $0.id }
+            gone.forEach { songs[$0] = nil }
+            return gone.count
+        }
+    }
+    func counts() async throws -> LibraryCounts {
+        lock.withLock {
+            LibraryCounts(artists: artists.count, albums: albums.count, songs: songs.count, playlists: playlists.count, genres: genres.count)
+        }
+    }
+    func syncState() async throws -> SyncState { lock.withLock { state } }
+    func setSyncState(_ state: SyncState) async throws { lock.withLock { self.state = state } }
+}
 
-    func testFullSyncMirrorsEverythingAndCheckIsUpToDate() async throws {
+/** What the mock server holds: albums, their tracks, and how often each was played. */
+private final class FakeServer: @unchecked Sendable {
+    private let lock = NSLock()
+    /** Album id → (changed, track ids). */
+    let library: [(id: String, changed: String, songs: [String])] = [
+        ("al1", "t1", ["s1", "s2"]),
+        ("al2", "t1", ["s3"]),
+    ]
+    /** Album id → (play count, last played), as the server counts them. */
+    private var playsValue: [String: (Int, String)] = [:]
+    private var requests: [String] = []
+
+    var plays: [String: (Int, String)] {
+        get { lock.withLock { playsValue } }
+        set { lock.withLock { playsValue = newValue } }
+    }
+
+    var albumRequests: [String] { lock.withLock { requests.sorted() } }
+    func clearRequests() { lock.withLock { requests = [] } }
+
+    func respond(_ request: URLRequest) -> (Int, String) {
+        let components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
+        func query(_ name: String) -> String? { components.queryItems?.first(where: { $0.name == name })?.value }
+        let head = #"{"subsonic-response":{"status":"ok","version":"1.16.1""#
+        let plays = self.plays
+        switch components.path.split(separator: "/").last.map(String.init) {
+        case "ping": return (200, head + "}}")
+        case "getArtists": return (200, head + #","artists":{"index":[{"name":"A","artist":[{"id":"ar1","name":"A"}]}]}}}"#)
+        case "getAlbumList2":
+            // "recent" lists only played albums, most recently played first.
+            let recent = query("type") == "recent"
+            let entries = recent
+                ? library.filter { plays[$0.id] != nil }.sorted { plays[$0.id]!.1 > plays[$1.id]!.1 }
+                : library
+            let offset = Int(query("offset") ?? "0") ?? 0
+            let albums = offset > 0 ? "" : entries.map { entry -> String in
+                let played = plays[entry.id].map { #","playCount":\#($0.0),"played":"\#($0.1)""# } ?? ""
+                return #"{"id":"\#(entry.id)","name":"Album \#(entry.id)","artistId":"ar1","songCount":\#(entry.songs.count),"changed":"\#(entry.changed)","created":"2026-0\#(entry.id.suffix(1))-01"\#(played)}"#
+            }.joined(separator: ",")
+            return (200, head + #","albumList2":{"album":["# + albums + "]}}}")
+        case "getAlbum":
+            let id = query("id") ?? ""
+            lock.withLock { requests.append(id) }
+            let count = plays[id]?.0 ?? 0
+            let songs = (library.first { $0.id == id }?.songs ?? []).map {
+                #"{"id":"\#($0)","title":"\#($0)","albumId":"\#(id)","playCount":\#(count)}"#
+            }.joined(separator: ",")
+            return (200, head + #","album":{"id":"\#(id)","name":"Album \#(id)","song":["# + songs + "]}}}")
+        case "getPlaylists": return (200, head + #","playlists":{"playlist":[{"id":"p1","name":"Mix"}]}}}"#)
+        case "getPlaylist": return (200, head + #","playlist":{"id":"p1","name":"Mix","entry":[{"id":"s1"}]}}}"#)
+        case "getGenres": return (200, head + #","genres":{"genre":[{"value":"Rock","songCount":3}]}}}"#)
+        default: return (404, "")
+        }
+    }
+}
+
+final class LibrarySyncTests: XCTestCase {
+    private let server = FakeServer()
+
+    override func setUp() {
+        let server = self.server
+        MockURLProtocol.handler = { server.respond($0) }
+    }
+
+    private func client() -> SubsonicClient {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [MockURLProtocol.self]
-        let client = SubsonicClient(
+        return SubsonicClient(
             credentials: Credentials(serverUrl: "https://nd.example.com", username: "u", password: "p"),
             session: URLSession(configuration: config)
         )
+    }
+
+    private func sync(_ store: MemoryStore) -> LibrarySync {
+        LibrarySync(client: client(), store: store, clock: { 1000 })
+    }
+
+    func testFullSyncMirrorsEverythingAndCheckIsUpToDate() async throws {
         let store = MemoryStore()
-        let sync = LibrarySync(client: client, store: store, clock: { 1000 })
-        let summary = try await sync.run(mode: .full)
+        let summary = try await sync(store).run(mode: .full)
         XCTAssertEqual(summary.counts, LibraryCounts(artists: 1, albums: 2, songs: 3, playlists: 1, genres: 1))
         XCTAssertEqual(summary.albumsAdded, 2)
-        XCTAssertEqual(store.state.newestAlbumCreated, "2025")
+        XCTAssertEqual(store.state.newestAlbumCreated, "2026-02-01")
         XCTAssertEqual(store.playlists.first?.entry?.map { $0.id }, ["s1"])
 
-        let check = try await sync.run(mode: .check)
+        server.clearRequests()
+        let check = try await sync(store).run(mode: .check)
         XCTAssertTrue(check.upToDate)
+        XCTAssertTrue(server.albumRequests.isEmpty)
         XCTAssertEqual(store.state.lastFullSync, 1000)
+    }
+
+    func testCheckRereadsAlbumsPlayedSinceWithoutCallingThemChanged() async throws {
+        let store = MemoryStore()
+        _ = try await sync(store).run(mode: .full)
+        server.clearRequests()
+
+        server.plays = ["al2": (4, "2026-09-24T10:00:00Z")]
+        let summary = try await sync(store).run(mode: .check)
+        XCTAssertEqual(server.albumRequests, ["al2"])
+        XCTAssertEqual(summary.albumsPlayed, 1)
+        XCTAssertEqual(summary.albumsUpdated, 0)
+        XCTAssertTrue(summary.upToDate)
+        XCTAssertEqual(store.songs["s3"]?.playCount, 4)
+    }
+
+    func testListeningPullReadsBackOnlyAlbumsPlayedSince() async throws {
+        let store = MemoryStore()
+        server.plays = ["al1": (2, "2026-09-20T08:00:00Z")]
+        _ = try await sync(store).run(mode: .full)
+        server.clearRequests()
+
+        // Played elsewhere: al2 for the first time, al1 not again.
+        server.plays = ["al1": (2, "2026-09-20T08:00:00Z"), "al2": (1, "2026-09-24T09:00:00Z")]
+        let listening = ListeningSync(client: client(), store: store)
+        let pull = try await listening.pull()
+        XCTAssertEqual(pull.albumsChanged, 1)
+        XCTAssertEqual(server.albumRequests, ["al2"])
+        XCTAssertEqual(store.songs["s3"]?.playCount, 1)
+        XCTAssertEqual(store.albums["al2"]?.played, "2026-09-24T09:00:00Z")
+        XCTAssertEqual(store.state.listeningPulledThrough, "2026-09-24T09:00:00Z")
+
+        // Nothing new: nothing re-read.
+        server.clearRequests()
+        let again = try await listening.pull()
+        XCTAssertEqual(again.albumsChanged, 0)
+        XCTAssertTrue(server.albumRequests.isEmpty)
+
+        // A later library sync keeps the watermark.
+        _ = try await sync(store).run(mode: .check)
+        XCTAssertEqual(store.state.listeningPulledThrough, "2026-09-24T09:00:00Z")
     }
 }

@@ -128,7 +128,8 @@ private struct HomeShelf: View {
         var key = tile.id.hasPrefix("random")
             ? "\(tile.id):\(counts.songs):\(counts.albums):\(counts.artists):\(lastCheck ?? 0)"
             : "\(tile.id):\(graph.library.version):\(lastCheck ?? 0)"
-        if tile.id == "recentlyPlayed" { key += ":\(graph.player.state.current?.id ?? ""):\(graph.library.historyVersion)" }
+        // Bumped when plays went up to the server or came down from other devices.
+        if tile.id == "recentlyPlayed" { key += ":\(graph.player.state.current?.id ?? ""):\(graph.library.historyVersion):\(graph.sync.listeningVersion)" }
         if tile.id == "favouriteRadios" { key += ":\(theme.settings.favouriteRadios.joined(separator: ","))" }
         return key
     }

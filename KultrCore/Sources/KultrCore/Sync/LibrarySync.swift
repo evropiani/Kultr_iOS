@@ -33,6 +33,8 @@ struct SyncState: Codable, Hashable {
     var serverType: String?
     /** Newest album `created` timestamp seen, used for cheap delta checks. */
     var newestAlbumCreated: String?
+    /** Newest album `played` time read by [ListeningSync]; older plays are already known. */
+    var listeningPulledThrough: String?
 
     init(
         lastFullSync: Int64? = nil,
@@ -40,7 +42,8 @@ struct SyncState: Codable, Hashable {
         counts: LibraryCounts = LibraryCounts(),
         serverVersion: String? = nil,
         serverType: String? = nil,
-        newestAlbumCreated: String? = nil
+        newestAlbumCreated: String? = nil,
+        listeningPulledThrough: String? = nil
     ) {
         self.lastFullSync = lastFullSync
         self.lastCheck = lastCheck
@@ -48,10 +51,11 @@ struct SyncState: Codable, Hashable {
         self.serverVersion = serverVersion
         self.serverType = serverType
         self.newestAlbumCreated = newestAlbumCreated
+        self.listeningPulledThrough = listeningPulledThrough
     }
 
     enum CodingKeys: String, CodingKey {
-        case lastFullSync, lastCheck, counts, serverVersion, serverType, newestAlbumCreated
+        case lastFullSync, lastCheck, counts, serverVersion, serverType, newestAlbumCreated, listeningPulledThrough
     }
 
     init(from decoder: Decoder) throws {
@@ -62,6 +66,7 @@ struct SyncState: Codable, Hashable {
         serverVersion = c.string(.serverVersion)
         serverType = c.string(.serverType)
         newestAlbumCreated = c.string(.newestAlbumCreated)
+        listeningPulledThrough = c.string(.listeningPulledThrough)
     }
 }
 
@@ -76,6 +81,8 @@ struct SyncSummary: Hashable {
     let songsRemoved: Int
     let upToDate: Bool
     let errors: [String]
+    /** Albums re-read only because they were played since, here or on another device. */
+    var albumsPlayed: Int = 0
 }
 
 /** What an album looked like last time, to decide whether its tracks need re-reading. */
@@ -83,6 +90,21 @@ struct AlbumStamp: Hashable {
     let songCount: Int?
     let changed: String?
     let duration: Int?
+    var playCount: Int64? = nil
+    var played: String? = nil
+
+    /** The album itself (its tracks, their tags) is different from [album]. */
+    func contentDiffers(_ album: Album) -> Bool {
+        songCount != album.songCount || changed != album.changed || duration != album.duration
+    }
+
+    /**
+     * It has been played since: its tracks' play counts and last-played times
+     * on this phone are out of date.
+     */
+    func playsDiffer(_ album: Album) -> Bool {
+        (playCount ?? 0) != (album.playCount ?? 0) || (played ?? "") != (album.played ?? "")
+    }
 }
 
 /**
@@ -235,10 +257,14 @@ final class LibrarySync {
             let stale = albums.filter { album in
                 if mode == .full { return true }
                 guard let before = previous[album.id] else { return true }
-                return before.songCount != album.songCount || before.changed != album.changed || before.duration != album.duration
+                return before.contentDiffers(album) || before.playsDiffer(album)
             }
             let albumsAdded = albums.filter { previous[$0.id] == nil }.count
-            let albumsUpdated = max(0, stale.count - albumsAdded)
+            // Played-only changes are not news about the library itself.
+            let albumsPlayed = mode == .full ? 0 : stale.filter { album in
+                previous[album.id].map { !$0.contentDiffers(album) } == true
+            }.count
+            let albumsUpdated = max(0, stale.count - albumsAdded - albumsPlayed)
 
             emit(.songs, stale.isEmpty ? "Tracks already up to date" : "Reading tracks…", 0, max(1, stale.count), Self.wSongs)
             let shared = SongBuffer()
@@ -327,16 +353,14 @@ final class LibrarySync {
             let counts = try await store.counts()
             let newest = albums.compactMap { $0.created }.max()
             let before = try await store.syncState()
-            try await store.setSyncState(
-                SyncState(
-                    lastFullSync: mode == .full ? startedAt : before.lastFullSync,
-                    lastCheck: startedAt,
-                    counts: counts,
-                    serverVersion: info.serverVersion ?? info.version,
-                    serverType: info.type,
-                    newestAlbumCreated: newest
-                )
-            )
+            var state = before
+            state.lastFullSync = mode == .full ? startedAt : before.lastFullSync
+            state.lastCheck = startedAt
+            state.counts = counts
+            state.serverVersion = info.serverVersion ?? info.version
+            state.serverType = info.type
+            state.newestAlbumCreated = newest
+            try await store.setSyncState(state)
             onProgress(SyncProgress(phase: .done, message: "Library up to date", current: 1, total: 1, percent: 1))
             return SyncSummary(
                 mode: mode,
@@ -348,7 +372,8 @@ final class LibrarySync {
                 albumsRemoved: albumsRemoved,
                 songsRemoved: songsRemoved,
                 upToDate: mode == .check && albumsAdded == 0 && albumsUpdated == 0 && albumsRemoved == 0,
-                errors: errors
+                errors: errors,
+                albumsPlayed: albumsPlayed
             )
         } catch is CancellationError {
             onProgress(SyncProgress(phase: .cancelled, message: "Sync cancelled", current: 0, total: 1, percent: 0))

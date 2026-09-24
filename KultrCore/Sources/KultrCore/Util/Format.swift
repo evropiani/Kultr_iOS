@@ -55,6 +55,14 @@ enum Format {
         integerFormatter.string(from: NSNumber(value: value)) ?? String(value)
     }
 
+    /** Milliseconds since 1970 for an ISO 8601 time as servers send it, with or without fractions of a second. */
+    static func isoMs(_ text: String?) -> Int64? {
+        guard let text, !text.isEmpty else { return nil }
+        let plain = text.replacingOccurrences(of: #"\.\d+"#, with: "", options: .regularExpression)
+        guard let date = ISO8601DateFormatter().date(from: plain) else { return nil }
+        return Int64(date.timeIntervalSince1970 * 1000)
+    }
+
     static func nowMs() -> Int64 {
         Int64(Date().timeIntervalSince1970 * 1000)
     }

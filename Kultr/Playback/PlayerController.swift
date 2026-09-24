@@ -170,10 +170,15 @@ final class PlayerController: EngineHost {
     // --------------------------------------------------------- restore --
 
     private func restore() {
-        guard graph.settings.current.resumeOnStart, let saved = SessionStore.load(),
-              saved.profileId == graph.auth.active?.id, !saved.songs.isEmpty
-        else { return }
+        guard graph.settings.current.resumeOnStart else { return }
+        _ = loadSavedSession()
+    }
+
+    /** Put the last saved queue back, at the position it stopped. False if there is none for this server. */
+    private func loadSavedSession() -> Bool {
+        guard let saved = SessionStore.load(), saved.profileId == graph.auth.active?.id, !saved.songs.isEmpty else { return false }
         engine.setQueue(engine.newItems(saved.songs), startIndex: saved.index, startPositionMs: saved.positionMs)
+        return true
     }
 
     private func saveSession() {
@@ -307,8 +312,11 @@ final class PlayerController: EngineHost {
 
     func onTrackStarted(_ item: QueueItem, reason: TrackChangeReason) {
         tracker.start(item.song)
-        graph.analysis.analyseAhead(item.song)
-        if engine.index + 1 < engine.queue.count { graph.analysis.analyseAhead(engine.queue[engine.index + 1].song) }
+        // This track and the next are analysed for the plan made now; look
+        // one further, so skipping ahead lands on a transition that is ready too.
+        for ahead in 1...2 where engine.index + ahead < engine.queue.count {
+            graph.analysis.analyseAhead(engine.queue[engine.index + ahead].song)
+        }
         saveSession()
     }
 
@@ -357,7 +365,9 @@ final class PlayerController: EngineHost {
     }
 
     func toggle() {
-        if engine.status == .ended {
+        if engine.queue.isEmpty {
+            resume()
+        } else if engine.status == .ended {
             engine.seekTo(0, positionMs: 0, manual: false)
             setPlaying(true)
         } else if engine.playWhenReady {
@@ -368,7 +378,12 @@ final class PlayerController: EngineHost {
         }
     }
 
+    /**
+     * Play. With nothing loaded (after the app was closed, from headphones or
+     * Control Center), pick up the last queue where it stopped.
+     */
     func resume() {
+        if engine.queue.isEmpty && !loadSavedSession() { return }
         engine.prepare()
         setPlaying(true)
     }

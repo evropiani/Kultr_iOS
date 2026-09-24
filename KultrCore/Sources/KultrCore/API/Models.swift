@@ -213,6 +213,8 @@ struct Album: Codable, Hashable, Identifiable {
     var songCount: Int?
     var duration: Int?
     var playCount: Int64?
+    /** When any of its tracks was last played (OpenSubsonic; Navidrome sends it). */
+    var played: String?
     var created: String?
     var changed: String?
     var starred: String?
@@ -233,6 +235,7 @@ struct Album: Codable, Hashable, Identifiable {
         songCount: Int? = nil,
         duration: Int? = nil,
         playCount: Int64? = nil,
+        played: String? = nil,
         created: String? = nil,
         changed: String? = nil,
         starred: String? = nil,
@@ -251,6 +254,7 @@ struct Album: Codable, Hashable, Identifiable {
         self.songCount = songCount
         self.duration = duration
         self.playCount = playCount
+        self.played = played
         self.created = created
         self.changed = changed
         self.starred = starred
@@ -263,7 +267,7 @@ struct Album: Codable, Hashable, Identifiable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, artist, artistId, coverArt, songCount, duration, playCount, created, changed, starred
+        case id, name, artist, artistId, coverArt, songCount, duration, playCount, played, created, changed, starred
         case year, genre, userRating, sortName, isCompilation, song
     }
 
@@ -280,6 +284,7 @@ struct Album: Codable, Hashable, Identifiable {
         songCount = c.int(.songCount)
         duration = c.int(.duration)
         playCount = c.int64(.playCount)
+        played = c.string(.played)
         created = c.string(.created)
         changed = c.string(.changed)
         starred = c.string(.starred)
