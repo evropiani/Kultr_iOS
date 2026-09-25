@@ -17,6 +17,7 @@ Environment:
   IPA          path to the built Kultr.ipa, for its size
   REPOSITORY   owner/repo, for the download address
   SOURCE_FILE  optional: the name the source file should have; it is renamed to it
+  DEVELOPER_NAME  optional: the developer name shown for Kultr
   SOURCE_NAME, SOURCE_IDENTIFIER, SOURCE_ICON
                optional: the source's own name, identifier and icon, kept as given
 """
@@ -73,6 +74,9 @@ def update_source(source, entry):
         if not is_kultr(app):
             continue
         count += 1
+        developer = os.environ.get("DEVELOPER_NAME", "").strip()
+        if developer:
+            app["developerName"] = developer
         # Newer sources list every version; keep the file's own shape and only
         # add to that list when it already has one.
         if isinstance(app.get("versions"), list):
