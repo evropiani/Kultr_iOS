@@ -16,6 +16,7 @@ Environment:
   NOTES_FILE   the release notes (Markdown); the part before "## Install" is used
   IPA          path to the built Kultr.ipa, for its size
   REPOSITORY   owner/repo, for the download address
+  SOURCE_FILE  optional: the name the source file should have; it is renamed to it
 """
 
 import datetime
@@ -51,7 +52,7 @@ def plain_notes(path):
     for line in text.splitlines():
         if line.startswith("#"):
             continue
-        line = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", line)  # links → their text
+        line = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", line)  # links → text (address)
         line = line.replace("**", "").replace("`", "")
         line = re.sub(r"^- ", "• ", line)
         lines.append(line.rstrip())
@@ -112,6 +113,7 @@ def main():
         "minOSVersion": MIN_OS,
     }
 
+    wanted_name = os.environ.get("SOURCE_FILE", "").strip()
     gist = api("GET", f"https://api.github.com/gists/{gist_id}", token)
     changed = {}
     for name, file in gist.get("files", {}).items():
@@ -128,14 +130,19 @@ def main():
         text = json.dumps(source, indent=indent_of(content), ensure_ascii=False)
         if content.endswith("\n"):
             text += "\n"
-        if text != content:
+        rename = wanted_name and name != wanted_name and wanted_name not in gist.get("files", {})
+        if text != content or rename:
             changed[name] = {"content": text}
+            if rename:
+                changed[name]["filename"] = wanted_name
 
     if not changed:
         print("Found no source file with Kultr in the gist, or it was already up to date.", file=sys.stderr)
         return 1
     api("PATCH", f"https://api.github.com/gists/{gist_id}", token, {"files": changed})
-    print(f"Updated {', '.join(changed)} in gist {gist_id} to Kultr {version}.")
+    for name, change in changed.items():
+        moved = f" (now called {change['filename']})" if "filename" in change else ""
+        print(f"Updated {name}{moved} in gist {gist_id} to Kultr {version}.")
     return 0
 
 

@@ -113,7 +113,7 @@ exist yet or replacing its IPA if it does. The build number is the workflow's
 run number.
 
 It then adds the release to the AltStore / SideStore source kept in a gist
-([apps.json](https://gist.github.com/evropiani/6e3a3c18525a228d03924674430c4d48),
+([evropiani.json](https://gist.github.com/evropiani/6e3a3c18525a228d03924674430c4d48),
 by `.github/scripts/update-source.py`), when the repository has a `GIST_TOKEN`
 secret (a classic token with only the *gist* scope).
 

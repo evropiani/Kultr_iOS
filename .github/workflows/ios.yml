@@ -200,6 +200,7 @@ jobs:
           BUILD: ${{ github.run_number }}
           IPA: out/Kultr.ipa
           REPOSITORY: ${{ github.repository }}
+          SOURCE_FILE: evropiani.json
         run: |
           export VERSION=$(grep -m1 "MARKETING_VERSION" Kultr.xcodeproj/project.pbxproj | sed -E 's/.*= ([^;]+);/\1/')
           export NOTES_FILE=".github/release-notes/v${VERSION}.md"
