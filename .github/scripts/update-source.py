@@ -18,6 +18,7 @@ Environment:
   REPOSITORY   owner/repo, for the download address
   SOURCE_FILE  optional: the name the source file should have; it is renamed to it
   DEVELOPER_NAME  optional: the developer name shown for Kultr
+  APP_DETAILS  optional: a JSON file whose fields (description, screenshots, …) are copied onto Kultr
   SOURCE_NAME, SOURCE_IDENTIFIER, SOURCE_ICON
                optional: the source's own name, identifier and icon, kept as given
 """
@@ -74,6 +75,11 @@ def update_source(source, entry):
         if not is_kultr(app):
             continue
         count += 1
+        # The store page: description, subtitle and screenshots, as kept in the repository.
+        details_file = os.environ.get("APP_DETAILS", "")
+        if details_file and os.path.exists(details_file):
+            with open(details_file, encoding="utf-8") as f:
+                app.update(json.load(f))
         developer = os.environ.get("DEVELOPER_NAME", "").strip()
         if developer:
             app["developerName"] = developer

@@ -1,0 +1,38 @@
+{
+  "subtitle": "A Navidrome player that mixes like a DJ.",
+  "localizedDescription": "Kultr is a modern, minimalist client for Navidrome and other Subsonic-compatible servers.\n\n• Your whole library, mirrored on the phone: browsing and search are instant and work offline.\n• Two real decks: crossfades with a choice of curves, gapless albums, or a clean cut.\n• InjeKt: tracks are analysed on the phone for tempo, beats, key and structure, then blended on the downbeat with a bass swap and a filter sweep, for an endless mix.\n• Downloads for offline listening, at the bitrate you choose.\n• Liquid glass on iOS 26, AirPlay, lock screen and Control Center.\n• Every play is sent to your server, so \"played recently\" is the same on all your devices.\n• Several servers, lyrics, favourites, ratings, playlists, internet radio, equaliser, sleep timer.\n\nFree and open source: github.com/evropiani/Kultr_iOS",
+  "screenshots": [
+    {
+      "imageURL": "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/1-home.jpg",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "imageURL": "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/2-album.jpg",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "imageURL": "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/3-library.jpg",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "imageURL": "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/4-search.jpg",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "imageURL": "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/5-listening.jpg",
+      "width": 1206,
+      "height": 2622
+    }
+  ],
+  "screenshotURLs": [
+    "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/1-home.jpg",
+    "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/2-album.jpg",
+    "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/3-library.jpg",
+    "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/4-search.jpg",
+    "https://raw.githubusercontent.com/evropiani/Kultr_iOS/main/docs/screenshots/5-listening.jpg"
+  ]
+}

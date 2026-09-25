@@ -203,6 +203,7 @@ jobs:
           SOURCE_FILE: evropiani.json
           SOURCE_NAME: evropiani
           DEVELOPER_NAME: evropiani
+          APP_DETAILS: .github/source/kultr.json
           SOURCE_IDENTIFIER: app.evropiani.source
           SOURCE_ICON: https://avatars.githubusercontent.com/u/298600384?s=400&u=352dc8c68bae25f44df17fdb24781be2d269ffbd&v=4
         run: |
