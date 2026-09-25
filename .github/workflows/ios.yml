@@ -187,3 +187,20 @@ jobs:
           else
             gh release create "$TAG" out/Kultr.ipa --title "Kultr for iOS ${VERSION}" --notes-file "$NOTES_FILE" --target "$GITHUB_SHA"
           fi
+
+      # The AltStore / SideStore source lives in a gist; this adds each new
+      # release to it. Needs a secret GIST_TOKEN (a classic token with only the
+      # "gist" scope) and the gist's id in SOURCE_GIST_ID; without them it
+      # skips quietly.
+      - name: Update the source gist
+        if: github.ref == 'refs/heads/main'
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: ${{ vars.SOURCE_GIST_ID }}
+          BUILD: ${{ github.run_number }}
+          IPA: out/Kultr.ipa
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          export VERSION=$(grep -m1 "MARKETING_VERSION" Kultr.xcodeproj/project.pbxproj | sed -E 's/.*= ([^;]+);/\1/')
+          export NOTES_FILE=".github/release-notes/v${VERSION}.md"
+          python3 .github/scripts/update-source.py

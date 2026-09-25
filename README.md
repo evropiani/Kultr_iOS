@@ -112,6 +112,11 @@ it as the GitHub release `v<version>`, creating the release if it doesn't
 exist yet or replacing its IPA if it does. The build number is the workflow's
 run number.
 
+It then adds the release to the AltStore / SideStore source kept in a gist
+(`.github/scripts/update-source.py`), when the repository has a `GIST_TOKEN`
+secret (a classic token with only the *gist* scope) and a `SOURCE_GIST_ID`
+variable.
+
 ## How it is put together
 
 | Part | What it holds |
