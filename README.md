@@ -76,6 +76,9 @@ then install it with your Apple ID:
   18 to 26 need a pairing file made on a computer once.
   [How](docs/INSTALL.md#without-a-computer-sideinstaller-and-localdevvpn)
 
+**AltStore / SideStore source:** `https://gist.githubusercontent.com/evropiani/6e3a3c18525a228d03924674430c4d48/raw/evropiani.json`
+Add it under **Sources** and new versions arrive as updates.
+
 With a free Apple ID the app has to be re-signed every 7 days. SideStore and
 Sideloadly can do that for you automatically. Your library, downloads and
 settings survive it, and installing a new release over the old one keeps them

@@ -398,6 +398,15 @@ install, update or refresh apps.
   **My Apps**.
 - **Updating:** download the new `Kultr.ipa` in Safari and install it with
   **+** again. Your servers, library, downloads and settings stay.
+- **Or let SideStore tell you about updates:** add Kultr's source once. In
+  SideStore open **Sources**, tap **+**, and paste
+
+  ```
+  https://gist.githubusercontent.com/evropiani/6e3a3c18525a228d03924674430c4d48/raw/evropiani.json
+  ```
+
+  Kultr then shows up under **Browse**, and SideStore offers each new version
+  as an update. The same address works in AltStore.
 - **Coming from a computer install?** Each tool names the app it installs a
   little differently, so SideStore may add a second Kultr instead of updating
   the one Sideloadly or Impactor put there. Your data stays in the old one,
