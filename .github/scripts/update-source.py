@@ -17,6 +17,8 @@ Environment:
   IPA          path to the built Kultr.ipa, for its size
   REPOSITORY   owner/repo, for the download address
   SOURCE_FILE  optional: the name the source file should have; it is renamed to it
+  SOURCE_NAME, SOURCE_IDENTIFIER, SOURCE_ICON
+               optional: the source's own name, identifier and icon, kept as given
 """
 
 import datetime
@@ -89,6 +91,23 @@ def update_source(source, entry):
     return count
 
 
+def set_source_details(source):
+    """The source's own name, identifier and icon, from the environment; they go first in the file."""
+    wanted = {
+        "name": os.environ.get("SOURCE_NAME", "").strip(),
+        "identifier": os.environ.get("SOURCE_IDENTIFIER", "").strip(),
+        "iconURL": os.environ.get("SOURCE_ICON", "").strip(),
+    }
+    wanted = {key: value for key, value in wanted.items() if value}
+    if not wanted:
+        return source
+    rest = {key: value for key, value in source.items() if key not in wanted}
+    ordered = {key: source.get(key) for key in ("name", "identifier", "iconURL") if key in source or key in wanted}
+    ordered.update(wanted)
+    ordered.update(rest)
+    return ordered
+
+
 def indent_of(text):
     match = re.search(r'\n( +)"', text)
     return len(match.group(1)) if match else 2
@@ -127,6 +146,7 @@ def main():
             continue
         if not isinstance(source, dict) or not update_source(source, entry):
             continue
+        source = set_source_details(source)
         text = json.dumps(source, indent=indent_of(content), ensure_ascii=False)
         if content.endswith("\n"):
             text += "\n"
