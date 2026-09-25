@@ -70,8 +70,10 @@ def update_source(source, entry):
         if not is_kultr(app):
             continue
         count += 1
-        versions = [v for v in app.get("versions", []) if v.get("version") != entry["version"]]
-        app["versions"] = [entry] + versions
+        # Newer sources list every version; keep the file's own shape and only
+        # add to that list when it already has one.
+        if isinstance(app.get("versions"), list):
+            app["versions"] = [entry] + [v for v in app["versions"] if v.get("version") != entry["version"]]
         # Older sources describe a single version on the app itself.
         legacy = {
             "version": entry["version"],
@@ -81,7 +83,7 @@ def update_source(source, entry):
             "size": entry["size"],
         }
         for key, value in legacy.items():
-            if key in app:
+            if key in app or "versions" not in app:
                 app[key] = value
     return count
 

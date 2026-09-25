@@ -189,14 +189,14 @@ jobs:
           fi
 
       # The AltStore / SideStore source lives in a gist; this adds each new
-      # release to it. Needs a secret GIST_TOKEN (a classic token with only the
-      # "gist" scope) and the gist's id in SOURCE_GIST_ID; without them it
-      # skips quietly.
+      # release to it (gist.github.com/evropiani/6e3a3c18525a228d03924674430c4d48,
+      # or SOURCE_GIST_ID if set). Needs a secret GIST_TOKEN (a classic token
+      # with only the "gist" scope); without it the step skips quietly.
       - name: Update the source gist
         if: github.ref == 'refs/heads/main'
         env:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
-          GIST_ID: ${{ vars.SOURCE_GIST_ID }}
+          GIST_ID: ${{ vars.SOURCE_GIST_ID || '6e3a3c18525a228d03924674430c4d48' }}
           BUILD: ${{ github.run_number }}
           IPA: out/Kultr.ipa
           REPOSITORY: ${{ github.repository }}
