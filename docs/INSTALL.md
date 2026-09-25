@@ -5,6 +5,9 @@ Store before. The first time takes about 20 minutes. After that it takes 2
 minutes. Your iPhone does **not** need to be jailbroken, and nothing here voids
 your warranty.
 
+**No computer?** On iOS 27 you can do all of it on the iPhone itself, with
+SideInstaller and LocalDevVPN: [jump to *Without a computer*](#without-a-computer-sideinstaller-and-localdevvpn).
+
 **Jump to:** [What you need](#what-you-need) ·
 [1. Download](#1-download-kultr) ·
 [2. Install the tool](#2-install-the-installing-tool-on-your-computer) ·
@@ -13,6 +16,7 @@ your warranty.
 [5. Unlock it on the iPhone](#5-let-the-iphone-open-it) ·
 [6. The 7-day rule](#6-keeping-kultr-working-the-7-day-rule) ·
 [7. Updating](#7-updating-to-a-new-version) ·
+[Without a computer](#without-a-computer-sideinstaller-and-localdevvpn) ·
 [Troubleshooting](#troubleshooting)
 
 ---
@@ -44,7 +48,7 @@ unless you refresh it. Refreshing takes a minute and keeps all your data.
 | | |
 |---|---|
 | An **iPhone or iPad** | running iOS 17 or newer (Settings → General → About → iOS Version) |
-| A **computer** | Windows 10/11, a Mac, or a Linux PC. You only need it for installing and refreshing |
+| A **computer** | Windows 10/11, a Mac, or a Linux PC. You only need it for installing and refreshing. On iOS 27 you can [skip the computer](#without-a-computer-sideinstaller-and-localdevvpn) |
 | A **cable** | the one you charge your iPhone with. It must carry data, not only charge |
 | An **Apple ID** | the one you already use is fine. Some people make a second, free Apple ID just for sideloading. That's optional |
 | A **Navidrome server** | (or any Subsonic-compatible server) with its address, your username and your password |
@@ -316,6 +320,97 @@ To hear about new versions, open the
 
 ---
 
+## Without a computer: SideInstaller and LocalDevVPN
+
+Everything above uses a computer to sign Kultr and copy it over a cable. With
+two free apps, the iPhone can do that job itself:
+
+- **[LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044)** (App
+  Store) is a VPN that only ever connects to your own iPhone. It lets
+  sideloading tools talk to the phone the way a computer would. Nothing leaves
+  the phone through it, and it doesn't use extra battery.
+- **[SideInstaller](https://github.com/FrizzleM/SideInstaller)** installs
+  **SideStore** for you, on the phone. SideStore is a small app store for your
+  own apps: it installs `Kultr.ipa` with your Apple ID, and re-signs it every
+  week in the background, so the [7-day rule](#6-keeping-kultr-working-the-7-day-rule)
+  takes care of itself.
+
+| Your iOS version | Does it work without a computer? |
+|---|---|
+| **iOS 27** | ✅ Yes, start to finish |
+| **iOS 18 to 26** | ⚠️ Yes, but only after a one-time *pairing file* is made [on a computer](https://docs.sidestore.io/docs/advanced/pairing-file) |
+| **iOS 17** | ❌ No. Use a computer, as in sections 1 to 5 |
+
+> ⚠️ **Get SideInstaller only from https://sideinstaller.net/** (or its
+> [GitHub page](https://github.com/FrizzleM/SideInstaller)). You type your
+> Apple ID password into it, and copies from anywhere else can steal it.
+> **sideinstaller.com is a fake site.** Don't use it.
+
+### 1. Install LocalDevVPN and connect it
+
+1. Install **[LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044)**
+   from the App Store.
+2. Open it and tap **Connect**. The first time, iOS asks to **Allow** adding a
+   VPN configuration. Allow it and enter your passcode.
+
+Leave it connected while you install, and whenever you want SideStore to
+install, update or refresh apps.
+
+### 2. Install SideInstaller
+
+1. In **Safari** on the iPhone, open **https://sideinstaller.net/**.
+2. Install SideInstaller with **any of the certificates** listed there. If one
+   fails or the app won't open, delete it and try another.
+3. If iOS says **“Untrusted Enterprise Developer”** when you open it, go to
+   **Settings → General → VPN & Device Management**, tap the developer listed
+   there and tap **Trust**.
+
+### 3. Let SideInstaller install SideStore
+
+1. Make sure LocalDevVPN says **Connected**.
+2. Open **SideInstaller** and sign in with your **Apple ID**. Type the 6-digit
+   code if one appears. Your password stays on the phone.
+3. Tap **Install SideStore**, and wait until it says it's done (usually well
+   under a minute).
+4. Trust your Apple ID and turn on Developer Mode, exactly as in
+   [section 5](#5-let-the-iphone-open-it) (skip whatever you've already done).
+5. Open **SideStore** and sign in with the **same Apple ID**. Go to **My Apps**
+   and tap the **7 DAYS** button next to SideStore once, to finish its setup. If
+   it asks to revoke or create a signing certificate, tap **Yes** or **Refresh
+   Now**.
+
+### 4. Install Kultr with SideStore
+
+1. In Safari on the iPhone, open
+   **https://github.com/evropiani/Kultr_iOS/releases/latest**, and under
+   **Assets** tap **`Kultr.ipa`**, then **Download**. It goes to the *Files*
+   app, in *Downloads*.
+2. With LocalDevVPN connected, open **SideStore → My Apps**, tap **+** in the
+   top corner, and pick **`Kultr.ipa`** from *Downloads*.
+3. Wait until Kultr shows up in the list, then open it from the home screen
+   and continue with [Open Kultr](#open-kultr).
+
+### Refreshing and updating
+
+- **Refreshing:** SideStore re-signs Kultr in the background before the 7 days
+  are up, as long as LocalDevVPN is connected. You can leave the VPN on all the
+  time. To do it yourself, tap the **days** button next to Kultr in
+  **My Apps**.
+- **Updating:** download the new `Kultr.ipa` in Safari and install it with
+  **+** again. Your servers, library, downloads and settings stay.
+- **Coming from a computer install?** Each tool names the app it installs a
+  little differently, so SideStore may add a second Kultr instead of updating
+  the one Sideloadly or Impactor put there. Your data stays in the old one,
+  so before you delete it, export your settings in Kultr (Settings →
+  Backup and reset) and sign in again in the new one.
+- **Handy:** SideInstaller's **Tools** tab lists the apps on the phone signed
+  with your Apple ID, and when each one expires.
+
+The [limits of a free Apple ID](#limits-of-a-free-apple-id) still apply, and
+SideStore counts as one of the 3 apps.
+
+---
+
 ## Troubleshooting
 
 ### Sideloadly doesn't see my iPhone
@@ -374,6 +469,15 @@ week. Delete a sideloaded app you no longer use, or wait a few days.
 ### Music stops when I lock the phone
 It shouldn't. Kultr plays in the background like any music app. Check that
 you're on the latest Kultr release, and tell us if it keeps happening.
+
+### SideStore or SideInstaller can't reach the iPhone, or an install hangs
+- Open LocalDevVPN and check it says **Connected**. Disconnect and connect it
+  again if it doesn't help.
+- Other VPNs (work, privacy or ad-blocking VPNs) can't run at the same time.
+  Turn them off while you install or refresh.
+- Be on Wi-Fi for the first setup.
+- On iOS 18 to 26 without a pairing file, this can't work. See the table in
+  [*Without a computer*](#without-a-computer-sideinstaller-and-localdevvpn).
 
 ### Still stuck?
 Open an issue at https://github.com/evropiani/Kultr_iOS/issues, or ask on

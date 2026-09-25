@@ -11,9 +11,10 @@ and Control Center controls, AirPlay, and downloads for offline listening.
 ## Features
 
 - **Liquid glass.** On iOS 26 the tab bar is the system's own liquid glass
-  bar, with the lens that follows your finger, a round search button, and
-  the mini player riding on it; on iOS 17 and 18 Kultr draws a floating
-  glass bar that behaves the same way. Every tab keeps its own pages with
+  bar, with the lens that follows your finger, a round search button that
+  grows into the search field, and the mini player riding on it; on iOS 17
+  and 18 Kultr draws a floating glass bar that behaves the same way. Light
+  and dark follow the iPhone's own setting. Every tab keeps its own pages with
   iOS's navigation bar, and Settings is a list of native pages.
 - **Library mirror.** The whole library is synced into a local database, so
   browsing and search are instant and work offline. Later syncs fetch only
@@ -38,9 +39,9 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   it happened (offline plays go later, exactly once), and plays from your
   other devices come back, so "played recently" and "played the most" are the
   same everywhere.
-- **Several servers.** Sign in to more than one server and switch between them.
-  Each has its own library, downloads and history. Passwords are kept in the
-  iOS Keychain.
+- **Several servers.** Sign in to more than one server, name them as you
+  like, and switch between them. Each has its own library, downloads and
+  history. Passwords are kept in the iOS Keychain.
 - **Home shelves** you choose and reorder: jump back in, recently added, most
   played, albums at random, favourites, playlists on repeat, internet radio
   and more.
@@ -55,19 +56,30 @@ and Control Center controls, AirPlay, and downloads for offline listening.
 
 Kultr isn't on the App Store. You install it yourself, a process called
 *sideloading*, which works on any iPhone or iPad running iOS 17 or later
-without jailbreaking. You need a computer (Windows, macOS or Linux) and a
-free Apple ID.
+without jailbreaking. All you need is a free Apple ID, and either a computer
+(Windows, macOS or Linux) or, on iOS 27, just the iPhone.
 
 **➡️ Step-by-step guide for first-timers: [docs/INSTALL.md](docs/INSTALL.md)**
 
 In short: download `Kultr.ipa` from the
 [latest release](https://github.com/evropiani/Kultr_iOS/releases/latest),
-then install it with [Sideloadly](https://sideloadly.io) (Windows, macOS),
-[AltStore](https://altstore.io) (Windows, macOS) or
-[Impactor](https://github.com/khcrysalis/PlumeImpactor) (Linux) using your Apple ID. With a
-free Apple ID the app has to be re-signed every 7 days. Your library, downloads
-and settings survive this, and installing a new release over the old one keeps
-them too.
+then install it with your Apple ID:
+
+- **With a computer:** [Sideloadly](https://sideloadly.io) (Windows, macOS),
+  [AltStore](https://altstore.io) (Windows, macOS) or
+  [Impactor](https://github.com/khcrysalis/PlumeImpactor) (Linux).
+- **Without a computer:** connect
+  [LocalDevVPN](https://apps.apple.com/app/localdevvpn/id6755608044), let
+  [SideInstaller](https://github.com/FrizzleM/SideInstaller) (only from
+  [sideinstaller.net](https://sideinstaller.net/)) install SideStore, and
+  install `Kultr.ipa` in SideStore. That works start to finish on iOS 27; iOS
+  18 to 26 need a pairing file made on a computer once.
+  [How](docs/INSTALL.md#without-a-computer-sideinstaller-and-localdevvpn)
+
+With a free Apple ID the app has to be re-signed every 7 days. SideStore and
+Sideloadly can do that for you automatically. Your library, downloads and
+settings survive it, and installing a new release over the old one keeps them
+too.
 
 The IPA is unsigned: the tool you install it with signs it for your device.
 Every push to `main` is built by GitHub Actions, and the resulting IPA
@@ -75,7 +87,7 @@ replaces the one on the current release.
 
 ## Building
 
-Requirements: macOS with Xcode 16 or newer (iOS 17 SDK). Then:
+Requirements: macOS with Xcode 26 or newer (the iOS 26 SDK; the app itself runs on iOS 17 and later). Then:
 
 ```sh
 swift test --package-path KultrCore     # core unit tests, no simulator needed
