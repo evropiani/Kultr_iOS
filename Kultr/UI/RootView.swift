@@ -71,6 +71,7 @@ private struct AppContent: View {
                         LoginScreen(
                             prefillUrl: request.url,
                             prefillUser: request.user,
+                            prefillLabel: request.label,
                             onCancel: { ui.login = nil },
                             onDone: { ui.login = nil }
                         )

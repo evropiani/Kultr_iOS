@@ -337,11 +337,12 @@ private struct Transport: View {
             .padding(.top, 4)
             HStack {
                 if !song.isRadio {
+                    let starred = graph.ui.isStarred(song)
                     IconButton(
-                        icon: song.isStarred ? "heart.fill" : "heart",
-                        tint: song.isStarred ? c.accent : c.ink2,
-                        label: song.isStarred ? "Remove from favourites" : "Add to favourites"
-                    ) { graph.actions.setFavourite(song, !song.isStarred) }
+                        icon: starred ? "heart.fill" : "heart",
+                        tint: starred ? c.accent : c.ink2,
+                        label: starred ? "Remove from favourites" : "Add to favourites"
+                    ) { graph.actions.setFavourite(song, !starred) }
                 }
                 IconButton(icon: "moon.fill", tint: player.sleepTimer != nil ? c.accent : c.ink2, label: "Sleep timer") {
                     graph.ui.sleepTimer = true

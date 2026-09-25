@@ -256,13 +256,12 @@ struct AlbumScreen: View {
                     }
                 } actions: {
                     Button {
-                        graph.actions.setAlbumFavourite(shown, !shown.isStarred)
-                        album?.starred = shown.isStarred ? nil : "now"
+                        graph.actions.setAlbumFavourite(shown, !graph.ui.isStarred(shown))
                     } label: {
-                        Image(systemName: shown.isStarred ? "heart.fill" : "heart")
+                        Image(systemName: graph.ui.isStarred(shown) ? "heart.fill" : "heart")
                             .contentTransition(.symbolEffect(.replace))
                     }
-                    .accessibilityLabel(shown.isStarred ? "Remove from favourites" : "Add to favourites")
+                    .accessibilityLabel(graph.ui.isStarred(shown) ? "Remove from favourites" : "Add to favourites")
                     DownloadToolbarButton(songs: songs, label: shown.name)
                     Menu {
                         Button { graph.actions.playNext(songs) } label: { Label("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") }
@@ -359,17 +358,12 @@ struct ArtistScreen: View {
                     }
                 } actions: {
                     Button {
-                        graph.actions.setArtistFavourite(shown, !shown.isStarred)
-                        if artist != nil {
-                            artist?.starred = shown.isStarred ? nil : "now"
-                        } else {
-                            remote?.starred = shown.isStarred ? nil : "now"
-                        }
+                        graph.actions.setArtistFavourite(shown, !graph.ui.isStarred(shown))
                     } label: {
-                        Image(systemName: shown.isStarred ? "heart.fill" : "heart")
+                        Image(systemName: graph.ui.isStarred(shown) ? "heart.fill" : "heart")
                             .contentTransition(.symbolEffect(.replace))
                     }
-                    .accessibilityLabel(shown.isStarred ? "Remove from favourites" : "Add to favourites")
+                    .accessibilityLabel(graph.ui.isStarred(shown) ? "Remove from favourites" : "Add to favourites")
                     DownloadToolbarButton(songs: songs, label: shown.name)
                     Menu {
                         Button {

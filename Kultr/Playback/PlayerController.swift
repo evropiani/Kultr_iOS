@@ -75,6 +75,7 @@ private final class ListeningTracker {
     private unowned let graph: AppGraph
     private var song: Song?
     private var listenedMs: Int64 = 0
+    private var lastPositionMs: Int64?
     private var scrobbled = false
 
     init(graph: AppGraph) {
@@ -84,13 +85,22 @@ private final class ListeningTracker {
     func start(_ song: Song) {
         self.song = song
         listenedMs = 0
+        lastPositionMs = nil
         scrobbled = false
         graph.scrobbles.nowPlaying(song)
     }
 
     func advance(_ deltaMs: Int64, durationMs: Int64, positionMs: Int64) {
         guard let current = song, !scrobbled, !current.isRadio else { return }
-        listenedMs += min(1_000, max(0, deltaMs))
+        // Listening is how far the track moved, not how often this ran: a
+        // late or throttled tick (in the background, with the phone locked)
+        // still counts in full. A jump the clock cannot account for is a seek.
+        let previous = lastPositionMs
+        lastPositionMs = positionMs
+        guard let previous else { return }
+        let moved = positionMs - previous
+        guard moved > 0, moved <= max(0, deltaMs) * 5 / 4 + 1_500 else { return }
+        listenedMs += moved
         let length = durationMs > 0 ? durationMs : Int64(current.duration ?? 0) * 1000
         let threshold = min(240_000, max(20_000, length / 2))
         if listenedMs >= threshold {

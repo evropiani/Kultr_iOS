@@ -54,7 +54,7 @@ struct SongMenuItems: View {
         Button { actions.enqueue([song]) } label: { Label("Add to queue", systemImage: "music.note.list") }
         if !song.isRadio {
             Button { actions.addToPlaylist([song]) } label: { Label("Add to playlist…", systemImage: "text.badge.plus") }
-            if song.isStarred {
+            if AppGraph.shared.ui.isStarred(song) {
                 Button { actions.setFavourite(song, false) } label: { Label("Remove from favourites", systemImage: "heart") }
             } else {
                 Button { actions.setFavourite(song, true) } label: { Label("Add to favourites", systemImage: "heart.fill") }
@@ -171,7 +171,7 @@ struct SongRow: View {
                     .foregroundStyle(c.ink3)
                     .padding(.trailing, 6)
             }
-            if song.isStarred {
+            if AppGraph.shared.ui.isStarred(song) {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 13))
                     .foregroundStyle(c.accent)

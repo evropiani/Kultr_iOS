@@ -8,6 +8,7 @@ struct LoginScreen: View {
     @Environment(\.kultr) private var theme
     var prefillUrl = ""
     var prefillUser = ""
+    var prefillLabel = ""
     var onCancel: (() -> Void)?
     var onDone: () -> Void = {}
 
@@ -118,6 +119,7 @@ struct LoginScreen: View {
                 filled = true
                 url = prefillUrl
                 user = prefillUser
+                label = prefillLabel
             }
         }
     }

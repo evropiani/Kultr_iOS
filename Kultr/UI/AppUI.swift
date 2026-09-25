@@ -66,6 +66,7 @@ enum Route: Hashable {
 struct LoginRequest: Equatable {
     var url = ""
     var user = ""
+    var label = ""
 }
 
 /** Navigation and the dialogs any screen can ask for; the root view shows them. */
@@ -76,6 +77,18 @@ final class AppUI {
     /** Each tab keeps its own stack of pages, like any iOS app. */
     var paths: [MainTab: [Route]] = [:]
     var playerOpen = false
+    /**
+     * Hearts as you last set them, by id, until the library has caught up. A
+     * heart shows this first, so tapping it again always undoes the last tap,
+     * even on a copy of the track that was drawn before the first one.
+     */
+    var starOverrides: [String: Bool] = [:]
+
+    func isStarred(_ id: String, _ stored: Bool) -> Bool { starOverrides[id] ?? stored }
+    func isStarred(_ song: Song) -> Bool { isStarred(song.id, song.isStarred) }
+    func isStarred(_ album: Album) -> Bool { isStarred(album.id, album.isStarred) }
+    func isStarred(_ artist: Artist) -> Bool { isStarred(artist.id, artist.isStarred) }
+
     /** What is typed in the search field, kept while you look at other tabs. */
     var searchQuery = ""
     /** The tab you came to search from; the collapsed tab bar goes back to it. */
@@ -204,25 +217,39 @@ final class AppActions {
         }
     }
 
-    func setFavourite(_ song: Song, _ starred: Bool) {
-        Task { report(await graph.library.setStarred(song, starred), starred ? "Added to favourites" : nil) }
-    }
-
-    func setFavourite(_ songs: [Song], _ starred: Bool) {
+    /** Hearts change the moment they are tapped; if the server says no, they go back. */
+    private func star(_ ids: [String], _ starred: Bool, _ send: @escaping () async -> String?, success: String?) {
+        let before = ids.map { ui.starOverrides[$0] }
+        for id in ids { ui.starOverrides[id] = starred }
+        Haptics.tap()
         Task {
-            report(
-                await graph.library.setStarred(songs, starred),
-                starred ? "Added \(songs.count) to favourites" : "Removed \(songs.count) from favourites"
-            )
+            let error = await send()
+            if error != nil {
+                for (id, old) in zip(ids, before) where ui.starOverrides[id] == starred { ui.starOverrides[id] = old }
+            }
+            report(error, success)
         }
     }
 
+    func setFavourite(_ song: Song, _ starred: Bool) {
+        star([song.id], starred, { await self.graph.library.setStarred(song, starred) }, success: starred ? "Added to favourites" : nil)
+    }
+
+    func setFavourite(_ songs: [Song], _ starred: Bool) {
+        star(
+            songs.map { $0.id },
+            starred,
+            { await self.graph.library.setStarred(songs, starred) },
+            success: starred ? "Added \(songs.count) to favourites" : "Removed \(songs.count) from favourites"
+        )
+    }
+
     func setAlbumFavourite(_ album: Album, _ starred: Bool) {
-        Task { report(await graph.library.setAlbumStarred(album, starred), starred ? "Added “\(album.name)” to favourites" : nil) }
+        star([album.id], starred, { await self.graph.library.setAlbumStarred(album, starred) }, success: starred ? "Added “\(album.name)” to favourites" : nil)
     }
 
     func setArtistFavourite(_ artist: Artist, _ starred: Bool) {
-        Task { report(await graph.library.setArtistStarred(artist, starred), starred ? "Added “\(artist.name)” to favourites" : nil) }
+        star([artist.id], starred, { await self.graph.library.setArtistStarred(artist, starred) }, success: starred ? "Added “\(artist.name)” to favourites" : nil)
     }
 
     func setRating(_ song: Song, _ rating: Int) {

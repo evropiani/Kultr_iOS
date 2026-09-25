@@ -34,8 +34,9 @@ struct AlbumCard: View {
         .contextMenu {
             CollectionMenuItems(name: album.name) { await AppGraph.shared.library.songsOfAlbumNow(album.id) }
             Divider()
-            Button { AppGraph.shared.actions.setAlbumFavourite(album, !album.isStarred) } label: {
-                Label(album.isStarred ? "Remove from favourites" : "Add to favourites", systemImage: album.isStarred ? "heart.slash" : "heart")
+            let starred = AppGraph.shared.ui.isStarred(album)
+            Button { AppGraph.shared.actions.setAlbumFavourite(album, !starred) } label: {
+                Label(starred ? "Remove from favourites" : "Add to favourites", systemImage: starred ? "heart.slash" : "heart")
             }
             if album.artistId != nil {
                 Button { AppGraph.shared.actions.openArtist(album.artistId) } label: { Label("Go to artist", systemImage: "person.fill") }
@@ -70,8 +71,9 @@ struct ArtistCard: View {
         .contextMenu {
             CollectionMenuItems(name: artist.name) { await AppGraph.shared.actions.artistSongs(artist) }
             Divider()
-            Button { AppGraph.shared.actions.setArtistFavourite(artist, !artist.isStarred) } label: {
-                Label(artist.isStarred ? "Remove from favourites" : "Add to favourites", systemImage: artist.isStarred ? "heart.slash" : "heart")
+            let starred = AppGraph.shared.ui.isStarred(artist)
+            Button { AppGraph.shared.actions.setArtistFavourite(artist, !starred) } label: {
+                Label(starred ? "Remove from favourites" : "Add to favourites", systemImage: starred ? "heart.slash" : "heart")
             }
         }
     }

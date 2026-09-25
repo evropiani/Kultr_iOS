@@ -765,6 +765,14 @@ private struct ServerSettings: View {
                     }
                     .contextMenu {
                         Button { rename(profile) } label: { Label("Rename", systemImage: "pencil") }
+                        if profile.hasCredentials {
+                            // Signing in again to the same address and user replaces the saved password.
+                            Button {
+                                graph.ui.login = LoginRequest(url: profile.serverUrl, user: profile.username, label: profile.label)
+                            } label: {
+                                Label("Change password…", systemImage: "key")
+                            }
+                        }
                         Button(role: .destructive) { forget = profile } label: { Label("Forget \(profile.label)", systemImage: "trash") }
                     }
                 }
