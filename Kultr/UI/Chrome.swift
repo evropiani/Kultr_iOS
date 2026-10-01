@@ -42,6 +42,11 @@ struct MainUI: View {
                     .transition(.move(edge: .bottom))
                     .zIndex(20)
             }
+            #if DEBUG
+            if ScreenshotState.shared.showWidgets {
+                WidgetPreviewScreen().zIndex(30)
+            }
+            #endif
         }
         .animation(theme.ease, value: graph.messages.current)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in

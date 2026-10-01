@@ -1,5 +1,7 @@
 #if DEBUG
 import Foundation
+import SwiftUI
+import WidgetKit
 
 /**
  * For CI's simulator screenshots only (Debug builds). With KULTR_DEMO_SERVER
@@ -75,6 +77,13 @@ enum ScreenshotDriver {
             if let artist = artists.first(where: { ($0.albumCount ?? 0) > 1 }) ?? artists.first {
                 actions.openArtist(artist.id)
             }
+        case "widget":
+            // The widget's faces, drawn by the app, with what is playing.
+            if let album = await library.recentlyAdded(3).last {
+                actions.play(await library.songsOfAlbumNow(album.id))
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+            }
+            ScreenshotState.shared.showWidgets = true
         case "player", "mini", "pull":
             if let album = await library.recentlyAdded(3).last {
                 let songs = await library.songsOfAlbumNow(album.id)
@@ -90,6 +99,50 @@ enum ScreenshotDriver {
     private static func mark(_ screen: String, _ note: String) {
         guard let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
         try? note.write(to: documents.appendingPathComponent("kultr-ready-\(screen)"), atomically: true, encoding: .utf8)
+    }
+}
+
+
+@MainActor
+@Observable
+final class ScreenshotState {
+    static let shared = ScreenshotState()
+    var showWidgets = false
+}
+
+/** The widget's faces as the home screen and lock screen would show them, for CI's screenshots. */
+struct WidgetPreviewScreen: View {
+    var body: some View {
+        let bridge = WidgetBridge.shared
+        ZStack {
+            LinearGradient(colors: [Color(red: 0.24, green: 0.18, blue: 0.42), Color(red: 0.06, green: 0.08, blue: 0.16)], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            VStack(spacing: 22) {
+                home(.systemMedium, width: 364, bridge)
+                HStack(spacing: 24) {
+                    home(.systemSmall, width: 170, bridge)
+                    VStack(spacing: 14) {
+                        NowPlayingWidgetView(family: .accessoryRectangular, snapshot: bridge.snapshot, artwork: nil)
+                            .frame(width: 160, height: 72)
+                        NowPlayingWidgetView(family: .accessoryCircular, snapshot: bridge.snapshot, artwork: nil)
+                            .frame(width: 72, height: 72)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(width: 170)
+                }
+                home(.systemSmall, width: 170, nil)
+            }
+            .padding(.top, 40)
+        }
+    }
+
+    private func home(_ family: WidgetFamily, width: CGFloat, _ bridge: WidgetBridge?) -> some View {
+        NowPlayingWidgetView(family: family, snapshot: bridge?.snapshot, artwork: bridge?.artwork)
+            .padding(14)
+            .frame(width: width, height: 170)
+            .background { NowPlayingWidgetBackground(snapshot: bridge?.snapshot, artwork: bridge?.artwork) }
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .shadow(color: .black.opacity(0.35), radius: 16, y: 8)
     }
 }
 #endif

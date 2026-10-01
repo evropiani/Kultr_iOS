@@ -292,7 +292,11 @@ a week and reinstall as described above. It takes a minute.
 
 ### Limits of a free Apple ID
 
-- At most **3 sideloaded apps** can be installed at the same time.
+- At most **3 sideloaded apps** can be installed at the same time. Kultr's
+  widget is an extra part of the app and counts as one of them. If your tool
+  says you've hit the limit, let it remove the app's extensions (SideStore and
+  AltStore offer to; Sideloadly has an option for it under *Advanced
+  options*). Kultr itself works the same without the widget.
 - At most **10 new app IDs per 7 days**. Reinstalling Kultr doesn't use a new
   one, but installing lots of different apps does.
 - The 7-day expiry described above.

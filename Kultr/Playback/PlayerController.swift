@@ -229,6 +229,7 @@ final class PlayerController: EngineHost {
         let info = TransitionInfo(upcoming: engine.currentPlan, active: engine.activeTransition, fromSongId: current?.id)
         if info != transition { transition = info }
         updateNowPlaying()
+        WidgetBridge.shared.update(state, positionMs: engine.positionMs)
     }
 
     /** Current position; read it on a timer, it is not part of [state]. */

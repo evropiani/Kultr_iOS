@@ -100,8 +100,8 @@ jobs:
             xcrun simctl spawn "$UDID" log show --last 20m --style compact --predicate 'process == "Kultr"' > "shots/${prefix}log.txt" 2>&1 || true
             xcrun simctl shutdown "$UDID" || true
           }
-          shoot 26 "" login home library library-switch songs album artist mini player search found settings stats sync
-          shoot 18 "ios18-" home lens mini library library-switch search found
+          shoot 26 "" login home widget library library-switch songs album artist mini player search found settings stats sync
+          shoot 18 "ios18-" home widget lens mini library library-switch search found
           LOOK=light shoot 26 "light-" mini found pull
           LOOK=light shoot 18 "ios18-light-" mini lens pull
 
@@ -138,6 +138,11 @@ jobs:
           grep -q "BUILD SUCCEEDED" build.log
           mkdir -p out/Payload
           cp -R build/Build/Products/Release-iphoneos/Kultr.app out/Payload/
+          # Signed ad hoc, only so the entitlements (the App Group the app and its
+          # widget share) travel with the IPA; the sideloading tool signs it for real.
+          codesign --force --sign - --entitlements Config/KultrWidget.entitlements out/Payload/Kultr.app/PlugIns/KultrWidget.appex
+          codesign --force --sign - --entitlements Config/Kultr.entitlements out/Payload/Kultr.app
+          codesign -d --entitlements - out/Payload/Kultr.app/PlugIns/KultrWidget.appex 2>&1 | grep -q group.app.kultr.ios
           (cd out && zip -qry Kultr.ipa Payload)
           ls -lh out/Kultr.ipa
 
