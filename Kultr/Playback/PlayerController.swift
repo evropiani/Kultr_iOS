@@ -195,12 +195,14 @@ final class PlayerController: EngineHost {
         }
         defaults.set(true, forKey: Self.restoringKey)
         defaults.synchronize()
-        _ = loadSavedSession()
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            UserDefaults.standard.removeObject(forKey: Self.restoringKey)
-        }
+        // Cleared once the restored state has been handed on (to the widget) on
+        // the next turn: a timer could be frozen with the app when iOS only woke
+        // Kultr in the background for a widget button.
+        restoring = loadSavedSession()
+        if !restoring { defaults.removeObject(forKey: Self.restoringKey) }
     }
+
+    @ObservationIgnored private var restoring = false
 
     /** Put the last saved queue back, at the position it stopped. False if there is none for this server. */
     private func loadSavedSession() -> Bool {
@@ -263,6 +265,10 @@ final class PlayerController: EngineHost {
             self.widgetUpdatePending = false
             let url = self.graph.auth.client?.coverArtUrl(self.state.current?.artworkId, size: 400)
             WidgetBridge.shared.update(self.state, positionMs: self.engine.positionMs, artworkURL: url)
+            if self.restoring {
+                self.restoring = false
+                UserDefaults.standard.removeObject(forKey: Self.restoringKey)
+            }
         }
     }
 
