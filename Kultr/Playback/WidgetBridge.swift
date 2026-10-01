@@ -43,7 +43,13 @@ final class WidgetBridge {
         }
     }
 
-    func update(_ state: PlayerUiState, positionMs: Int64) {
+    /**
+     * [artworkURL] comes from the player: this must not reach for
+     * `AppGraph.shared`, because the first update can come while the graph is
+     * still being built (restoring the last queue at launch), and touching it
+     * then crashes Kultr on every launch.
+     */
+    func update(_ state: PlayerUiState, positionMs: Int64, artworkURL: URL?) {
         guard let song = state.current else {
             if snapshot != nil {
                 snapshot = nil
@@ -70,7 +76,7 @@ final class WidgetBridge {
         snapshot = next
         SharedStore.write(next, artwork: nil)
         reload()
-        if artworkFor != song.id { loadArtwork(for: song) }
+        if artworkFor != song.id { loadArtwork(for: song, from: artworkURL) }
     }
 
     /** A new track, play/pause, a new length, or a position the widget's own clock would not show. */
@@ -83,11 +89,11 @@ final class WidgetBridge {
         return abs(expected - new.positionMs) > 3_000
     }
 
-    private func loadArtwork(for song: Song) {
+    private func loadArtwork(for song: Song, from url: URL?) {
         artworkFor = song.id
         artworkTask?.cancel()
         let songId = song.id
-        guard let url = artworkUrl(song.artworkId, 300) else {
+        guard let url else {
             artwork = nil
             return
         }

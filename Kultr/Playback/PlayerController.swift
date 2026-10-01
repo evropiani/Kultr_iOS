@@ -179,11 +179,27 @@ final class PlayerController: EngineHost {
 
     // --------------------------------------------------------- restore --
 
+    private static let restoringKey = "player.restoring"
+
     private func restore() {
         // Without a client (the saved password could not be read) the decks
         // could not load it, and would only report an error.
         guard graph.settings.current.resumeOnStart, graph.auth.client != nil else { return }
+        // If Kultr died while putting the last queue back, doing it again would
+        // only kill it again, on every launch. Start empty instead, once.
+        let defaults = UserDefaults.standard
+        if defaults.bool(forKey: Self.restoringKey) {
+            defaults.removeObject(forKey: Self.restoringKey)
+            SessionStore.clear()
+            return
+        }
+        defaults.set(true, forKey: Self.restoringKey)
+        defaults.synchronize()
         _ = loadSavedSession()
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            UserDefaults.standard.removeObject(forKey: Self.restoringKey)
+        }
     }
 
     /** Put the last saved queue back, at the position it stopped. False if there is none for this server. */
@@ -229,7 +245,25 @@ final class PlayerController: EngineHost {
         let info = TransitionInfo(upcoming: engine.currentPlan, active: engine.activeTransition, fromSongId: current?.id)
         if info != transition { transition = info }
         updateNowPlaying()
-        WidgetBridge.shared.update(state, positionMs: engine.positionMs)
+        scheduleWidgetUpdate()
+    }
+
+    @ObservationIgnored private var widgetUpdatePending = false
+
+    /**
+     * The widget hears about it on the next turn of the main loop: never in
+     * the middle of building the app (restoring the queue at launch happens
+     * inside AppGraph's init), and once for a burst of changes.
+     */
+    private func scheduleWidgetUpdate() {
+        guard !widgetUpdatePending else { return }
+        widgetUpdatePending = true
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.widgetUpdatePending = false
+            let url = self.graph.auth.client?.coverArtUrl(self.state.current?.artworkId, size: 400)
+            WidgetBridge.shared.update(self.state, positionMs: self.engine.positionMs, artworkURL: url)
+        }
     }
 
     /** Current position; read it on a timer, it is not part of [state]. */
