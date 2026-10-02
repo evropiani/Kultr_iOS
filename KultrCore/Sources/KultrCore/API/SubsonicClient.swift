@@ -543,7 +543,10 @@ final class SubsonicClient: @unchecked Sendable {
         let fmt: String? = (format?.trimmingCharacters(in: .whitespaces).isEmpty ?? true) ? nil : format
         return try? buildUrl(
             "stream",
-            [("id", id), ("maxBitRate", bitrate), ("format", fmt), ("estimateContentLength", true)],
+            // No estimateContentLength: Navidrome cuts a converted stream at the size
+            // it guessed, so a transcoded track stopped a moment early. Without it the
+            // stream arrives whole (the loader waits for the end before it knows the length).
+            [("id", id), ("maxBitRate", bitrate), ("format", fmt)],
             stable: true
         )
     }

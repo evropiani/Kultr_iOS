@@ -242,7 +242,7 @@ private struct PlayerTopBar: View {
                     if song.artistId != nil {
                         Button { onClose(); graph.actions.openArtist(song.artistId) } label: { Label("Go to artist", systemImage: "person.fill") }
                     }
-                    if !downloaded {
+                    if !downloaded && !LocalLibrary.isLocal(song) {
                         Button { graph.actions.download([song], song.title) } label: { Label("Download", systemImage: "arrow.down.circle") }
                     }
                 }

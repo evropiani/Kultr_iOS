@@ -51,7 +51,7 @@ unless you refresh it. Refreshing takes a minute and keeps all your data.
 | A **computer** | Windows 10/11, a Mac, or a Linux PC. You only need it for installing and refreshing. On iOS 27 you can [skip the computer](#without-a-computer-sideinstaller-and-localdevvpn) |
 | A **cable** | the one you charge your iPhone with. It must carry data, not only charge |
 | An **Apple ID** | the one you already use is fine. Some people make a second, free Apple ID just for sideloading. That's optional |
-| A **Navidrome server** | (or any Subsonic-compatible server) with its address, your username and your password |
+| **Your music** | on a **Navidrome server** (or any Subsonic-compatible server: its address, your username and password), or as **files on the iPhone**, in iCloud Drive or on a drive |
 
 ---
 
@@ -244,14 +244,20 @@ iPhones need this switched on before they'll open any sideloaded app.
 
 ### Open Kultr
 
-Tap the **K** icon. Kultr asks for:
+Tap the **K** icon. Kultr welcomes you and asks where your music is:
 
-- **Server address**: the web address of your Navidrome, for example
-  `https://music.example.com`. Use the same address you open in a browser.
-- **Username** and **Password**: your Navidrome login.
+- **On my Navidrome server**: type the **server address** (the web address
+  of your Navidrome, for example `https://music.example.com`, the same one
+  you open in a browser), your **username** and **password**, and tap
+  **Connect**. Kultr offers to sync your library. Let it finish once, with
+  Kultr open. After that it only fetches what changed.
+- **On this iPhone**: tap **Choose a folder** and pick the folder your music
+  is in (in *On My iPhone*, *iCloud Drive* or a drive). Add more if you like,
+  then **Continue**. Kultr reads the files while you look around. Music in
+  iCloud Drive must be downloaded to the iPhone to play; Kultr asks iCloud to
+  bring it down and picks it up on the next scan.
 
-Tap **Connect**. Kultr offers to sync your library. Let it finish once, with
-Kultr open. After that it only fetches what changed.
+You can add the other one later in Settings. A short tour follows.
 
 That's it. Kultr is installed. 🎉
 

@@ -135,7 +135,8 @@ struct DownloadToolbarButton: View {
         let graph = AppGraph.shared
         let downloaded = graph.offline.downloadedIds
         let missing = songs.filter { !$0.isRadio && !downloaded.contains($0.id) }.count
-        if !songs.isEmpty {
+        // Music on the phone is there already.
+        if !songs.isEmpty && !graph.isLocal {
             if missing == 0 {
                 Menu {
                     Button(role: .destructive) { graph.actions.removeDownloads(songs) } label: {

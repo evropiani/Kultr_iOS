@@ -13,6 +13,7 @@ struct SyncScreen: View {
         let c = theme.colors
         let sync = graph.sync
         let settings = theme.settings
+        let local = graph.isLocal
         ZStack(alignment: .top) {
             AccentWash()
             VStack(spacing: 0) {
@@ -38,7 +39,7 @@ struct SyncScreen: View {
                                         .font(KFont.bodySmall)
                                         .foregroundStyle(c.success)
                                     if !s.errors.isEmpty {
-                                        Text("\(s.errors.count) albums could not be read: \(s.errors.prefix(3).joined(separator: "; "))")
+                                        Text(local ? s.errors.prefix(3).joined(separator: " ") : "\(s.errors.count) albums could not be read: \(s.errors.prefix(3).joined(separator: "; "))")
                                             .font(KFont.bodySmall)
                                             .foregroundStyle(c.warning)
                                     }
@@ -51,11 +52,15 @@ struct SyncScreen: View {
                                         if sync.running {
                                             Pill("Stop", icon: "stop.fill") { sync.cancel() }
                                         } else {
-                                            Pill(counts.albums == 0 ? "Sync my library" : "Check for updates", icon: "arrow.triangle.2.circlepath", accent: true) {
+                                            Pill(
+                                                local ? (counts.albums == 0 ? "Scan my folders" : "Scan for changes") : (counts.albums == 0 ? "Sync my library" : "Check for updates"),
+                                                icon: "arrow.triangle.2.circlepath",
+                                                accent: true
+                                            ) {
                                                 sync.start(counts.albums == 0 ? .full : .check)
                                             }
                                             if counts.albums > 0 {
-                                                Pill("Full resync", icon: "icloud.and.arrow.down") { sync.start(.full) }
+                                                Pill(local ? "Read all tags again" : "Full resync", icon: local ? "tag" : "icloud.and.arrow.down") { sync.start(.full) }
                                             }
                                         }
                                     }
@@ -105,7 +110,8 @@ struct SyncScreen: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
-                        GlassPanel {
+                        // Music on the phone is there already: nothing to download.
+                        if !local { GlassPanel {
                             VStack(alignment: .leading, spacing: 10) {
                                 Eyebrow("Offline")
                                 Text("\(Format.count(usage.count, "track")) downloaded · \(Format.bytes(usage.bytes))")
@@ -128,7 +134,7 @@ struct SyncScreen: View {
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                        } }
                     }
                     .padding(16)
                     .padding(.bottom, 24)
@@ -153,6 +159,19 @@ struct SyncScreen: View {
     }
 
     @ViewBuilder private var connectionLine: some View {
+        let c = theme.colors
+        let graph = AppGraph.shared
+        if graph.isLocal {
+            let folders = graph.local.folders
+            Text("Read from \(Format.count(folders.count, "folder")) on this iPhone: \(folders.map(\.name).joined(separator: ", "))")
+                .font(KFont.bodySmall)
+                .foregroundStyle(c.ink3)
+        } else {
+            serverLine
+        }
+    }
+
+    @ViewBuilder private var serverLine: some View {
         let c = theme.colors
         switch AppGraph.shared.auth.connection {
         case .online(let info):

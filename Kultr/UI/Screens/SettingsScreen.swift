@@ -51,7 +51,7 @@ struct SettingsScreen: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(active.label).font(.system(size: 19, weight: .semibold))
-                                Text("\(active.username) · \(hostLabel(active.serverUrl))")
+                                Text(active.isLocal ? "Folders on this iPhone, no server" : "\(active.username) · \(hostLabel(active.serverUrl))")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
@@ -72,6 +72,7 @@ struct SettingsScreen: View {
                 link("Equaliser", "slider.vertical.3", .teal) { EqualiserSettings() }
             }
             Section {
+                link("Music on this iPhone", "iphone", .mint) { LocalMusicSettings() }
                 link("Offline and cache", "arrow.down.circle.fill", .green) { OfflineSettings() }
                 // Signed in, the server card at the top already opens Servers.
                 if auth.active == nil {
@@ -733,7 +734,7 @@ private struct ServerSettings: View {
                 ForEach(auth.profiles) { profile in
                     let isActive = profile.id == activeId
                     HStack(spacing: 12) {
-                        Image(systemName: isActive ? "checkmark.circle.fill" : "server.rack")
+                        Image(systemName: isActive ? "checkmark.circle.fill" : profile.isLocal ? "iphone" : "server.rack")
                             .font(.system(size: 18))
                             .foregroundStyle(isActive ? c.accent : .secondary)
                             .frame(width: 26)
@@ -741,13 +742,13 @@ private struct ServerSettings: View {
                             Text(profile.label)
                                 .font(.body.weight(isActive ? .semibold : .regular))
                                 .lineLimit(1)
-                            Text([profile.username.isEmpty ? "not signed in" : profile.username, profile.serverUrl].joined(separator: " · "))
+                            Text(profile.isLocal ? "Folders on this iPhone, no server" : [profile.username.isEmpty ? "not signed in" : profile.username, profile.serverUrl].joined(separator: " · "))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(2)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        if !profile.hasCredentials {
+                        if !profile.usable {
                             Button("Sign in") { graph.ui.login = LoginRequest(url: profile.serverUrl, user: profile.username) }
                                 .buttonStyle(.borderless)
                         } else if !isActive && profile.enabled {
@@ -826,6 +827,92 @@ extension ServerSettings {
     fileprivate func rename(_ profile: ServerProfile) {
         newName = profile.label
         renaming = profile
+    }
+}
+
+// ---------------------------------------------------------- music on phone --
+
+/**
+ * The library on the phone: the folders it is read from, and scanning them.
+ * Before there is one, a way to start it.
+ */
+private struct LocalMusicSettings: View {
+    @Environment(\.kultr) private var theme
+    @State private var picking = false
+
+    var body: some View {
+        let graph = AppGraph.shared
+        let library = graph.local
+        let localProfile = graph.auth.profiles.first { $0.isLocal }
+        let inUse = graph.isLocal
+        let scanning = graph.sync.running && inUse
+        List {
+            Section {
+                ForEach(library.folders) { folder in
+                    Label {
+                        Text(folder.name).lineLimit(1)
+                    } icon: {
+                        Image(systemName: "folder.fill").foregroundStyle(theme.colors.accent)
+                    }
+                    .swipeActions {
+                        Button(role: .destructive) { remove(folder) } label: { Label("Stop using", systemImage: "folder.badge.minus") }
+                    }
+                    .contextMenu {
+                        Button(role: .destructive) { remove(folder) } label: { Label("Stop using \(folder.name)", systemImage: "folder.badge.minus") }
+                    }
+                }
+                Button { picking = true } label: {
+                    Label(library.folders.isEmpty ? "Choose a folder" : "Add another folder", systemImage: "folder.badge.plus")
+                }
+            } header: {
+                Text("Folders")
+            } footer: {
+                Text(localProfile == nil
+                    ? "Play the music stored on this iPhone, in iCloud Drive or on a drive, without a server. Choose the folders it is in; Kultr gets access to those and nothing else."
+                    : "Kultr reads these folders. New and changed files are picked up when it starts, or when you scan. Swipe a folder to stop using it.")
+            }
+            if localProfile != nil || !library.folders.isEmpty {
+                Section {
+                    if inUse {
+                        Button { graph.sync.start(.check) } label: {
+                            Label(scanning ? "Scanning…" : "Scan now", systemImage: "arrow.clockwise")
+                        }
+                        .disabled(scanning)
+                        Button { graph.sync.start(.full) } label: {
+                            Label("Read all tags again", systemImage: "tag")
+                        }
+                        .disabled(scanning)
+                    } else {
+                        Button {
+                            graph.player.stop()
+                            graph.auth.useLocalLibrary()
+                            graph.sync.startFirstSyncIfNeeded()
+                        } label: {
+                            Label("Play music on this iPhone", systemImage: "iphone")
+                        }
+                        .disabled(library.folders.isEmpty)
+                    }
+                } footer: {
+                    if !inUse {
+                        Text("Switches Kultr to this library. Your servers stay in Settings → Servers, one tap away.")
+                    }
+                }
+            }
+        }
+        .navigationTitle("Music on this iPhone")
+        .navigationBarTitleDisplayMode(.inline)
+        .settingsPage()
+        .musicFolderPicker(isPresented: $picking) { _ in
+            // The first folder starts the library on the phone; while it is in use, folders are read in at once.
+            graph.auth.ensureLocalLibrary()
+            if graph.isLocal { graph.sync.start(.check, quiet: true) }
+        }
+    }
+
+    private func remove(_ folder: LocalFolder) {
+        let graph = AppGraph.shared
+        graph.local.removeFolder(folder)
+        if graph.isLocal { graph.sync.start(.check, quiet: true) }
     }
 }
 
@@ -973,6 +1060,32 @@ private struct AboutSection: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .listRowBackground(Color.clear)
+            }
+            Section {
+                let updates = AppGraph.shared.updates
+                Button {
+                    Task {
+                        switch await updates.checkNow() {
+                        case .available(let release): AppGraph.shared.ui.update = release
+                        case .upToDate: AppGraph.shared.messages.success("You have the latest version.")
+                        case .failed(let message): AppGraph.shared.messages.error("Could not check for updates. \(message)")
+                        default: break
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "arrow.down.app").frame(width: 26).foregroundStyle(.tint)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Check for updates").foregroundStyle(Color.primary)
+                            Text(updates.available.map { "Kultr \($0.version) is available" } ?? "Kultr looks by itself twice a day, too")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if updates.check == .checking { ProgressView() }
+                    }
+                }
+                .disabled(updates.check == .checking)
             }
             Section {
                 link("Source code", "chevron.left.forwardslash.chevron.right", "github.com/evropiani/Kultr_iOS", SOURCE)

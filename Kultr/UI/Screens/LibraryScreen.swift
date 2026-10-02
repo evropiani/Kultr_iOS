@@ -34,8 +34,9 @@ struct LibraryScreen: View {
     @State private var pager = PagerModel()
 
     var body: some View {
-        let current = page ?? initialTab
-        let tabs = LibraryTab.allCases
+        // Music on the phone has no internet radio, and nothing to download.
+        let current = page.flatMap { LibraryTab.shown.contains($0) ? $0 : nil } ?? (LibraryTab.shown.contains(initialTab) ? initialTab : .albums)
+        let tabs = LibraryTab.shown
         VStack(spacing: 0) {
             LibraryTabStrip(current: current, pager: pager) { tab in
                 withAnimation(theme.spring ?? .linear(duration: 0)) { page = tab }
@@ -157,7 +158,7 @@ private struct LibraryTabStrip: View {
 
     var body: some View {
         let c = theme.colors
-        let tabs = LibraryTab.allCases
+        let tabs = LibraryTab.shown
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 0) {

@@ -61,8 +61,10 @@ private struct AppContent: View {
     var body: some View {
         let auth = AppGraph.shared.auth
         let ui = AppGraph.shared.ui
-        if let profile = auth.active {
-            if auth.client == nil {
+        if !ui.welcomed {
+            WelcomeFlow(returning: false) { ui.finishWelcome() }
+        } else if let profile = auth.active {
+            if auth.client == nil && !profile.isLocal {
                 LoginScreen(prefillUrl: profile.serverUrl, prefillUser: profile.username, onCancel: { auth.signOut() })
             } else {
                 ZStack {
@@ -82,7 +84,8 @@ private struct AppContent: View {
                 }
             }
         } else {
-            LoginScreen()
+            // Signed out of everything: the same choice as on the first start.
+            WelcomeFlow(returning: true) { ui.finishWelcome() }
         }
     }
 }

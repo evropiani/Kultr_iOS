@@ -12,21 +12,25 @@ struct SearchScreen: View {
     var body: some View {
         let graph = AppGraph.shared
         let c = theme.colors
-        let useServer = serverSearch || counts.songs == 0
+        // The phone's own music is all in the library; only a server has more to ask.
+        let local = graph.isLocal
+        let useServer = !local && (serverSearch || counts.songs == 0)
         // The field itself lives in the tab bar (see Chrome), where it expands out of the search button.
         let trimmed = graph.ui.searchQuery.trimmingCharacters(in: .whitespaces)
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text(counts.songs == 0 ? "Searching your server (the library is not synced yet)" : "Search on the server instead")
-                    .font(KFont.bodySmall)
-                    .foregroundStyle(c.ink3)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                if counts.songs > 0 {
-                    KultrSwitch(isOn: serverSearch) { serverSearch = $0 }
+            if !local {
+                HStack {
+                    Text(counts.songs == 0 ? "Searching your server (the library is not synced yet)" : "Search on the server instead")
+                        .font(KFont.bodySmall)
+                        .foregroundStyle(c.ink3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if counts.songs > 0 {
+                        KultrSwitch(isOn: serverSearch) { serverSearch = $0 }
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 4)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 4)
             SelectionBar(selection: selection, songs: results.songs)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {

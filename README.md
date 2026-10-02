@@ -1,7 +1,8 @@
 # Kultr for iOS
 
 A native iPhone client for [Navidrome](https://www.navidrome.org/) and other
-Subsonic-compatible servers. It's the iOS counterpart of the
+Subsonic-compatible servers, and a player for the music stored on the iPhone
+itself. It's the iOS counterpart of the
 [Kultr web client](https://github.com/evropiani/Kultr) and of
 [Kultr for Android](https://github.com/evropiani/Kultr_Android). It keeps
 their behaviour and settings (a settings file exported from one opens in the
@@ -10,12 +11,22 @@ and Control Center controls, AirPlay, and downloads for offline listening.
 
 ## Features
 
+- **Your server, or your iPhone.** Sign in to a Navidrome server, or choose
+  folders of music on the iPhone, in iCloud Drive or on a drive you plug in,
+  with no server and no account. Kultr reads the files' tags and covers (MP3,
+  FLAC, AAC/ALAC, WAV, AIFF), builds albums, artists and genres from them and
+  picks up new files on its own; favourites, ratings, play counts, playlists
+  and InjeKt all work. Switch between them in Settings.
+
 - **Liquid glass.** On iOS 26 the tab bar is the system's own liquid glass
   bar, with the lens that follows your finger, a round search button that
   grows into the search field, and the mini player riding on it; on iOS 17
   and 18 Kultr draws a floating glass bar that behaves the same way. Light
   and dark follow the iPhone's own setting. Every tab keeps its own pages with
   iOS's navigation bar, and Settings is a list of native pages.
+- **A welcome on first start** asks where your music is and shows you around.
+- **Updates from inside the app.** Kultr tells you about new versions, shows
+  what's new, and hands the update to SideStore or AltStore.
 - **Library mirror.** The whole library is synced into a local database, so
   browsing and search are instant and work offline. Later syncs fetch only
   what changed. They run when Kultr starts, and in the background whenever
@@ -126,7 +137,7 @@ secret (a classic token with only the *gist* scope).
 
 | Part | What it holds |
 | --- | --- |
-| `KultrCore` | Plain Swift, no UIKit or AVFoundation: the Subsonic API client, the audio analysis (FFT, tempo, key, structure), the InjeKt transition planner, the two-deck playback engine, the library sync, the SQLite library mirror, and the settings model with its import/export. A Swift package, unit-tested with `swift test`. The app compiles the same sources directly. |
+| `KultrCore` | Plain Swift, no UIKit or AVFoundation: the Subsonic API client, the tag reader (ID3, FLAC, MP4, WAV) and the catalogue builder for music on the phone, the version and release-notes readers, the audio analysis (FFT, tempo, key, structure), the InjeKt transition planner, the two-deck playback engine, the library sync, the SQLite library mirror, and the settings model with its import/export. A Swift package, unit-tested with `swift test`. The app compiles the same sources directly. |
 | `Kultr` | The iOS app: a database per server, a download queue, background refresh for sync, a player that drives two AVFoundation decks through the core engine (with an audio tap for fades, EQ and filters), Now Playing and remote-command integration, and the SwiftUI interface. |
 
 No third-party dependencies: SwiftUI, AVFoundation, MediaPlayer, SQLite3,

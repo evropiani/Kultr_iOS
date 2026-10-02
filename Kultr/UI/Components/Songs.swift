@@ -70,7 +70,10 @@ struct SongMenuItems: View {
             if song.artistId != nil {
                 Button { actions.openArtist(song.artistId) } label: { Label("Go to artist", systemImage: "person.fill") }
             }
-            if downloaded {
+            // Music on the phone is there already.
+            if LocalLibrary.isLocal(song) {
+                EmptyView()
+            } else if downloaded {
                 Button(role: .destructive) { actions.removeDownloads([song]) } label: { Label("Remove download", systemImage: "trash") }
             } else {
                 Button { actions.download([song], song.title) } label: { Label("Download", systemImage: "arrow.down.circle") }
@@ -307,8 +310,10 @@ struct SelectionBar: View {
                     Button { actions.addToPlaylist(picked); selection.clear() } label: { Label("Add to playlist…", systemImage: "text.badge.plus") }
                     Button { actions.setFavourite(picked, true); selection.clear() } label: { Label("Add to favourites", systemImage: "heart.fill") }
                     Button { actions.setFavourite(picked, false); selection.clear() } label: { Label("Remove from favourites", systemImage: "heart") }
-                    Button { actions.download(picked); selection.clear() } label: { Label("Download", systemImage: "arrow.down.circle") }
-                    Button(role: .destructive) { actions.removeDownloads(picked); selection.clear() } label: { Label("Remove downloads", systemImage: "trash") }
+                    if !AppGraph.shared.isLocal {
+                        Button { actions.download(picked); selection.clear() } label: { Label("Download", systemImage: "arrow.down.circle") }
+                        Button(role: .destructive) { actions.removeDownloads(picked); selection.clear() } label: { Label("Remove downloads", systemImage: "trash") }
+                    }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 17, weight: .semibold))

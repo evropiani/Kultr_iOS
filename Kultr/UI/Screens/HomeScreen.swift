@@ -52,7 +52,9 @@ struct HomeScreen: View {
                 .padding(.top, 2)
                 .padding(.bottom, 8)
 
-                if loaded && counts.albums == 0 {
+                if loaded && counts.albums == 0 && graph.isLocal {
+                    LocalEmptyState(scanning: sync.running)
+                } else if loaded && counts.albums == 0 {
                     EmptyState(
                         icon: "opticaldisc",
                         title: sync.running ? "Syncing your library…" : "Your library is not synced yet",
@@ -244,5 +246,32 @@ private struct HomeShelf: View {
         default:
             break
         }
+    }
+}
+
+/** The phone's own library, still empty: choose a folder, or read the chosen ones. */
+private struct LocalEmptyState: View {
+    let scanning: Bool
+    @State private var picking = false
+
+    var body: some View {
+        let graph = AppGraph.shared
+        let folders = graph.local.folders
+        EmptyState(
+            icon: "opticaldisc",
+            title: scanning ? "Reading your music…" : folders.isEmpty ? "Where is your music?" : "No music found yet",
+            message: folders.isEmpty
+                ? "Choose the folders your music is in. Kultr reads them and builds a library of your albums, artists and covers."
+                : "Kultr looked through \(folders.map(\.name).joined(separator: ", ")) and found nothing it can play yet. Add another folder, or scan again after copying music in."
+        ) {
+            if folders.isEmpty {
+                Pill("Choose a folder", icon: "folder.badge.plus", accent: true) { picking = true }
+            } else {
+                Pill(scanning ? "Reading…" : "Scan again", icon: "arrow.clockwise", accent: true, enabled: !scanning) {
+                    graph.sync.start(.full)
+                }
+            }
+        }
+        .musicFolderPicker(isPresented: $picking) { _ in graph.sync.start(.full) }
     }
 }

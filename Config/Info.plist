@@ -25,6 +25,11 @@
 	</dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>sidestore</string>
+		<string>altstore</string>
+	</array>
 	<key>UIFileSharingEnabled</key>
 	<false/>
 </dict>

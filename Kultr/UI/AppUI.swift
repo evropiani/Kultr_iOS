@@ -19,6 +19,14 @@ enum LibraryTab: String, CaseIterable, Hashable {
     }
 }
 
+extension LibraryTab {
+    /** The pages of the Library: without radio and downloads for the music on the phone. */
+    @MainActor
+    static var shown: [LibraryTab] {
+        AppGraph.shared.isLocal ? allCases.filter { $0 != .radio && $0 != .downloads } : allCases
+    }
+}
+
 enum DownloadsPage: String, CaseIterable, Hashable {
     case now, offline
 
@@ -89,6 +97,14 @@ final class AppUI {
     func isStarred(_ album: Album) -> Bool { isStarred(album.id, album.isStarred) }
     func isStarred(_ artist: Artist) -> Bool { isStarred(artist.id, artist.isStarred) }
 
+    /** Whether the welcome has been seen. Anyone with a library from before it existed has seen enough already. */
+    private(set) var welcomed = UserDefaults.standard.bool(forKey: "ui.welcomed")
+
+    func finishWelcome() {
+        UserDefaults.standard.set(true, forKey: "ui.welcomed")
+        welcomed = true
+    }
+
     /** What is typed in the search field, kept while you look at other tabs. */
     var searchQuery = ""
     /** The tab you came to search from; the collapsed tab bar goes back to it. */
@@ -97,6 +113,8 @@ final class AppUI {
     var addToPlaylist: [Song]?
     var rate: Song?
     var sleepTimer = false
+    /** The new version being looked at, on the update page. */
+    var update: AppRelease?
 
     /** The pages open on top of the current tab's start page. */
     var path: [Route] {

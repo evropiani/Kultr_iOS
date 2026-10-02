@@ -33,6 +33,7 @@ final class AppGraph {
             self.offline.reload()
             self.ui.resetPaths()
         }
+        if !auth.profiles.isEmpty && !ui.welcomed { ui.finishWelcome() }
         offline.start()
         player.start()
         sync.onAppStart()

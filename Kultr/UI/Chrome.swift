@@ -29,6 +29,20 @@ struct MainUI: View {
             .allowsHitTesting(!playerOpen)
             .accessibilityHidden(playerOpen)
 
+            // A new version: a note at the top until it is opened or dismissed.
+            if let release = graph.updates.available, release.version != graph.updates.dismissed,
+               graph.messages.current == nil, !playerOpen, ui.tab != .search {
+                UpdateBanner(
+                    release: release,
+                    onOpen: { ui.update = release },
+                    onDismiss: { withAnimation(theme.ease) { graph.updates.dismiss(release) } }
+                )
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(4)
+            }
+
             if let message = graph.messages.current {
                 ToastView(message: message)
                     .padding(.top, 6)
@@ -52,6 +66,13 @@ struct MainUI: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             // Plays go up and plays from other devices come down whenever Kultr comes to the front.
             graph.sync.refreshListening()
+            graph.updates.checkInBackground()
+        }
+        .task { graph.updates.checkInBackground() }
+        .animation(theme.ease, value: graph.updates.available?.version)
+        .sheet(item: Binding(get: { ui.update }, set: { ui.update = $0 })) { release in
+            UpdateScreen(release: release)
+                .environment(\.kultr, theme)
         }
         .sheet(isPresented: Binding(get: { ui.addToPlaylist != nil }, set: { if !$0 { ui.addToPlaylist = nil } })) {
             AddToPlaylistSheet(songs: ui.addToPlaylist ?? []) { ui.addToPlaylist = nil }

@@ -149,8 +149,10 @@ struct CollectionMenuItems: View {
         Button { run { actions.playNext($0) } } label: { Label("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") }
         Button { run { actions.enqueue($0) } } label: { Label("Add to queue", systemImage: "text.line.last.and.arrowtriangle.forward") }
         Button { run { actions.addToPlaylist($0) } } label: { Label("Add to playlist…", systemImage: "text.badge.plus") }
-        Button { run { actions.download($0, name) } } label: { Label("Download", systemImage: "arrow.down.circle") }
-        Button(role: .destructive) { run { actions.removeDownloads($0) } } label: { Label("Remove downloads", systemImage: "trash") }
+        if !AppGraph.shared.isLocal {
+            Button { run { actions.download($0, name) } } label: { Label("Download", systemImage: "arrow.down.circle") }
+            Button(role: .destructive) { run { actions.removeDownloads($0) } } label: { Label("Remove downloads", systemImage: "trash") }
+        }
     }
 
     private func run(_ body: @escaping @MainActor ([Song]) -> Void) {

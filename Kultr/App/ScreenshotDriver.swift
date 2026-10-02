@@ -19,12 +19,13 @@ enum ScreenshotDriver {
             let graph = AppGraph.shared
             let look: ThemeMode = env["KULTR_LOOK"] == "light" ? .light : .dark
             if graph.settings.settings.theme != look { graph.settings.update { $0.theme = look } }
-            if screen == "login" {
-                // The very first launch: nothing signed in yet.
+            if screen == "login" || screen == "welcome" {
+                // The very first launch: nothing signed in yet, so the welcome.
                 try? await Task.sleep(nanoseconds: 2_500_000_000)
                 mark(screen, "ok")
                 return
             }
+            graph.ui.finishWelcome()
             if graph.auth.client == nil {
                 let input = AuthRepository.LoginInput(
                     serverUrl: server,
