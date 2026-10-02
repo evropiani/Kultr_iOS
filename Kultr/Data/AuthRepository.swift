@@ -14,8 +14,13 @@ struct ServerProfile: Codable, Hashable, Identifiable {
     var enabled: Bool = true
     /** Whether a password is saved in the Keychain. False for imported profiles. */
     var hasSecret: Bool = false
+    /** The library on the phone itself: music from chosen folders, no server. (Optional so older saved lists still read.) */
+    var local: Bool?
 
     var hasCredentials: Bool { !username.trimmingCharacters(in: .whitespaces).isEmpty && hasSecret }
+    var isLocal: Bool { local == true }
+    /** Whether it can be switched to: a server Kultr can sign in to, or the phone's own music. */
+    var usable: Bool { isLocal || hasCredentials }
 }
 
 enum Connection: Equatable {
@@ -114,6 +119,15 @@ final class AuthRepository {
      */
     private func activate(_ profile: ServerProfile, ping: Bool) {
         let previous = active?.id
+        if profile.isLocal {
+            pingTask?.cancel()
+            active = profile
+            client = nil
+            connection = .idle
+            saveActive(profile.id)
+            if previous != profile.id { notify() }
+            return
+        }
         let client = buildClient(profile)
         active = profile
         self.client = client
@@ -195,10 +209,33 @@ final class AuthRepository {
 
     @discardableResult
     func switchTo(_ id: String) -> Bool {
-        guard let profile = profiles.first(where: { $0.id == id }), profile.enabled, profile.hasCredentials else { return false }
+        guard let profile = profiles.first(where: { $0.id == id }), profile.enabled, profile.usable else { return false }
         activate(profile, ping: true)
         return true
     }
+
+    /** The library on the phone, added to the list if it is not there yet (without switching to it). */
+    @discardableResult
+    func ensureLocalLibrary() -> ServerProfile {
+        if let existing = profiles.first(where: { $0.isLocal }) { return existing }
+        let profile = ServerProfile(id: LocalLibrary.profileId, label: LocalLibrary.label, serverUrl: "", username: "", local: true)
+        saveProfiles(profiles + [profile])
+        return profile
+    }
+
+    /** Play the music on the phone: make the local library the active one, adding it if needed. */
+    @discardableResult
+    func useLocalLibrary() -> ServerProfile {
+        var profile = ensureLocalLibrary()
+        profile.enabled = true
+        let updated = profile
+        saveProfiles(profiles.map { $0.id == updated.id ? updated : $0 })
+        activate(updated, ping: false)
+        return updated
+    }
+
+    /** Whether the library in use is the music on the phone, not a server. */
+    var isLocal: Bool { active?.isLocal == true }
 
     func setEnabled(_ id: String, _ enabled: Bool) {
         saveProfiles(profiles.map { profile in

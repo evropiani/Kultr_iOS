@@ -104,11 +104,13 @@ final class AnalysisManager {
     private func analyse(_ song: Song) async -> TrackAnalysis? {
         guard let db = graph.library.db else { return nil }
         if (song.duration ?? 0) > MAX_ANALYSIS_SECONDS { return nil }
-        let local = graph.offline.fileFor(song.id)
+        // Music on the phone is read straight from its file; otherwise an offline copy, or a stream.
+        let local = LocalLibrary.isLocal(song) ? graph.local.fileURL(song) : graph.offline.fileFor(song.id)
+        if LocalLibrary.isLocal(song) && local == nil { return nil }
         if local == nil && graph.settings.current.injektAnalyseOnWifiOnly && graph.network.isMetered { return nil }
-        guard let client = graph.auth.client else { return nil }
         let session = graph.auth.session
-        let streamUrl = client.streamUrl(song.id, maxBitRate: ANALYSIS_BITRATE, format: "mp3")
+        let streamUrl = graph.auth.client?.streamUrl(song.id, maxBitRate: ANALYSIS_BITRATE, format: "mp3")
+        if local == nil && streamUrl == nil { return nil }
 
         return await Task.detached(priority: .utility) { () -> TrackAnalysis? in
             var temp: URL?

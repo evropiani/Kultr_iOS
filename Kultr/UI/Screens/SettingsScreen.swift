@@ -865,7 +865,7 @@ private struct BackupSettings: View {
                 SettingToggle("Include the list of servers", isOn: $includeServers, hint: "Addresses only — never usernames or passwords.")
                 Button {
                     let servers = includeServers
-                        ? graph.auth.profiles.map { SettingsFile.ExportedServer(label: $0.label, serverUrl: $0.serverUrl, authMode: $0.authMode) }
+                        ? graph.auth.profiles.filter { !$0.isLocal }.map { SettingsFile.ExportedServer(label: $0.label, serverUrl: $0.serverUrl, authMode: $0.authMode) }
                         : nil
                     document = JsonDocument(
                         text: SettingsFile.export(graph.settings.current, appVersion: appVersion, exportedAt: ISO8601DateFormatter().string(from: Date()), servers: servers)

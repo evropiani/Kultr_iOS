@@ -235,6 +235,8 @@ final class LibraryRepository {
 
     /** The server's own search, for libraries that have not been synced (yet). */
     func searchServer(_ query: String) async throws -> SearchResults {
+        // The phone's own music is all in the library.
+        if local { return await search(query) }
         let result = try await client().search3(query, artistCount: 20, albumCount: 30, songCount: 60)
         return SearchResults(artists: result.artist, albums: result.album, songs: result.song)
     }
@@ -281,20 +283,27 @@ final class LibraryRepository {
         }
     }
 
+    /** Music on the phone: favourites, ratings and playlists live in its database alone. */
+    private var local: Bool { graph.isLocal }
+
     func setStarred(_ song: Song, _ starred: Bool) async -> String? {
         await attempt {
-            let c = try client()
-            if starred { try await c.star(id: song.id) } else { try await c.unstar(id: song.id) }
+            if !local {
+                let c = try client()
+                if starred { try await c.star(id: song.id) } else { try await c.unstar(id: song.id) }
+            }
             try db?.setSongStarred(song.id, starred ? nowIso() : nil)
         }
     }
 
     func setStarred(_ songs: [Song], _ starred: Bool) async -> String? {
         await attempt {
-            let c = try client()
             for chunk in songs.chunked(100) {
-                for song in chunk {
-                    if starred { try await c.star(id: song.id) } else { try await c.unstar(id: song.id) }
+                if !local {
+                    let c = try client()
+                    for song in chunk {
+                        if starred { try await c.star(id: song.id) } else { try await c.unstar(id: song.id) }
+                    }
                 }
                 try db?.setSongsStarred(chunk.map { $0.id }, starred ? nowIso() : nil)
             }
@@ -303,29 +312,43 @@ final class LibraryRepository {
 
     func setAlbumStarred(_ album: Album, _ starred: Bool) async -> String? {
         await attempt {
-            let c = try client()
-            if starred { try await c.star(albumId: album.id) } else { try await c.unstar(albumId: album.id) }
+            if !local {
+                let c = try client()
+                if starred { try await c.star(albumId: album.id) } else { try await c.unstar(albumId: album.id) }
+            }
             try db?.setAlbumStarred(album.id, starred ? nowIso() : nil)
         }
     }
 
     func setArtistStarred(_ artist: Artist, _ starred: Bool) async -> String? {
         await attempt {
-            let c = try client()
-            if starred { try await c.star(artistId: artist.id) } else { try await c.unstar(artistId: artist.id) }
+            if !local {
+                let c = try client()
+                if starred { try await c.star(artistId: artist.id) } else { try await c.unstar(artistId: artist.id) }
+            }
             try db?.setArtistStarred(artist.id, starred ? nowIso() : nil)
         }
     }
 
     func setRating(_ song: Song, _ rating: Int) async -> String? {
         await attempt {
-            try await client().setRating(song.id, rating: rating)
+            if !local { try await client().setRating(song.id, rating: rating) }
             try db?.setSongRating(song.id, rating)
         }
     }
 
     func createPlaylist(_ name: String, _ songs: [Song]) async -> String? {
         await attempt {
+            if local {
+                guard let db else { return }
+                let now = nowIso()
+                var playlist = Playlist(id: Self.localPlaylistPrefix + UUID().uuidString, name: name.trimmingCharacters(in: .whitespaces))
+                playlist.created = now
+                playlist.changed = now
+                playlist.isPublic = false
+                try saveLocalPlaylist(db, playlist, position: (db.playlists().map { $0.position }.max() ?? -1) + 1, ids: songs.map { $0.id })
+                return
+            }
             try await client().createPlaylist(name: name.trimmingCharacters(in: .whitespaces), songIds: songs.map { $0.id })
             try await refreshPlaylistsNow()
         }
@@ -333,6 +356,10 @@ final class LibraryRepository {
 
     func addToPlaylist(_ playlistId: String, _ songs: [Song]) async -> String? {
         await attempt {
+            if local {
+                try editLocalPlaylist(playlistId) { $0 + songs.map { $0.id } }
+                return
+            }
             for chunk in songs.chunked(200) {
                 try await client().updatePlaylist(playlistId, songIdToAdd: chunk.map { $0.id })
             }
@@ -342,6 +369,11 @@ final class LibraryRepository {
 
     func removeFromPlaylist(_ playlistId: String, _ indices: [Int]) async -> String? {
         await attempt {
+            if local {
+                let gone = Set(indices)
+                try editLocalPlaylist(playlistId) { ids in ids.enumerated().filter { !gone.contains($0.offset) }.map { $0.element } }
+                return
+            }
             try await client().updatePlaylist(playlistId, songIndexToRemove: indices.sorted(by: >))
             try await refreshPlaylistNow(playlistId)
         }
@@ -349,6 +381,13 @@ final class LibraryRepository {
 
     func renamePlaylist(_ playlistId: String, _ name: String) async -> String? {
         await attempt {
+            if local {
+                guard let db, let row = db.playlist(playlistId) else { return }
+                var playlist = row.playlist
+                playlist.name = name.trimmingCharacters(in: .whitespaces)
+                try saveLocalPlaylist(db, playlist, position: row.position, ids: row.entryIds)
+                return
+            }
             try await client().updatePlaylist(playlistId, name: name.trimmingCharacters(in: .whitespaces))
             try await refreshPlaylistNow(playlistId)
         }
@@ -356,15 +395,46 @@ final class LibraryRepository {
 
     func deletePlaylist(_ playlistId: String) async -> String? {
         await attempt {
+            if local {
+                try db?.deletePlaylist(playlistId)
+                return
+            }
             try await client().deletePlaylist(playlistId)
             try await refreshPlaylistsNow()
         }
     }
 
     /** Re-read the playlist list (and every playlist's tracks) from the server. */
-    func refreshPlaylists() async -> String? { await attempt { try await refreshPlaylistsNow() } }
+    func refreshPlaylists() async -> String? {
+        if local { return nil }
+        return await attempt { try await refreshPlaylistsNow() }
+    }
 
-    func refreshPlaylist(_ playlistId: String) async -> String? { await attempt { try await refreshPlaylistNow(playlistId) } }
+    func refreshPlaylist(_ playlistId: String) async -> String? {
+        if local { return nil }
+        return await attempt { try await refreshPlaylistNow(playlistId) }
+    }
+
+    /** Playlists made in the phone's own library. */
+    private static let localPlaylistPrefix = "local-playlist:"
+
+    /** Change a playlist in the phone's own library: [edit] gets its track ids and returns the new ones. */
+    private func editLocalPlaylist(_ playlistId: String, _ edit: ([String]) -> [String]) throws {
+        guard let db, let row = db.playlist(playlistId) else { return }
+        try saveLocalPlaylist(db, row.playlist, position: row.position, ids: edit(row.entryIds))
+    }
+
+    private func saveLocalPlaylist(_ db: LibraryDatabase, _ playlist: Playlist, position: Int, ids: [String]) throws {
+        let byId = Dictionary(db.songs(ids: ids).map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let songs = ids.compactMap { byId[$0] }
+        var updated = playlist
+        updated.songCount = ids.count
+        updated.duration = songs.reduce(0) { $0 + ($1.duration ?? 0) }
+        updated.coverArt = songs.lazy.compactMap { $0.coverArt }.first
+        updated.changed = nowIso()
+        updated.entry = nil
+        try db.upsertPlaylist(updated, position: position, entryIds: ids)
+    }
 
     private func refreshPlaylistsNow() async throws {
         guard let db else { return }

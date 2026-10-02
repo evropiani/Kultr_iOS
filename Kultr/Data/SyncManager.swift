@@ -48,26 +48,40 @@ final class SyncManager {
         }
     }
 
-    /** Run a sync and wait for it. Returns nil on success, or an error message. */
+    /**
+     * Run a sync and wait for it: from the server, or, for the music on the
+     * phone, a scan of its folders. Returns nil on success, or an error message.
+     */
     @discardableResult
     func runNow(_ mode: SyncMode, quiet: Bool = false) async -> String? {
-        guard let client = graph.auth.client, let db = graph.library.db else { return "Not signed in." }
+        guard let db = graph.library.db else { return "Not signed in." }
+        let local = graph.isLocal
+        let client = graph.auth.client
+        if !local && client == nil { return "Not signed in." }
         if running { return nil }
         running = true
         error = nil
         defer { running = false }
         let includePlaylists = graph.settings.current.syncPlaylistContents
-        let report: (SyncProgress) -> Void = { [weak self] progress in
+        let report: @Sendable (SyncProgress) -> Void = { [weak self] progress in
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { self?.progress = progress }
             }
         }
-        let work = Task.detached(priority: .utility) { () -> SyncSummary in
-            try await LibrarySync(client: client, store: DatabaseLibraryStore(db)).run(
-                mode: mode,
-                includePlaylistContents: includePlaylists,
-                onProgress: report
-            )
+        let work: Task<SyncSummary, Error>
+        if local {
+            let library = graph.local
+            work = Task { try await library.scan(into: db, mode: mode, onProgress: report) }
+        } else if let client {
+            work = Task.detached(priority: .utility) { () -> SyncSummary in
+                try await LibrarySync(client: client, store: DatabaseLibraryStore(db)).run(
+                    mode: mode,
+                    includePlaylistContents: includePlaylists,
+                    onProgress: report
+                )
+            }
+        } else {
+            return "Not signed in."
         }
         do {
             let summary = try await withTaskCancellationHandler {
@@ -79,14 +93,17 @@ final class SyncManager {
             if !quiet {
                 if summary.upToDate {
                     graph.messages.success("Everything is up to date.")
+                } else if summary.mode == .full && local {
+                    graph.messages.success("Found \(summary.counts.songs) tracks in \(summary.counts.albums) albums.")
                 } else if summary.mode == .full {
                     graph.messages.success("Library synced: \(summary.counts.songs) tracks in \(summary.counts.albums) albums.")
                 } else {
                     graph.messages.success("Updated: \(summary.albumsAdded) new, \(summary.albumsUpdated) changed, \(summary.albumsRemoved) removed.")
                 }
+                if local, let problem = summary.errors.first { graph.messages.error(problem) }
             }
             // Plays made offline go up, and anything played elsewhere since comes down.
-            await refreshListeningNow()
+            if !local { await refreshListeningNow() }
             return nil
         } catch is CancellationError {
             if !quiet { graph.messages.show("Sync cancelled.") }
@@ -153,6 +170,12 @@ final class SyncManager {
 
     /** The cheap "anything new?" probe, followed by a delta sync when it says so. */
     func quickCheckAndSync() async -> Bool {
+        if graph.isLocal {
+            // New or changed files in the folders since last time.
+            guard await graph.library.syncState().lastCheck != nil else { return false }
+            await runNow(.check, quiet: true)
+            return true
+        }
         guard let client = graph.auth.client, let db = graph.library.db else { return false }
         let state = await graph.library.syncState()
         if state.lastCheck == nil { return false }

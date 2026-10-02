@@ -30,6 +30,10 @@ final class DeckSources {
         if let station = song.kultrStreamUrl {
             return URL(string: station).map { .radio($0) }
         }
+        // Music on the phone plays straight from its file.
+        if LocalLibrary.isLocal(song) {
+            return graph.local.fileURL(song).map { .file($0, mimeType: song.contentType) }
+        }
         let settings = graph.settings.current
         if settings.offlineFirst, let file = graph.offline.fileFor(song.id) {
             return .file(file, mimeType: song.contentType)

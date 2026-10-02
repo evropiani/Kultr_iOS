@@ -27,14 +27,15 @@ final class Scrobbles {
 
     /** Tell the server what is playing right now. Best-effort. */
     func nowPlaying(_ song: Song) {
-        guard !song.isRadio, graph.settings.current.scrobble, let client = graph.auth.client else { return }
+        guard !song.isRadio, !LocalLibrary.isLocal(song), graph.settings.current.scrobble, let client = graph.auth.client else { return }
         Task.detached { try? await client.scrobble(song.id, submission: false) }
     }
 
     /** A play counted: record it, bump the local play count, and send it. Internet radio is not a library track and is not sent. */
     func played(_ song: Song, seconds: Int, completed: Bool, source: String) {
         guard !song.isRadio, let db = graph.library.db else { return }
-        let sending = graph.settings.current.scrobble
+        // Music on the phone has no server to tell; it is counted here only.
+        let sending = graph.settings.current.scrobble && !LocalLibrary.isLocal(song)
         let playedAt = Format.nowMs()
         let entry = HistoryEntry(songId: song.id, playedAt: playedAt, seconds: seconds, completed: completed, source: source, submitted: !sending)
         // Recorded and claimed here on the main actor, so a flush cannot send it too.

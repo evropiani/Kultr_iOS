@@ -435,6 +435,11 @@ final class LibraryDatabase: @unchecked Sendable {
         changed([.library])
     }
 
+    func deletePlaylist(_ id: String) throws {
+        _ = try db.execute("DELETE FROM playlists WHERE id = ?", [id])
+        changed([.library])
+    }
+
     func replaceGenres(_ genres: [Genre]) throws {
         try db.transaction {
             try db.execute("DELETE FROM genres")

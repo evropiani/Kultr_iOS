@@ -3,9 +3,19 @@ import SwiftUI
 /** Artwork URL for a cover id at a size bucket, or nil when signed out. */
 @MainActor
 func artworkUrl(_ coverId: String?, _ size: Int) -> URL? {
+    coverURL(coverId, size, client: AppGraph.shared.auth.client)
+}
+
+/**
+ * Where a cover is: an image Kultr made for the music on the phone, or the
+ * server's cover art at a size bucket. Takes the client rather than reaching
+ * for the graph, so it can be used while the graph is being built.
+ */
+func coverURL(_ coverId: String?, _ size: Int, client: SubsonicClient?) -> URL? {
+    if let local = LocalLibrary.artURL(coverId) { return local }
     // Snap to a few sizes so the same cover is not fetched at every pixel size.
     let bucket = size <= 96 ? 96 : size <= 200 ? 200 : size <= 400 ? 400 : 800
-    return AppGraph.shared.auth.client?.coverArtUrl(coverId, size: bucket)
+    return client?.coverArtUrl(coverId, size: bucket)
 }
 
 private func bucketFor(_ size: Int) -> Int {

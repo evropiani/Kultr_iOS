@@ -63,6 +63,14 @@ enum Format {
         return Int64(date.timeIntervalSince1970 * 1000)
     }
 
+    /** Milliseconds since the epoch as an ISO 8601 time in UTC, without fractions ("2026-10-02T09:40:53Z"). */
+    static func iso(_ ms: Int64) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        return formatter.string(from: Date(timeIntervalSince1970: Double(ms) / 1000))
+    }
+
     static func nowMs() -> Int64 {
         Int64(Date().timeIntervalSince1970 * 1000)
     }

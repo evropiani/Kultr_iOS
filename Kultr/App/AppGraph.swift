@@ -13,6 +13,8 @@ final class AppGraph {
     let network = NetworkMonitor()
     let auth = AuthRepository()
     let ui = AppUI()
+    let local = LocalLibrary()
+    let updates = UpdateChecker()
     // Lazy only so they can be handed `self`; all of them are created in init.
     private(set) lazy var library = LibraryRepository(graph: self)
     private(set) lazy var scrobbles = Scrobbles(graph: self)
@@ -40,7 +42,11 @@ final class AppGraph {
     func deleteDataFor(_ profileId: String) {
         library.deleteDataFor(profileId)
         offline.deleteDataFor(profileId)
+        if profileId == LocalLibrary.profileId { local.forgetAll() }
     }
+
+    /** Whether the library in use is the music on the phone, not a server. */
+    var isLocal: Bool { auth.isLocal }
 
     func clearMediaCache() {
         StreamCache.shared.clear()

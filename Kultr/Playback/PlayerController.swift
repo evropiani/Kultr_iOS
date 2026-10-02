@@ -184,7 +184,7 @@ final class PlayerController: EngineHost {
     private func restore() {
         // Without a client (the saved password could not be read) the decks
         // could not load it, and would only report an error.
-        guard graph.settings.current.resumeOnStart, graph.auth.client != nil else { return }
+        guard graph.settings.current.resumeOnStart, graph.auth.client != nil || graph.isLocal else { return }
         // If Kultr died while putting the last queue back, doing it again would
         // only kill it again, on every launch. Start empty instead, once.
         let defaults = UserDefaults.standard
@@ -263,7 +263,7 @@ final class PlayerController: EngineHost {
         Task { @MainActor [weak self] in
             guard let self else { return }
             self.widgetUpdatePending = false
-            let url = self.graph.auth.client?.coverArtUrl(self.state.current?.artworkId, size: 400)
+            let url = coverURL(self.state.current?.artworkId, 400, client: self.graph.auth.client)
             WidgetBridge.shared.update(self.state, positionMs: self.engine.positionMs, artworkURL: url)
             if self.restoring {
                 self.restoring = false
@@ -624,7 +624,7 @@ final class PlayerController: EngineHost {
         if key != artworkKey {
             artworkKey = key
             artwork = nil
-            if let url = graph.auth.client?.coverArtUrl(key, size: 600) {
+            if let url = coverURL(key, 600, client: graph.auth.client) {
                 Task { [weak self] in
                     guard let image = await ImageLoader.shared.image(url, pixelSize: 600), let self, self.artworkKey == key else { return }
                     self.artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }

@@ -158,7 +158,8 @@ final class OfflineManager {
     func download(_ songs: [Song], label: String? = nil) async {
         guard let db = graph.library.db, let directory else { return }
         var seen = Set<String>()
-        let wanted = songs.filter { !$0.isRadio && seen.insert($0.id).inserted }
+        // Radio is live, and music on the phone is there already.
+        let wanted = songs.filter { !$0.isRadio && !LocalLibrary.isLocal($0) && seen.insert($0.id).inserted }
         let ids = wanted.map { $0.id }
         let pending: [Song] = await Task.detached(priority: .userInitiated) {
             let rows = Dictionary(db.downloads(ids).map { ($0.songId, $0) }, uniquingKeysWith: { a, _ in a })
