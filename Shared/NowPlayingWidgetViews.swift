@@ -131,7 +131,7 @@ private struct LargeFace: View {
                 .padding(.top, 12)
             TransportRow(snapshot: snapshot, playSize: 44, sideSize: 34, extras: true)
                 .padding(.top, 6)
-            UpNextList(snapshot: snapshot, queueArtwork: queueArtwork, maxRows: 3, rowHeight: 38)
+            UpNextList(snapshot: snapshot, queueArtwork: queueArtwork, maxRows: 4, rowHeight: 38)
                 .padding(.top, 10)
         }
         .foregroundStyle(.white)
