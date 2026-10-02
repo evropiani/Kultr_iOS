@@ -263,8 +263,13 @@ final class PlayerController: EngineHost {
         Task { @MainActor [weak self] in
             guard let self else { return }
             self.widgetUpdatePending = false
-            let url = coverURL(self.state.current?.artworkId, 400, client: self.graph.auth.client)
-            WidgetBridge.shared.update(self.state, positionMs: self.engine.positionMs, artworkURL: url)
+            let client = self.graph.auth.client
+            let url = coverURL(self.state.current?.artworkId, 400, client: client)
+            var queueArt: [String: URL] = [:]
+            for entry in self.state.upNext.prefix(WidgetBridge.upNextLimit) {
+                if let cover = coverURL(entry.song.artworkId, 96, client: client) { queueArt[entry.song.id] = cover }
+            }
+            WidgetBridge.shared.update(self.state, positionMs: self.engine.positionMs, artworkURL: url, queueArtworkURLs: queueArt)
             if self.restoring {
                 self.restoring = false
                 UserDefaults.standard.removeObject(forKey: Self.restoringKey)

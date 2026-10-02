@@ -85,6 +85,13 @@ enum ScreenshotDriver {
                 try? await Task.sleep(nanoseconds: 4_000_000_000)
             }
             ScreenshotState.shared.showWidgets = true
+        case "widget-large":
+            // The large and extra-large faces, with the album's other songs up next.
+            if let album = await library.recentlyAdded(3).last {
+                actions.play(await library.songsOfAlbumNow(album.id))
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+            }
+            ScreenshotState.shared.showLargeWidgets = true
         case "player", "mini", "pull":
             if let album = await library.recentlyAdded(3).last {
                 let songs = await library.songsOfAlbumNow(album.id)
@@ -109,6 +116,34 @@ enum ScreenshotDriver {
 final class ScreenshotState {
     static let shared = ScreenshotState()
     var showWidgets = false
+    var showLargeWidgets = false
+}
+
+/** The large widget as an iPhone shows it, and the extra-large one as an iPad would, scaled to fit. */
+struct LargeWidgetPreviewScreen: View {
+    var body: some View {
+        let bridge = WidgetBridge.shared
+        ZStack {
+            LinearGradient(colors: [Color(red: 0.24, green: 0.18, blue: 0.42), Color(red: 0.06, green: 0.08, blue: 0.16)], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            VStack(spacing: 26) {
+                face(.systemLarge, CGSize(width: 364, height: 382), bridge)
+                face(.systemExtraLarge, CGSize(width: 715, height: 354), bridge)
+                    .scaleEffect(364 / 715)
+                    .frame(width: 364, height: 354 * 364 / 715)
+            }
+            .padding(.top, 30)
+        }
+    }
+
+    private func face(_ family: WidgetFamily, _ size: CGSize, _ bridge: WidgetBridge) -> some View {
+        NowPlayingWidgetView(family: family, snapshot: bridge.snapshot, artwork: bridge.artwork, queueArtwork: bridge.queueArtwork)
+            .padding(16)
+            .frame(width: size.width, height: size.height)
+            .background { NowPlayingWidgetBackground(snapshot: bridge.snapshot, artwork: bridge.artwork) }
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .shadow(color: .black.opacity(0.35), radius: 16, y: 8)
+    }
 }
 
 /** The widget's faces as the home screen and lock screen would show them, for CI's screenshots. */

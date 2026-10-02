@@ -57,7 +57,9 @@ struct MainUI: View {
                     .zIndex(20)
             }
             #if DEBUG
-            if ScreenshotState.shared.showWidgets {
+            if ScreenshotState.shared.showLargeWidgets {
+                LargeWidgetPreviewScreen().zIndex(30)
+            } else if ScreenshotState.shared.showWidgets {
                 WidgetPreviewScreen().zIndex(30)
             }
             #endif

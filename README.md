@@ -43,8 +43,9 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   phone. Downloaded tracks play before the network is tried, and a stream
   cache keeps recent tracks too.
 - **AirPlay** to a HomePod, Apple TV or any AirPlay speaker from the player.
-- **Now Playing widget** for the home screen (small and medium, with play,
-  pause and skip) and the lock screen.
+- **Now Playing widget** for the home screen in every size (small and medium
+  with play, pause and skip; large and extra large with shuffle, repeat and
+  the next songs in the queue, tap one to play it) and the lock screen.
 - **Long-press menus and swipes.** Long-press a track, album, artist or
   playlist to play it next, queue it, favourite, download or remove it;
   swipe a track to play it next or add it to the queue.
