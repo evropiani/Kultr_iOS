@@ -134,7 +134,12 @@ final class AudioTagTests: XCTestCase {
 
     func testReadsID3v23TagsAndTheLengthFromXing() {
         let picture: [UInt8] = [0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3]
-        let apic = [0] + Array("image/jpeg".utf8) + [0, 3] + Array("front".utf8) + [0] + picture
+        var apic: [UInt8] = [0]
+        apic += Array("image/jpeg".utf8)
+        apic += [0, 3]
+        apic += Array("front".utf8)
+        apic += [0]
+        apic += picture
         let tag = id3([
             id3Frame("TIT2", latin("Daniel"), v4: false),
             id3Frame("TPE1", latin("Natasha Beller"), v4: false),
@@ -165,7 +170,8 @@ final class AudioTagTests: XCTestCase {
     }
 
     func testReadsID3v24WithUTF8AndUTF16Text() {
-        let utf16: [UInt8] = [1, 0xFF, 0xFE] + Array("Café".utf16.flatMap { [UInt8($0 & 0xFF), UInt8($0 >> 8)] })
+        var utf16: [UInt8] = [1, 0xFF, 0xFE]
+        for unit in "Café".utf16 { utf16 += [UInt8(unit & 0xFF), UInt8(unit >> 8)] }
         let tag = id3([
             id3Frame("TIT2", [3] + Array("Ünïcode ♫".utf8), v4: true),
             id3Frame("TPE1", utf16, v4: true),

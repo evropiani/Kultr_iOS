@@ -47,7 +47,7 @@ struct UpdateScreen: View {
                     .padding(.top, 10)
                     Text(installers.isEmpty
                         ? "Download Kultr.ipa there and install it the way you installed Kultr, with the same Apple ID. Your library, downloads and settings stay."
-                        : "Installed Kultr with Sideloadly, AltServer or Impactor rather than \(installers.map(\\.name).joined(separator: " or "))? Install the new version the same way, with the same Apple ID. Your library, downloads and settings stay.")
+                        : "Installed Kultr with Sideloadly, AltServer or Impactor rather than \(installers.map(\.name).joined(separator: " or "))? Install the new version the same way, with the same Apple ID. Your library, downloads and settings stay.")
                         .font(.system(size: 13))
                         .foregroundStyle(c.ink3)
                 }
