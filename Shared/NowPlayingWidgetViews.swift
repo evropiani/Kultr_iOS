@@ -510,25 +510,38 @@ private struct ArtworkTile: View {
     }
 }
 
-/** A progress line that runs by itself while playing, so the widget needs no refreshes for it. */
+/**
+ * A progress line that runs by itself while playing, so the widget needs no
+ * refreshes for it. The running bar lays out a few points taller than the
+ * still one, so the line keeps one height and draws either bar centred on
+ * it: nothing around it moves on play or pause.
+ */
 private struct ProgressLine: View {
     let snapshot: NowPlayingSnapshot?
 
     var body: some View {
-        Group {
-            if let snapshot, snapshot.isPlaying, snapshot.durationMs > 0, snapshot.endsAt > snapshot.startedAt {
-                ProgressView(timerInterval: snapshot.startedAt...snapshot.endsAt, countsDown: false) {
-                    EmptyView()
-                } currentValueLabel: {
-                    EmptyView()
-                }
-            } else {
-                ProgressView(value: snapshot?.progress ?? 0)
+        Color.clear
+            .frame(height: 4)
+            .frame(maxWidth: .infinity)
+            .overlay {
+                bar
+                    .progressViewStyle(.linear)
+                    .tint(.white)
             }
+            .opacity(snapshot == nil ? 0 : 1)
+    }
+
+    @ViewBuilder
+    private var bar: some View {
+        if let snapshot, snapshot.isPlaying, snapshot.durationMs > 0, snapshot.endsAt > snapshot.startedAt {
+            ProgressView(timerInterval: snapshot.startedAt...snapshot.endsAt, countsDown: false) {
+                EmptyView()
+            } currentValueLabel: {
+                EmptyView()
+            }
+        } else {
+            ProgressView(value: snapshot?.progress ?? 0)
         }
-        .progressViewStyle(.linear)
-        .tint(.white)
-        .opacity(snapshot == nil ? 0 : 1)
     }
 }
 
