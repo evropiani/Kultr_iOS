@@ -218,6 +218,16 @@ private struct AppearanceSettings: View {
             }
             Section {
                 SettingToggle(
+                    "Night mode",
+                    isOn: setting({ $0.nightMode }, { $0.nightMode = $1 }),
+                    hint: s.theme == .light
+                        ? "Pure black for OLED screens. Choose Dark or System above to use it."
+                        : "Pure black instead of dark grey, with a dimmer artwork background. Easier on the eyes in the dark, and it saves battery on OLED screens."
+                )
+                .disabled(s.theme == .light)
+            }
+            Section {
+                SettingToggle(
                     "Colour from artwork",
                     isOn: setting({ $0.accentMode == .artwork }, { $0.accentMode = $1 ? .artwork : .fixed }),
                     hint: "The interface takes its colour from whatever is playing."

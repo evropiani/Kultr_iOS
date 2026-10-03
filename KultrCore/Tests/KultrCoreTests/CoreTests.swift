@@ -257,6 +257,7 @@ final class SettingsFileTests: XCTestCase {
     func testExportRoundTrips() throws {
         let mine = Settings().with {
             $0.theme = .light
+            $0.nightMode = true
             $0.crossfadeSeconds = 9.5
             $0.homeTiles = ["radios", "recentlyAdded"]
             $0.eqGains = (0..<10).map { Double($0) }
@@ -266,6 +267,8 @@ final class SettingsFileTests: XCTestCase {
         XCTAssertFalse(text.contains("hasSeenWelcome"))
         let result = try SettingsFile.importFile(text, current: Settings())
         XCTAssertEqual(result.settings.theme, .light)
+        XCTAssertTrue(result.settings.nightMode)
+        XCTAssertFalse(Settings().nightMode)
         XCTAssertEqual(result.settings.crossfadeSeconds, 9.5)
         XCTAssertEqual(result.settings.homeTiles, mine.homeTiles)
         XCTAssertEqual(result.settings.eqGains, mine.eqGains)

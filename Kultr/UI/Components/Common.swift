@@ -322,7 +322,7 @@ struct PlainBackdrop: View {
         ZStack {
             theme.colors.background
             RadialGradient(
-                colors: [theme.colors.accent.opacity(theme.colors.dark ? 0.22 : 0.16), .clear],
+                colors: [theme.colors.accent.opacity(theme.colors.night ? 0.1 : theme.colors.dark ? 0.22 : 0.16), .clear],
                 center: .topLeading,
                 startRadius: 0,
                 endRadius: 560
@@ -354,7 +354,7 @@ struct ArtworkBackdrop: View {
                         .scaleEffect(1.2)
                         .clipped()
                 }
-                .opacity(theme.colors.dark ? 0.6 : 0.5)
+                .opacity(theme.colors.night ? 0.32 : theme.colors.dark ? 0.6 : 0.5)
                 .transition(.opacity)
                 .id(url)
             }

@@ -96,6 +96,8 @@ let EQ_PRESETS: [String: [Double]] = Dictionary(uniqueKeysWithValues: EQ_PRESET_
 struct Settings: Codable, Hashable {
     // ---- appearance
     var theme: ThemeMode = .system
+    /** Pure black instead of dark grey whenever the interface is dark, for OLED screens. */
+    var nightMode: Bool = false
     var accentMode: AccentMode = .artwork
     var accent: String = "#7c8cff"
     /** How strongly `accent` is mixed into the colour taken from the artwork, 0–100. */
@@ -177,7 +179,7 @@ struct Settings: Codable, Hashable {
     init() {}
 
     enum CodingKeys: String, CodingKey, CaseIterable {
-        case theme, accentMode, accent, accentBlend, surfaceBorder, borderOpacity, surfaceOpacity, corners
+        case theme, nightMode, accentMode, accent, accentBlend, surfaceBorder, borderOpacity, surfaceOpacity, corners
         case playhead, timeRemaining, reduceMotion, backdropArtwork, gridSize, compactRows
         case crossfadeEnabled, crossfadeSeconds, crossfadeCurve, crossfadeOnSkip, gapless, replayGainMode
         case replayGainPreamp, preferredBitrate, preferredBitrateMobile, preferredFormat, scrobble, resumeOnStart
@@ -203,6 +205,7 @@ struct Settings: Codable, Hashable {
             c.double(key) ?? fallback
         }
         theme = v(.theme, d.theme)
+        nightMode = v(.nightMode, d.nightMode)
         accentMode = v(.accentMode, d.accentMode)
         accent = v(.accent, d.accent)
         accentBlend = int(.accentBlend, d.accentBlend)

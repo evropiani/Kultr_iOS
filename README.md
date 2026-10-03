@@ -22,8 +22,9 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   bar, with the lens that follows your finger, a round search button that
   grows into the search field, and the mini player riding on it; on iOS 17
   and 18 Kultr draws a floating glass bar that behaves the same way. Light
-  and dark follow the iPhone's own setting. Every tab keeps its own pages with
-  iOS's navigation bar, and Settings is a list of native pages.
+  and dark follow the iPhone's own setting, and **Night mode** turns dark into
+  pure black for OLED screens. Every tab keeps its own pages with iOS's
+  navigation bar, and Settings is a list of native pages.
 - **A welcome on first start** asks where your music is and shows you around.
 - **Updates from inside the app.** Kultr tells you about new versions, shows
   what's new, and hands the update to SideStore or AltStore.

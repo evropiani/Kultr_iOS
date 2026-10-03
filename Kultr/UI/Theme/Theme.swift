@@ -22,6 +22,8 @@ extension Color {
  */
 struct KultrColors: Equatable {
     var dark: Bool
+    /** Night mode: dark, on pure black, with less light behind the content. */
+    var night = false
     var accent: Color
     var onAccent: Color
     var background: Color
@@ -52,12 +54,16 @@ struct KultrColors: Equatable {
         let onAccent: Color = ArtworkColor.luminance(argb) > 0.45 ? Color(argb: 0x0A0A10) : .white
         let inkBase = Color(argb: 0x0A0A10)
         if dark {
+            // Night mode is for OLED screens: black pixels are switched off, so
+            // the background is true black and raised surfaces only just lift.
+            let night = settings.nightMode
             return KultrColors(
                 dark: true,
+                night: night,
                 accent: accent,
                 onAccent: onAccent,
-                background: Color(argb: 0x08080C),
-                elevated: Color(argb: 0x101018),
+                background: Color(argb: night ? 0x000000 : 0x08080C),
+                elevated: Color(argb: night ? 0x0A0A0D : 0x101018),
                 ink: .white.opacity(0.96),
                 ink2: .white.opacity(0.66),
                 ink3: .white.opacity(0.42),
