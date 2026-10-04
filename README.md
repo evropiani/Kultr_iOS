@@ -1,5 +1,7 @@
 # Kultr for iOS
 
+<img src="docs/logo.png" alt="Kultr icon" width="112" align="right">
+
 A native iPhone client for [Navidrome](https://www.navidrome.org/) and other
 Subsonic-compatible servers, and a player for the music stored on the iPhone
 itself. It's the iOS counterpart of the

@@ -213,7 +213,7 @@ flatpak run dev.khcrysalis.PlumeImpactor
 
 ---
 
-The Kultr icon (a silver **K**) is now on your iPhone's home screen, but it
+The Kultr icon (a blue **K** on dark grey) is now on your iPhone's home screen, but it
 **won't open yet**. Do the next section first.
 
 ## 5. Let the iPhone open it
