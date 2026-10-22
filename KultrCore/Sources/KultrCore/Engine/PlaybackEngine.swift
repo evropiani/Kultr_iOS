@@ -29,8 +29,12 @@ protocol EngineHost: AnyObject {
     /** Plan the hand-over from [current] to [next]. May analyse both tracks. */
     func plan(current: Song, next: Song, context: PlanContext) async throws -> TransitionPlan
 
-    /** The queue ran out; return tracks to keep going with (or nothing). */
-    func extendQueue(seed: Song, recent: [Song]) async throws -> [Song]
+    /**
+     * The queue is running out and Karousel is on: return tracks like [seeds]
+     * (what has been playing, the current track first) to keep going with, or
+     * nothing. [queued] is the whole queue, so none of it comes back.
+     */
+    func extendQueue(seeds: [Song], queued: [Song]) async throws -> [Song]
 
     /** Anything visible changed: queue, index, status, plan. */
     func onStateChanged()
@@ -225,11 +229,13 @@ final class PlaybackEngine: DeckListener {
 
     var isTransitioning: Bool { crossing != nil }
 
-    func newItems(_ songs: [Song]) -> [QueueItem] {
-        songs.map { song in
-            defer { nextUid += 1 }
-            return QueueItem(uid: nextUid, song: song)
-        }
+    func newItems(_ songs: [Song], karousel: Bool = false) -> [QueueItem] {
+        songs.map { newItem($0, karousel: karousel) }
+    }
+
+    func newItem(_ song: Song, karousel: Bool = false) -> QueueItem {
+        defer { nextUid += 1 }
+        return QueueItem(uid: nextUid, song: song, karousel: karousel)
     }
 
     // ------------------------------------------------------------- transport --
@@ -439,6 +445,33 @@ final class PlaybackEngine: DeckListener {
         host.onStateChanged()
     }
 
+    // --------------------------------------------------------------- Karousel --
+
+    /**
+     * Karousel was switched. Off: the songs it added that have not played yet
+     * leave the queue. On: if the queue has already run out, it carries on
+     * with music like it; otherwise the next plan tops the queue up.
+     */
+    func onKarouselChanged(_ on: Bool) {
+        if !on {
+            extendTask?.cancel()
+            let upcoming = Set(queue.dropFirst(index + 1).filter { $0.karousel }.map { $0.uid })
+            if upcoming.isEmpty { return }
+            queue = queue.filter { !upcoming.contains($0.uid) }
+            unshuffled = unshuffled?.filter { !upcoming.contains($0.uid) }
+            revalidatePending()
+            host.onStateChanged()
+            return
+        }
+        guard let current = currentItem else { return }
+        if ended {
+            continueAfterEnd(current)
+        } else if peekNext() == nil {
+            clearPending()
+            host.onStateChanged()
+        }
+    }
+
     // --------------------------------------------------------------- settings --
 
     /** Re-read gains and invalidate plans after a settings change. */
@@ -610,7 +643,7 @@ final class PlaybackEngine: DeckListener {
         planTask = Task { [weak self] in
             guard let self else { return }
             var next = self.peekNext()
-            if next == nil && self.host.settings().injektAutoQueue {
+            if next == nil && self.host.settings().karousel {
                 if await self.extendQueueNow(current) { next = self.peekNext() }
             }
             guard !Task.isCancelled, let next, self.currentItem?.uid == current.uid else { return }
@@ -643,15 +676,21 @@ final class PlaybackEngine: DeckListener {
     }
 
     private func extendQueueNow(_ seed: QueueItem) async -> Bool {
-        let recent = queue.suffix(60).map { $0.song }
+        let at = queue.firstIndex { $0.uid == seed.uid } ?? index
+        // The track playing and the ones before it, and a couple the user chose
+        // themselves, so the music stays close to where it started.
+        let before = Array(queue.prefix(max(0, at)).reversed().prefix(4))
+        let beforeIds = Set(before.map { $0.uid })
+        let chosen = queue.filter { !$0.karousel && $0.uid != seed.uid && !beforeIds.contains($0.uid) }.shuffled().prefix(2)
+        let seeds = ([seed] + before + chosen).map { $0.song }
         let songs: [Song]
         do {
-            songs = try await host.extendQueue(seed: seed.song, recent: Array(recent))
+            songs = try await host.extendQueue(seeds: seeds, queued: queue.map { $0.song })
         } catch {
             songs = []
         }
-        if Task.isCancelled || songs.isEmpty || queue.isEmpty { return false }
-        let items = newItems(songs)
+        if Task.isCancelled || songs.isEmpty || queue.isEmpty || !host.settings().karousel { return false }
+        let items = newItems(songs, karousel: true)
         queue += items
         if unshuffled != nil { unshuffled! += items }
         host.onStateChanged()
@@ -832,19 +871,24 @@ final class PlaybackEngine: DeckListener {
             skipTo(next, 0, manual: false)
             return
         }
-        if let current = currentItem, host.settings().injektAutoQueue {
-            extendTask?.cancel()
-            extendTask = Task { [weak self] in
-                guard let self else { return }
-                if await self.extendQueueNow(current), self.currentItem?.uid == current.uid {
-                    if let next = self.nextIndexAfter(self.index) { self.skipTo(next, 0, manual: false) }
-                } else {
-                    self.markEnded()
-                }
-            }
+        if let current = currentItem, host.settings().karousel {
+            continueAfterEnd(current)
             return
         }
         markEnded()
+    }
+
+    /** The queue ran out with [current]: add music like it and play on, or end there. */
+    private func continueAfterEnd(_ current: QueueItem) {
+        extendTask?.cancel()
+        extendTask = Task { [weak self] in
+            guard let self else { return }
+            if await self.extendQueueNow(current), self.currentItem?.uid == current.uid {
+                if let next = self.nextIndexAfter(self.index) { self.skipTo(next, 0, manual: false) }
+            } else {
+                self.markEnded()
+            }
+        }
     }
 
     private func markEnded() {

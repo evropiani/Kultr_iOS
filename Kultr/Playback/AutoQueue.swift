@@ -1,7 +1,8 @@
 import Foundation
 
 /**
- * Picks tracks to keep the music going when the queue runs out.
+ * Picks tracks for an InjeKt set started from one song (Karousel keeps a
+ * queue going once it runs out).
  *
  * Candidates come from the server's similarity endpoint first, then the same
  * artist, then the same genre, and finally anything in the library. Whatever

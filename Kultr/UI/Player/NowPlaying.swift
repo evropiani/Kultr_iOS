@@ -300,9 +300,20 @@ private struct Transport: View {
         let graph = AppGraph.shared
         let player = graph.player
         let c = theme.colors
+        let mode: ShuffleMode = theme.settings.karousel ? .karousel : (state.shuffle ? .shuffle : .off)
         VStack(spacing: 0) {
             HStack {
-                IconButton(icon: "shuffle", tint: state.shuffle ? c.accent : c.ink2, label: "Shuffle") { player.setShuffle(!state.shuffle) }
+                ModeButton(
+                    icon: mode == .karousel ? "infinity" : "shuffle",
+                    on: mode != .off,
+                    label: mode == .karousel ? "Karousel on" : (mode == .shuffle ? "Shuffle on" : "Shuffle off")
+                ) {
+                    switch player.cycleShuffle() {
+                    case .shuffle: graph.messages.show("Shuffle on")
+                    case .karousel: graph.messages.show("Karousel on: when the queue runs out, music like it keeps playing")
+                    case .off: graph.messages.show("Shuffle and Karousel off")
+                    }
+                }
                 Spacer()
                 IconButton(icon: "backward.end.fill", size: 30, label: "Previous") { player.previous() }
                 Spacer()
@@ -328,11 +339,16 @@ private struct Transport: View {
                 Spacer()
                 IconButton(icon: "forward.end.fill", size: 30, label: "Next") { player.next() }
                 Spacer()
-                IconButton(
+                ModeButton(
                     icon: state.repeatMode == .one ? "repeat.1" : "repeat",
-                    tint: state.repeatMode != .off ? c.accent : c.ink2,
-                    label: "Repeat"
-                ) { player.cycleRepeat() }
+                    on: state.repeatMode != .off,
+                    label: state.repeatMode == .one ? "Repeat this track" : (state.repeatMode == .all ? "Repeat the queue" : "Repeat off")
+                ) {
+                    if state.repeatMode == .off && mode == .karousel {
+                        graph.messages.show("Repeat on: Karousel waits until repeat is off again")
+                    }
+                    player.cycleRepeat()
+                }
             }
             .padding(.top, 4)
             HStack {
@@ -349,6 +365,34 @@ private struct Transport: View {
                 }
             }
         }
+    }
+}
+
+/** Shuffle and repeat: tinted, on a disc, while they're on, so it reads at a glance. */
+private struct ModeButton: View {
+    @Environment(\.kultr) private var theme
+    let icon: String
+    let on: Bool
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        let c = theme.colors
+        Button {
+            Haptics.select()
+            action()
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(on ? c.accent : c.ink2)
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: 40, height: 40)
+                .background(Circle().fill(on ? c.accent.opacity(0.2) : .clear))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableStyle())
+        .accessibilityLabel(label)
     }
 }
 
@@ -375,10 +419,49 @@ private struct QueueList: View {
             .padding(.leading, 20)
             .padding(.trailing, 4)
             .padding(.vertical, 4)
-            ForEach(upNext) { entry in
+            // What Karousel added goes under its own heading.
+            let firstKarousel = upNext.firstIndex { $0.karousel } ?? upNext.count
+            ForEach(upNext[..<firstKarousel]) { entry in
                 QueueRow(index: entry.index, song: entry.song, size: state.queue.count, currentIndex: state.index)
             }
+            if firstKarousel < upNext.count {
+                KarouselHeading(text: "Music like what's playing, so it never stops.")
+                ForEach(upNext[firstKarousel...]) { entry in
+                    QueueRow(index: entry.index, song: entry.song, size: state.queue.count, currentIndex: state.index)
+                }
+            } else if theme.settings.karousel && state.current?.isRadio != true {
+                KarouselHeading(text: "On: when the queue runs out, music like it keeps playing.")
+            }
         }
+    }
+}
+
+private struct KarouselHeading: View {
+    @Environment(\.kultr) private var theme
+    let text: String
+
+    var body: some View {
+        let c = theme.colors
+        HStack(spacing: 12) {
+            Image(systemName: "infinity")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(c.accent)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(c.accent.opacity(0.24)))
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Karousel")
+                    .font(KFont.titleSmall.weight(.semibold))
+                    .foregroundStyle(c.ink)
+                Text(text)
+                    .font(KFont.bodySmall)
+                    .foregroundStyle(c.ink3)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 6)
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -607,6 +607,17 @@ final class LibraryDatabase: @unchecked Sendable {
         read("SELECT * FROM songs WHERE playCount > 0 ORDER BY playCount DESC LIMIT ?", [limit], Self.song)
     }
 
+    /** The library's songs by any of these artists, by id or by name. */
+    func songsByArtists(ids: [String], names: [String]) -> [Song] {
+        let ids = Array(Set(ids).prefix(SQL_CHUNK / 2))
+        let names = Array(Set(names).prefix(SQL_CHUNK / 2))
+        if ids.isEmpty && names.isEmpty { return [] }
+        var clauses: [String] = []
+        if !ids.isEmpty { clauses.append("artistId IN (\(placeholders(ids.count)))") }
+        if !names.isEmpty { clauses.append("artist IN (\(placeholders(names.count)))") }
+        return read("SELECT * FROM songs WHERE " + clauses.joined(separator: " OR "), ids + names, Self.song)
+    }
+
     /** Tracks by when they were last played, as the server (and this phone) last recorded it. */
     func recentlyPlayedSongs(_ limit: Int) -> [Song] {
         read("SELECT * FROM songs WHERE played IS NOT NULL AND played != '' ORDER BY played DESC LIMIT ?", [limit], Self.song)
@@ -739,6 +750,11 @@ final class LibraryDatabase: @unchecked Sendable {
 
     func recentHistory(_ limit: Int) -> [HistoryEntry] {
         read("SELECT * FROM history ORDER BY playedAt DESC LIMIT ?", [limit], Self.history)
+    }
+
+    /** Songs played on this phone since [millis]. */
+    func songIdsPlayedSince(_ millis: Int64) -> [String] {
+        read("SELECT DISTINCT songId FROM history WHERE playedAt >= ?", [millis]) { $0.string(0) ?? "" }.filter { !$0.isEmpty }
     }
 
     func unsubmittedHistory(_ limit: Int) -> [HistoryEntry] {

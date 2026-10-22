@@ -323,7 +323,12 @@ private struct TransportRow: View {
     var body: some View {
         HStack(spacing: 0) {
             if extras {
-                ToggleButton(intent: ToggleShuffleIntent(), icon: "shuffle", on: snapshot?.shuffle == true, size: sideSize)
+                ToggleButton(
+                    intent: ToggleShuffleIntent(),
+                    icon: snapshot?.karousel == true ? "infinity" : "shuffle",
+                    on: snapshot?.shuffle == true || snapshot?.karousel == true,
+                    size: sideSize
+                )
                 Spacer(minLength: 0)
             }
             ControlButton(intent: PreviousTrackIntent(), icon: "backward.fill", size: sideSize, prominent: false)
@@ -562,7 +567,7 @@ private struct ToggleButton<Intent: AppIntent>: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(icon == "shuffle" ? "Shuffle" : "Repeat")
+        .accessibilityLabel(icon == "infinity" ? "Karousel" : icon == "shuffle" ? "Shuffle" : "Repeat")
         .accessibilityValue(on ? "On" : "Off")
     }
 }

@@ -9,10 +9,8 @@ enum KultrIntentActions {
     static func toggle() { AppGraph.shared.player.toggle() }
     static func next() { AppGraph.shared.player.next() }
     static func previous() { AppGraph.shared.player.previous() }
-    static func toggleShuffle() {
-        let player = AppGraph.shared.player
-        player.setShuffle(!player.state.shuffle)
-    }
+    /** Off → shuffle → Karousel → off, like the button in the player. */
+    static func toggleShuffle() { AppGraph.shared.player.cycleShuffle() }
     static func cycleRepeat() { AppGraph.shared.player.cycleRepeat() }
 
     /**
@@ -112,7 +110,8 @@ final class WidgetBridge {
             upNext: Array(waiting),
             upNextCount: state.upNext.count,
             shuffle: state.shuffle,
-            repeatMode: state.repeatMode.rawValue
+            repeatMode: state.repeatMode.rawValue,
+            karousel: state.karousel
         )
         guard changedEnough(from: snapshot, to: next) else { return }
         let queueChanged = snapshot?.upNext != next.upNext
@@ -129,7 +128,8 @@ final class WidgetBridge {
         if old.songId != new.songId || old.isPlaying != new.isPlaying || old.durationMs != new.durationMs || old.title != new.title {
             return true
         }
-        if old.upNext != new.upNext || old.upNextCount != new.upNextCount || old.shuffle != new.shuffle || old.repeatMode != new.repeatMode {
+        if old.upNext != new.upNext || old.upNextCount != new.upNextCount || old.shuffle != new.shuffle || old.repeatMode != new.repeatMode
+            || old.karousel != new.karousel {
             return true
         }
         let expected = old.isPlaying ? old.positionMs + Int64(new.at.timeIntervalSince(old.at) * 1000) : old.positionMs

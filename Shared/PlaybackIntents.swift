@@ -41,8 +41,8 @@ struct PreviousTrackIntent: AudioPlaybackIntent {
 }
 
 struct ToggleShuffleIntent: AudioPlaybackIntent {
-    static let title: LocalizedStringResource = "Shuffle on or off"
-    static let description = IntentDescription("Turns shuffle on or off in Kultr.")
+    static let title: LocalizedStringResource = "Shuffle or Karousel"
+    static let description = IntentDescription("Switches Kultr between shuffle, Karousel (music like what's playing, once the queue runs out) and neither.")
 
     func perform() async throws -> some IntentResult {
         #if !KULTR_WIDGET

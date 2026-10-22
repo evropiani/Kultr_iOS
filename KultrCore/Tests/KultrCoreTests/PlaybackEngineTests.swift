@@ -126,6 +126,7 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
     private var started: [(String, TrackChangeReason)] = []
     private var errors: [String] = []
     private var extensionSongs: [Song] = []
+    private var asked: [(seeds: [String], queued: [String])] = []
     private var planOverride: ((Song, Song, PlanContext) -> TransitionPlan)?
     private var engine: PlaybackEngine!
 
@@ -140,6 +141,7 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         started = []
         errors = []
         extensionSongs = []
+        asked = []
         planOverride = nil
         engine = PlaybackEngine(deckA: a, deckB: b, host: self)
         engine.errorSkipDelayMs = 0
@@ -159,7 +161,8 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         return planTransition(current: current, next: next, context: context, settings: settingsValue, analysisA: nil, analysisB: nil)
     }
 
-    func extendQueue(seed: Song, recent: [Song]) async throws -> [Song] {
+    func extendQueue(seeds: [Song], queued: [Song]) async throws -> [Song] {
+        asked.append((seeds.map { $0.id }, queued.map { $0.id }))
         defer { extensionSongs = [] }
         return extensionSongs
     }
@@ -321,22 +324,67 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
     }
 
     func testEndOfQueueEnds() async {
-        settingsValue.injektAutoQueue = false
+        settingsValue.karousel = false
         await start(["1"], seconds: 20)
         await advance(21_000)
         XCTAssertEqual(engine.status, .ended)
         XCTAssertEqual(engine.index, 0)
     }
 
-    func testAutoQueueKeepsTheMusicGoing() async {
-        settingsValue.injektAutoQueue = true
+    func testKarouselKeepsTheMusicGoing() async {
+        settingsValue.karousel = true
         extensionSongs = songs(["x", "y"])
         await start(["1"])
         await advance(30_000)
         XCTAssertEqual(engine.queue.count, 3)
+        XCTAssertEqual(engine.queue.map { $0.karousel }, [false, true, true])
+        // Asked with the track playing first, and told the whole queue.
+        XCTAssertEqual(asked.count, 1)
+        XCTAssertEqual(asked.first?.seeds, ["1"])
+        XCTAssertEqual(asked.first?.queued, ["1"])
         await advance(31_000)
         XCTAssertEqual(engine.index, 1)
         XCTAssertEqual(engine.currentItem?.song.id, "x")
+    }
+
+    func testKarouselSeedsWithWhatLedHere() async {
+        settingsValue.karousel = true
+        extensionSongs = songs(["x"])
+        engine.setQueue(engine.newItems(songs(["1", "2", "3", "4", "5", "6"])), startIndex: 5, startPositionMs: 0)
+        engine.setPlayWhenReady(true)
+        await advance(30_000)
+        XCTAssertEqual(asked.count, 1)
+        // The track playing, then the ones before it nearest first; a couple more the user chose may follow.
+        XCTAssertEqual(Array(asked[0].seeds.prefix(5)), ["6", "5", "4", "3", "2"])
+        XCTAssertEqual(asked[0].queued, ["1", "2", "3", "4", "5", "6"])
+    }
+
+    func testSwitchingKarouselOffTakesItsSongsOut() async {
+        settingsValue.karousel = true
+        extensionSongs = songs(["x", "y"])
+        await start(["1"])
+        await advance(30_000)
+        XCTAssertEqual(engine.queue.count, 3)
+        engine.addItems(at: engine.queue.count, engine.newItems(songs(["mine"])))
+        settingsValue.karousel = false
+        engine.onKarouselChanged(false)
+        // Karousel's songs leave; the user's own stay.
+        XCTAssertEqual(engine.queue.map { $0.song.id }, ["1", "mine"])
+        await advance(31_000)
+        XCTAssertEqual(engine.currentItem?.song.id, "mine")
+    }
+
+    func testSwitchingKarouselOnAfterTheEndPlaysOn() async {
+        settingsValue.karousel = false
+        await start(["1"], seconds: 20)
+        await advance(21_000)
+        XCTAssertEqual(engine.status, .ended)
+        settingsValue.karousel = true
+        extensionSongs = songs(["x"])
+        engine.onKarouselChanged(true)
+        await advance(100)
+        XCTAssertEqual(engine.currentItem?.song.id, "x")
+        XCTAssertEqual(engine.status, .ready)
     }
 
     func testQueueEditsKeepTheCurrentTrack() async {

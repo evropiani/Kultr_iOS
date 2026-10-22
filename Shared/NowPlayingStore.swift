@@ -25,6 +25,8 @@ struct NowPlayingSnapshot: Codable, Equatable {
     var shuffle: Bool?
     /** "off", "all" or "one". */
     var repeatMode: String?
+    /** Karousel is on: the shuffle button shows it. Nil from versions before 1.3.0. */
+    var karousel: Bool?
 
     /** When the track started, as if it had played without a pause. */
     var startedAt: Date { at.addingTimeInterval(-Double(positionMs) / 1000) }

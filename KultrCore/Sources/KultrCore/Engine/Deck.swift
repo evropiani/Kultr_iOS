@@ -1,9 +1,13 @@
 import Foundation
 
-/** One entry in the play queue. [uid] tells apart two copies of the same song. */
+/**
+ * One entry in the play queue. [uid] tells apart two copies of the same song;
+ * [karousel]: added by Karousel to keep the music going, not by the user.
+ */
 struct QueueItem: Hashable {
     let uid: Int64
     let song: Song
+    var karousel = false
 }
 
 enum DeckStatus: Hashable {

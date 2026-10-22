@@ -8,8 +8,15 @@ struct QueueEntry: Hashable, Identifiable {
     let index: Int
     let song: Song
     let key: String
+    /** Added by Karousel to keep the music going, not by the user. */
+    var karousel = false
 
     var id: String { key }
+}
+
+/** The shuffle button's three states: Karousel keeps shuffle as it was. */
+enum ShuffleMode {
+    case off, shuffle, karousel
 }
 
 struct PlayerUiState: Equatable {
@@ -21,6 +28,8 @@ struct PlayerUiState: Equatable {
     var buffering = false
     var ended = false
     var shuffle = false
+    /** Karousel is on: when the queue runs out, music like it keeps playing. */
+    var karousel = false
     var repeatMode: RepeatMode = .off
     var durationMs: Int64 = 0
 
@@ -48,6 +57,8 @@ private struct SavedSession: Codable {
     let songs: [Song]
     let index: Int
     let positionMs: Int64
+    /** Which of [songs] Karousel added; missing in sessions saved before 1.3.0. */
+    var karousel: [Int]? = nil
 }
 
 /** The queue and position, kept across launches when "Resume where you left off" is on. */
@@ -127,6 +138,7 @@ final class PlayerController: EngineHost {
     @ObservationIgnored private var decks: [AVDeck] = []
     @ObservationIgnored private var engine: PlaybackEngine!
     @ObservationIgnored private var tracker: ListeningTracker!
+    @ObservationIgnored private var karousel: KarouselMusic!
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var lastTickAt: Int64 = 0
     @ObservationIgnored private var lastSavedAt: Int64 = 0
@@ -145,6 +157,7 @@ final class PlayerController: EngineHost {
         decks = [AVDeck(name: "A", sources: sources, eq: eq), AVDeck(name: "B", sources: sources, eq: eq)]
         engine = PlaybackEngine(deckA: decks[0], deckB: decks[1], host: self)
         tracker = ListeningTracker(graph: graph)
+        karousel = KarouselMusic(graph: graph)
         applyEq(graph.settings.current)
         StreamCache.shared.setLimit(megabytes: graph.settings.current.streamCacheMb)
 
@@ -152,6 +165,11 @@ final class PlayerController: EngineHost {
             guard let self else { return }
             self.applyEq(new)
             self.engine.onSettingsChanged(plansAffected: Self.planSignature(old) != Self.planSignature(new))
+            if old.karousel != new.karousel {
+                self.engine.onKarouselChanged(new.karousel)
+                // The widget's shuffle button shows Karousel too.
+                self.publish()
+            }
             if old.streamCacheMb != new.streamCacheMb { StreamCache.shared.setLimit(megabytes: new.streamCacheMb) }
         }
         // A different server has a different library; its queue makes no sense here.
@@ -207,7 +225,9 @@ final class PlayerController: EngineHost {
     /** Put the last saved queue back, at the position it stopped. False if there is none for this server. */
     private func loadSavedSession() -> Bool {
         guard let saved = SessionStore.load(), saved.profileId == graph.auth.active?.id, !saved.songs.isEmpty else { return false }
-        engine.setQueue(engine.newItems(saved.songs), startIndex: saved.index, startPositionMs: saved.positionMs)
+        let added = Set(saved.karousel ?? [])
+        let items = saved.songs.enumerated().map { engine.newItem($0.element, karousel: added.contains($0.offset)) }
+        engine.setQueue(items, startIndex: saved.index, startPositionMs: saved.positionMs)
         return true
     }
 
@@ -220,14 +240,24 @@ final class PlayerController: EngineHost {
         }
         // Keep the saved queue a sensible size around the current track.
         let from = max(0, engine.index - 100)
-        let songs = queue.dropFirst(from).prefix(500).map { $0.song }
-        SessionStore.save(SavedSession(profileId: profile.id, songs: Array(songs), index: engine.index - from, positionMs: engine.positionMs))
+        let kept = Array(queue.dropFirst(from).prefix(500))
+        SessionStore.save(
+            SavedSession(
+                profileId: profile.id,
+                songs: kept.map { $0.song },
+                index: engine.index - from,
+                positionMs: engine.positionMs,
+                karousel: kept.indices.filter { kept[$0].karousel }
+            )
+        )
     }
 
     // ---------------------------------------------------------- state --
 
     private func publish() {
-        let queue = engine.queue.enumerated().map { QueueEntry(index: $0.offset, song: $0.element.song, key: "\($0.offset):\($0.element.uid)") }
+        let queue = engine.queue.enumerated().map {
+            QueueEntry(index: $0.offset, song: $0.element.song, key: "\($0.offset):\($0.element.uid)", karousel: $0.element.karousel)
+        }
         let current = engine.currentItem?.song
         let status = engine.status
         var next = PlayerUiState(
@@ -239,6 +269,7 @@ final class PlayerController: EngineHost {
             buffering: status == .buffering,
             ended: status == .ended,
             shuffle: engine.shuffle,
+            karousel: graph.settings.current.karousel,
             repeatMode: engine.repeatMode,
             durationMs: engine.durationMs
         )
@@ -357,8 +388,8 @@ final class PlayerController: EngineHost {
         }
     }
 
-    func extendQueue(seed: Song, recent: [Song]) async throws -> [Song] {
-        await AutoQueue(graph: graph).build(seed: seed, recent: recent)
+    func extendQueue(seeds: [Song], queued: [Song]) async throws -> [Song] {
+        await karousel.next(seeds: seeds, queued: queued)
     }
 
     func onStateChanged() {
@@ -494,6 +525,36 @@ final class PlayerController: EngineHost {
 
     func setShuffle(_ enabled: Bool) {
         engine.setShuffle(enabled)
+    }
+
+    var shuffleMode: ShuffleMode {
+        if graph.settings.current.karousel { return .karousel }
+        return state.shuffle ? .shuffle : .off
+    }
+
+    /**
+     * The shuffle button: off → shuffle → Karousel → off. Karousel keeps shuffle
+     * as it was and turns repeat off, since a repeating queue never runs out.
+     */
+    @discardableResult
+    func cycleShuffle() -> ShuffleMode {
+        let next: ShuffleMode
+        switch shuffleMode {
+        case .off: next = .shuffle
+        case .shuffle: next = .karousel
+        case .karousel: next = .off
+        }
+        switch next {
+        case .shuffle:
+            setShuffle(true)
+        case .karousel:
+            if engine.repeatMode != .off { engine.setRepeat(.off) }
+            graph.settings.update { $0.karousel = true }
+        case .off:
+            graph.settings.update { $0.karousel = false }
+            setShuffle(false)
+        }
+        return next
     }
 
     func cycleRepeat() {

@@ -148,7 +148,11 @@ struct Settings: Codable, Hashable {
     var injektTempoBlend: Double = 50.0
     var injektBars: Int = 8
     var injektSkipIntro: Bool = true
-    var injektAutoQueue: Bool = true
+    /**
+     * Karousel: when the queue runs out, music like it keeps playing. Saved under
+     * the name the other Kultr apps give their "keep playing similar music".
+     */
+    var karousel: Bool = true
     var injektAnalyseAhead: Bool = true
     /** Only analyse over Wi-Fi, so InjeKt never spends mobile data. */
     var injektAnalyseOnWifiOnly: Bool = false
@@ -185,7 +189,7 @@ struct Settings: Codable, Hashable {
         case replayGainPreamp, preferredBitrate, preferredBitrateMobile, preferredFormat, scrobble, resumeOnStart
         case eqEnabled, eqPreset, eqGains, eqPreamp
         case injektEnabled, injektBeatMatch, injektBassSwap, injektHarmonic, injektMaxTempoShift, injektTempoRamp
-        case injektTempoBlend, injektBars, injektSkipIntro, injektAutoQueue, injektAnalyseAhead, injektAnalyseOnWifiOnly
+        case injektTempoBlend, injektBars, injektSkipIntro, karousel = "injektAutoQueue", injektAnalyseAhead, injektAnalyseOnWifiOnly
         case offlineConcurrency, offlineBitrate, offlineWifiOnly, offlineFirst, streamCacheMb
         case autoSyncOnStart, autoSyncMinutes, syncPlaylistContents
         case showLyrics, homeTiles, favouriteRadios, hasSeenWelcome
@@ -244,7 +248,7 @@ struct Settings: Codable, Hashable {
         injektTempoBlend = double(.injektTempoBlend, d.injektTempoBlend)
         injektBars = int(.injektBars, d.injektBars)
         injektSkipIntro = v(.injektSkipIntro, d.injektSkipIntro)
-        injektAutoQueue = v(.injektAutoQueue, d.injektAutoQueue)
+        karousel = v(.karousel, d.karousel)
         injektAnalyseAhead = v(.injektAnalyseAhead, d.injektAnalyseAhead)
         injektAnalyseOnWifiOnly = v(.injektAnalyseOnWifiOnly, d.injektAnalyseOnWifiOnly)
         offlineConcurrency = int(.offlineConcurrency, d.offlineConcurrency)

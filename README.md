@@ -38,8 +38,15 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   crossfade (with a choice of curves), play gapless albums seamlessly, or cut.
 - **InjeKt transitions.** Tracks are analysed on the phone (tempo, beat grid,
   key, energy and intro/outro structure), and transitions are planned from
-  that. You get tempo-matched blends that land on the downbeat, a bass swap, a
-  filter sweep, and key-aware ordering for an endless automatic queue.
+  that. You get tempo-matched blends that land on the downbeat, a bass swap and
+  a filter sweep.
+- **Karousel.** Tap shuffle twice: when the queue runs out, music like what
+  was playing keeps coming — your server's similar songs, songs by similar
+  artists and by the ones you're hearing (with Last.fm set up on Navidrome),
+  and your own favourites, which also keep it going offline and for the music
+  on your iPhone. With InjeKt on, the songs that mix best come first. Its songs
+  show under their own heading in Up next and leave the queue when you turn it
+  off.
 - **Offline.** Download albums, playlists, favourites or the whole library, at
   a bitrate of your choosing, on Wi-Fi only if you like. A Downloads page shows
   what is coming down, what is queued or failed, and what is already on the

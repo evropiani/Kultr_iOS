@@ -63,7 +63,7 @@ struct KultrColors: Equatable {
                 accent: accent,
                 onAccent: onAccent,
                 background: Color(argb: night ? 0x000000 : 0x08080C),
-                elevated: Color(argb: night ? 0x0A0A0D : 0x101018),
+                elevated: Color(argb: night ? 0x0C0C10 : 0x101018),
                 ink: .white.opacity(0.96),
                 ink2: .white.opacity(0.66),
                 ink3: .white.opacity(0.42),

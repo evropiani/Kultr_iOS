@@ -219,12 +219,13 @@ private struct AppearanceSettings: View {
             Section {
                 SettingToggle(
                     "Night mode",
-                    isOn: setting({ $0.nightMode }, { $0.nightMode = $1 }),
-                    hint: s.theme == .light
-                        ? "Pure black for OLED screens. Choose Dark or System above to use it."
-                        : "Pure black instead of dark grey, with a dimmer artwork background. Easier on the eyes in the dark, and it saves battery on OLED screens."
+                    // Asking for black while the theme is Light means dark is wanted.
+                    isOn: setting({ $0.nightMode }, { s, on in
+                        s.nightMode = on
+                        if on && s.theme == .light { s.theme = .dark }
+                    }),
+                    hint: "Pure black instead of dark grey, for OLED screens: easier on the eyes in the dark, and lighter on the battery. Used whenever Kultr is dark, so with System it comes on with your iPhone's dark mode."
                 )
-                .disabled(s.theme == .light)
             }
             Section {
                 SettingToggle(
@@ -426,6 +427,13 @@ private struct PlaybackSettings: View {
             }
             Section {
                 SettingToggle(
+                    "Karousel",
+                    isOn: setting({ $0.karousel }, { $0.karousel = $1 }),
+                    hint: "When the queue runs out, music like what's been playing keeps coming: similar songs, artists like these and your own favourites. Its songs show under their own heading in Up next. Tapping the shuffle button twice turns it on too."
+                )
+            }
+            Section {
+                SettingToggle(
                     "Resume where you left off",
                     isOn: setting({ $0.resumeOnStart }, { $0.resumeOnStart = $1 }),
                     hint: "Restores the queue and position when Kultr opens. Pressing play on headphones or in Control Center picks it up too."
@@ -508,13 +516,6 @@ private struct InjektSettings: View {
                 )
             }
             .disabled(!on)
-            Section {
-                SettingToggle(
-                    "Keep playing similar music",
-                    isOn: setting({ $0.injektAutoQueue }, { $0.injektAutoQueue = $1 }),
-                    hint: "When the queue runs out, continue with tracks chosen by tempo, key and energy."
-                )
-            }
             Section("Analysis") {
                 SettingToggle(
                     "Analyse ahead",

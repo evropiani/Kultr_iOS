@@ -181,6 +181,16 @@ final class LibraryRepository {
 
     func songsOfGenreNow(_ genre: String) async -> [Song] { await songsOfGenre(genre) }
 
+    /** The library's songs by any of these artists, by id or by name. */
+    func songsByArtists(ids: [String], names: [String]) async -> [Song] {
+        await read([]) { $0.songsByArtists(ids: ids, names: names) }
+    }
+
+    /** Songs played on this phone since [millis]. */
+    func songIdsPlayedSince(_ millis: Int64) async -> [String] {
+        await read([]) { $0.songIdsPlayedSince(millis) }
+    }
+
     func randomSongs(_ count: Int, genre: String? = nil) async -> [Song] {
         let local = await read([Song]()) { db in
             genre.map { db.randomSongsOfGenre($0, count) } ?? db.randomSongs(count)

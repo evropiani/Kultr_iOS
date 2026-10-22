@@ -306,7 +306,7 @@ struct AccentWash: View {
     var height: CGFloat = 320
 
     var body: some View {
-        LinearGradient(colors: [theme.colors.accent.opacity(0.28), .clear], startPoint: .top, endPoint: .bottom)
+        LinearGradient(colors: [theme.colors.accent.opacity(theme.colors.night ? 0.18 : 0.28), .clear], startPoint: .top, endPoint: .bottom)
             .frame(height: height)
             .frame(maxHeight: .infinity, alignment: .top)
             .ignoresSafeArea()
@@ -322,7 +322,7 @@ struct PlainBackdrop: View {
         ZStack {
             theme.colors.background
             RadialGradient(
-                colors: [theme.colors.accent.opacity(theme.colors.night ? 0.1 : theme.colors.dark ? 0.22 : 0.16), .clear],
+                colors: [theme.colors.accent.opacity(theme.colors.night ? 0.12 : theme.colors.dark ? 0.22 : 0.16), .clear],
                 center: .topLeading,
                 startRadius: 0,
                 endRadius: 560
