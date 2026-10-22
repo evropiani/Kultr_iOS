@@ -78,9 +78,15 @@ final class Karousel {
         }
     }
 
+    /** Whatever generator [Input] brought, as a concrete one that `shuffled(using:)` accepts. */
+    private struct Random: RandomNumberGenerator {
+        var base: any RandomNumberGenerator
+        mutating func next() -> UInt64 { base.next() }
+    }
+
     private let sources: KarouselSources
     private let log: (String) -> Void
-    private var random: any RandomNumberGenerator = SystemRandomNumberGenerator()
+    private var random = Random(base: SystemRandomNumberGenerator())
 
     init(sources: KarouselSources, log: @escaping (String) -> Void = { _ in }) {
         self.sources = sources
@@ -90,7 +96,7 @@ final class Karousel {
     func next(_ input: Input) async -> [Song] {
         let seeds = input.seeds.filter { !$0.isRadio && !($0.artist ?? "").trimmingCharacters(in: .whitespaces).isEmpty }
         if seeds.isEmpty || input.count <= 0 { return [] }
-        random = input.random
+        random = Random(base: input.random)
         var seenArtists = Set<String>()
         let artists = Array(
             seeds.map { ArtistRef(name: Self.primary($0.artist), id: $0.artistId) }
