@@ -916,29 +916,9 @@ private struct LocalMusicSettings: View {
 
 // --------------------------------------------------------------- backup --
 
-private struct JsonDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.json] }
-    var text: String
-
-    init(text: String) {
-        self.text = text
-    }
-
-    init(configuration: ReadConfiguration) throws {
-        text = String(decoding: configuration.file.regularFileContents ?? Data(), as: UTF8.self)
-    }
-
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: Data(text.utf8))
-    }
-}
-
 private struct BackupSettings: View {
     @Environment(\.kultr) private var theme
     @State private var includeServers = false
-    @State private var exporting = false
-    @State private var importing = false
-    @State private var document = JsonDocument(text: "")
     @State private var confirmReset = false
     @State private var confirmWipe = false
     @State private var report: String?
@@ -949,17 +929,16 @@ private struct BackupSettings: View {
             Section {
                 SettingToggle("Include the list of servers", isOn: $includeServers, hint: "Addresses only — never usernames or passwords.")
                 Button {
-                    let servers = includeServers
-                        ? graph.auth.profiles.filter { !$0.isLocal }.map { SettingsFile.ExportedServer(label: $0.label, serverUrl: $0.serverUrl, authMode: $0.authMode) }
-                        : nil
-                    document = JsonDocument(
-                        text: SettingsFile.export(graph.settings.current, appVersion: appVersion, exportedAt: ISO8601DateFormatter().string(from: Date()), servers: servers)
-                    )
-                    exporting = true
+                    exportSettings()
                 } label: {
                     Label("Export settings", systemImage: "square.and.arrow.up")
                 }
-                Button { importing = true } label: { Label("Import settings", systemImage: "square.and.arrow.down") }
+                Button {
+                    // A copy of the file, so it reads the same wherever it lives (iCloud, another app).
+                    FilePicker.open([.json, .plainText, .data], copy: true) { url in importFrom(url) }
+                } label: {
+                    Label("Import settings", systemImage: "square.and.arrow.down")
+                }
             } header: {
                 Text("Backup")
             } footer: {
@@ -975,23 +954,6 @@ private struct BackupSettings: View {
         .navigationTitle("Backup and reset")
         .navigationBarTitleDisplayMode(.inline)
         .settingsPage()
-        .fileExporter(
-            isPresented: $exporting,
-            document: document,
-            contentType: .json,
-            defaultFilename: "kultr-settings-\(ISO8601DateFormatter().string(from: Date()).prefix(10)).json"
-        ) { result in
-            switch result {
-            case .success: graph.messages.success("Settings exported.")
-            case .failure(let error): graph.messages.error("Could not write the file: \(error.localizedDescription)")
-            }
-        }
-        .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .plainText, .data]) { result in
-            switch result {
-            case .success(let url): importFrom(url)
-            case .failure(let error): graph.messages.error(error.localizedDescription)
-            }
-        }
         .alert("Settings imported", isPresented: Binding(get: { report != nil }, set: { if !$0 { report = nil } })) {
             Button("OK", role: .cancel) { report = nil }
         } message: {
@@ -1013,6 +975,28 @@ private struct BackupSettings: View {
             }
         } message: {
             Text("The synced library, InjeKt analysis and listening history for this server are deleted from this phone. Downloads are kept. Sync again to rebuild the library.")
+        }
+    }
+
+    /** Write the settings to a file named for today, then let the Files picker save it where the user wants. */
+    private func exportSettings() {
+        let graph = AppGraph.shared
+        let servers = includeServers
+            ? graph.auth.profiles.filter { !$0.isLocal }.map { SettingsFile.ExportedServer(label: $0.label, serverUrl: $0.serverUrl, authMode: $0.authMode) }
+            : nil
+        let now = ISO8601DateFormatter().string(from: Date())
+        let text = SettingsFile.export(graph.settings.current, appVersion: appVersion, exportedAt: now, servers: servers)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let file = folder.appendingPathComponent("kultr-settings-\(now.prefix(10)).json")
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try Data(text.utf8).write(to: file, options: .atomic)
+        } catch {
+            graph.messages.error("Could not write the file: \(error.localizedDescription)")
+            return
+        }
+        FilePicker.export(file) { saved in
+            if saved { graph.messages.success("Settings exported.") }
         }
     }
 

@@ -394,20 +394,18 @@ struct MusicFolders: View {
 }
 
 extension View {
-    /** The Files folder picker; a folder picked there is kept as a music folder. */
+    /** The Files folder picker (UIKit's); a folder picked there is kept as a music folder. */
     func musicFolderPicker(isPresented: Binding<Bool>, onAdded: @escaping (LocalFolder) -> Void) -> some View {
-        fileImporter(isPresented: isPresented, allowedContentTypes: [.folder], allowsMultipleSelection: false) { result in
-            let graph = AppGraph.shared
-            switch result {
-            case .success(let urls):
-                guard let url = urls.first else { return }
+        onChange(of: isPresented.wrappedValue) { _, show in
+            guard show else { return }
+            isPresented.wrappedValue = false
+            FilePicker.open([.folder]) { url in
+                let graph = AppGraph.shared
                 if let folder = graph.local.addFolder(url) {
                     onAdded(folder)
                 } else {
                     graph.messages.error("Kultr was not given access to that folder.")
                 }
-            case .failure(let error):
-                graph.messages.error("Could not open that folder: \(error.localizedDescription)")
             }
         }
     }
