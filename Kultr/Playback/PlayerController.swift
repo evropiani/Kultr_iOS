@@ -156,6 +156,9 @@ final class PlayerController: EngineHost {
         let sources = DeckSources(graph: graph)
         decks = [AVDeck(name: "A", sources: sources, eq: eq), AVDeck(name: "B", sources: sources, eq: eq)]
         engine = PlaybackEngine(deckA: decks[0], deckB: decks[1], host: self)
+        // AVPlayer rebuffers on every speed change, which is heard as a stutter:
+        // InjeKt sets a track's tempo before it starts and never while it plays.
+        engine.steadyTempo = true
         tracker = ListeningTracker(graph: graph)
         karousel = KarouselMusic(graph: graph)
         applyEq(graph.settings.current)
@@ -403,8 +406,20 @@ final class PlayerController: EngineHost {
         tracker.start(item.song)
         // This track and the next are analysed for the plan made now; look
         // one further, so skipping ahead lands on a transition that is ready too.
-        for ahead in 1...2 where engine.index + ahead < engine.queue.count {
-            graph.analysis.analyseAhead(engine.queue[engine.index + ahead].song)
+        let ahead = (1...2).compactMap { step in
+            engine.index + step < engine.queue.count ? engine.queue[engine.index + step].song : nil
+        }
+        // Analysis decodes whole tracks; while a blend has both decks playing,
+        // leave the phone to them and start once it is over.
+        let wait = reason == .transition ? (engine.activeTransition?.duration ?? 0) + 2 : 0
+        if wait > 0 {
+            Task { [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
+                guard let self else { return }
+                for song in ahead { self.graph.analysis.analyseAhead(song) }
+            }
+        } else {
+            for song in ahead { graph.analysis.analyseAhead(song) }
         }
         saveSession()
     }

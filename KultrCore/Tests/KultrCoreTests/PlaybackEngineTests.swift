@@ -450,6 +450,34 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         XCTAssertEqual(b.rate, 1, accuracy: 0.001)
     }
 
+    func testSteadyTempoKeepsTheIncomingTempoAndTellsTheNextPlan() async {
+        settingsValue.injektEnabled = true
+        engine.steadyTempo = true
+        var contexts: [PlanContext] = []
+        planOverride = { _, _, context in
+            contexts.append(context)
+            return TransitionPlan(
+                type: .blend, duration: 8, startAt: 48, inStartOffset: 0,
+                incomingRate: 0.98, outgoingRate: context.outgoingRate, outgoingRamp: 0, tempoRelease: 0,
+                bassSwap: false, sweep: false, curve: .equalPower, label: "InjeKt", reason: ""
+            )
+        }
+        await start(["1", "2", "3"])
+        await advance(30_000)
+        XCTAssertEqual(contexts.first?.steadyTempo, true)
+        XCTAssertEqual(contexts.first?.outgoingRate ?? 0, 1, accuracy: 0.0001)
+        await advance(30_000)
+        XCTAssertFalse(engine.isTransitioning)
+        XCTAssertEqual(engine.currentItem?.song.id, "2")
+        // Neither deck changed speed while it played: the outgoing one never moved,
+        // and the incoming one started at its tempo and kept it.
+        XCTAssertEqual(a.rate, 1, accuracy: 0.0001)
+        XCTAssertEqual(b.rate, 0.98, accuracy: 0.0001)
+        await advance(10_000)
+        XCTAssertEqual(b.rate, 0.98, accuracy: 0.0001)
+        XCTAssertEqual(contexts.last?.outgoingRate ?? 0, 0.98, accuracy: 0.0001)
+    }
+
     func testAFailedTrackIsSkipped() async {
         a.failNextLoad = true
         engine.setQueue(engine.newItems(songs(["bad", "good"])), startIndex: 0, startPositionMs: 0)

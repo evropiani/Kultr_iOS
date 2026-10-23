@@ -86,6 +86,16 @@ final class PlaybackEngine: DeckListener {
     /** Fade level (0..1) per deck, before ReplayGain. */
     private var fades: [Float] = [1, 0]
 
+    /** The speed each deck was last set to. */
+    private var rates: [Float] = [1, 1]
+
+    /**
+     * Never change the speed of a deck that is playing: a blend sets the
+     * incoming deck's tempo before it starts, and it keeps it. For decks that
+     * rebuffer, and so stutter, on every speed change (AVPlayer).
+     */
+    var steadyTempo = false
+
     private(set) var queue: [QueueItem] = []
     private var unshuffled: [QueueItem]?
 
@@ -558,11 +568,11 @@ final class PlaybackEngine: DeckListener {
         let span = a.toMs - a.fromMs
         let t = span > 0 ? Double(position - a.fromMs) / Double(span) : 1
         if t >= 1 {
-            deck.setRate(Float(a.rate))
+            setDeckRate(deck, Float(a.rate))
             approach = nil
         } else if t >= 0 {
             let eased = t * t * (3 - 2 * t)
-            deck.setRate(Float(1 + (a.rate - 1) * eased))
+            setDeckRate(deck, Float(1 + (a.rate - 1) * eased))
         }
     }
 
@@ -570,11 +580,11 @@ final class PlaybackEngine: DeckListener {
         guard let r = tempoRelease else { return }
         let t = Double(clock - r.start) / Double(max(1, r.duration))
         if t >= 1 {
-            r.deck.setRate(Float(r.to))
+            setDeckRate(r.deck, Float(r.to))
             tempoRelease = nil
         } else if t >= 0 {
             let eased = t * t * (3 - 2 * t)
-            r.deck.setRate(Float(r.from + (r.to - r.from) * eased))
+            setDeckRate(r.deck, Float(r.from + (r.to - r.from) * eased))
         }
     }
 
@@ -649,7 +659,9 @@ final class PlaybackEngine: DeckListener {
             guard !Task.isCancelled, let next, self.currentItem?.uid == current.uid else { return }
             let context = PlanContext(
                 durationA: Double(self.durationMs) / 1000,
-                currentTime: Double(self.active.positionMs) / 1000
+                currentTime: Double(self.active.positionMs) / 1000,
+                outgoingRate: Double(self.rates[self.activeSlot]),
+                steadyTempo: self.steadyTempo
             )
             var plan: TransitionPlan
             do {
@@ -733,7 +745,7 @@ final class PlaybackEngine: DeckListener {
         pending = nil
         preparedFor = nil
         if let a = approach {
-            a.deck.setRate(1)
+            setDeckRate(a.deck, 1)
             approach = nil
         }
         if !stopped { active.setNext(nil) }
@@ -765,8 +777,8 @@ final class PlaybackEngine: DeckListener {
             resetDeck(to)
             to.load(p.item, startMs: ms(plan.inStartOffset))
         }
-        if abs(plan.incomingRate - 1) > 0.001 { to.setRate(Float(plan.incomingRate)) }
-        if abs(plan.outgoingRate - 1) > 0.001 { from.setRate(Float(plan.outgoingRate)) }
+        if abs(plan.incomingRate - 1) > 0.001 { setDeckRate(to, Float(plan.incomingRate)) }
+        if abs(Float(plan.outgoingRate) - rates[slotOf(from)]) > 0.0005 { setDeckRate(from, Float(plan.outgoingRate)) }
         if plan.bassSwap { to.setBassDb(Float(Self.bassCutDb)) }
         setFade(to, 0)
         to.play()
@@ -952,6 +964,8 @@ final class PlaybackEngine: DeckListener {
         } else if let found = queue.firstIndex(where: { $0.uid == item.uid }) {
             index = found
         }
+        // A gapless follower starts at its own tempo, not one an earlier blend left the deck at.
+        if rates[slotOf(deck)] != 1 { setDeckRate(deck, 1) }
         host.onTrackStarted(item, reason: .auto)
         host.onStateChanged()
     }
@@ -960,6 +974,11 @@ final class PlaybackEngine: DeckListener {
 
     private func slotOf(_ deck: Deck) -> Int {
         deck === decks[0] ? 0 : 1
+    }
+
+    private func setDeckRate(_ deck: Deck, _ rate: Float) {
+        rates[slotOf(deck)] = rate
+        deck.setRate(rate)
     }
 
     private func setFade(_ deck: Deck, _ fade: Float) {
@@ -973,7 +992,7 @@ final class PlaybackEngine: DeckListener {
     }
 
     private func resetDeck(_ deck: Deck) {
-        deck.setRate(1)
+        setDeckRate(deck, 1)
         deck.setBassDb(0)
         deck.setSweepHz(Float(Self.sweepFromHz))
     }
@@ -1009,7 +1028,7 @@ final class PlaybackEngine: DeckListener {
             tr.to.setSweepHz(Float(Self.sweepFromHz))
         }
         if let r = tempoRelease {
-            r.deck.setRate(1)
+            setDeckRate(r.deck, 1)
             tempoRelease = nil
         }
     }

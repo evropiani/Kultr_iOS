@@ -149,6 +149,15 @@ struct PlanContext: Hashable {
     var durationA: Double
     /** Where playback currently is, so a plan is never scheduled in the past. */
     var currentTime: Double
+    /** The speed the outgoing track is playing at now (1 unless an earlier blend left it matched). */
+    var outgoingRate: Double = 1
+    /**
+     * Never change the speed of a track while it plays: the incoming track is
+     * matched before it starts and keeps that tempo, and the outgoing track
+     * keeps its own. For players that rebuffer, and so stutter, on every
+     * speed change (AVPlayer).
+     */
+    var steadyTempo = false
 }
 
 /** Whether planning needs analysis at all, so callers can skip fetching it. */
@@ -186,12 +195,15 @@ func planTransition(
 
     let bpmA = analysisA.bpm
     let bpmB = analysisB.bpm
+    let steady = context.steadyTempo
+    // What the outgoing track sounds like now: with a steady tempo, the speed an earlier blend left it at.
+    let currentRate = steady && context.outgoingRate > 0 ? context.outgoingRate : 1
 
-    // How much of the tempo gap the *outgoing* track closes.
-    let blend = s.injektTempoRamp ? clamp(s.injektTempoBlend / 100, 0, 1) : 0
+    // How much of the tempo gap the *outgoing* track closes; none when it may not change speed.
+    let blend = !steady && s.injektTempoRamp ? clamp(s.injektTempoBlend / 100, 0, 1) : 0
     let maxShift = s.injektMaxTempoShift / 100
 
-    let match = matchTempo(bpmA, bpmB, blend: blend)
+    let match = matchTempo(bpmA * currentRate, bpmB, blend: blend)
     let confident = analysisA.bpmConfidence >= 0.2 && analysisB.bpmConfidence >= 0.2
     let beatMatch = s.injektBeatMatch && confident && match.worstShift <= maxShift
 
@@ -233,19 +245,26 @@ func planTransition(
 
     let type: TransitionType = harmonicClash ? .sweep : (beatMatch ? .blend : .crossfade)
     let incomingRate = beatMatch ? clamp(match.incomingRate, 0.75, 1.35) : 1
-    let outgoingRate = beatMatch ? clamp(match.outgoingRate, 0.75, 1.35) : 1
+    // A steady outgoing track simply keeps the speed it has.
+    let outgoingRate = steady ? currentRate : (beatMatch ? clamp(match.outgoingRate, 0.75, 1.35) : 1)
     let meetBpm = bpmA * outgoingRate
 
     // The outgoing track drifts into the meeting tempo *before* the blend,
     // over eight of its own bars.
     var outgoingRamp = 0.0
-    if beatMatch && abs(outgoingRate - 1) > 0.0005 {
+    if !steady && beatMatch && abs(outgoingRate - 1) > 0.0005 {
         outgoingRamp = clamp(barSeconds * 8, 6, 24)
         outgoingRamp = min(outgoingRamp, max(0, startAt - context.currentTime - 0.25))
     }
 
     var details: [String] = []
-    if beatMatch {
+    if beatMatch && steady {
+        let inDir = incomingRate >= 1 ? "up" : "down"
+        details.append(
+            "Beat-matched at \(fmt(meetBpm)) BPM — the next track \(inDir) \(fmt(abs(incomingRate - 1) * 100, 1))%, " +
+                "and it stays at that tempo, so no track changes speed while it plays"
+        )
+    } else if beatMatch {
         let outDir = outgoingRate >= 1 ? "up" : "down"
         let inDir = incomingRate >= 1 ? "up" : "down"
         details.append(
@@ -254,7 +273,7 @@ func planTransition(
         )
         if outgoingRamp > 0 { details.append("current track eased into tempo over \(fmt(outgoingRamp))s") }
     } else {
-        details.append("\(fmt(bpmA)) BPM into \(fmt(bpmB)) BPM, tempos too far apart to match")
+        details.append("\(fmt(bpmA * outgoingRate)) BPM into \(fmt(bpmB)) BPM, tempos too far apart to match")
     }
     details.append("keys \(analysisA.camelot) → \(analysisB.camelot)")
     if harmonicClash { details.append("keys clash, so the outgoing track is filtered out instead of blended") }
@@ -274,7 +293,7 @@ func planTransition(
         incomingRate: incomingRate,
         outgoingRate: outgoingRate,
         outgoingRamp: outgoingRamp,
-        tempoRelease: beatMatch ? clamp(60 / bpmB * 4 * 8, 4, 30) : 0,
+        tempoRelease: beatMatch && !steady ? clamp(60 / bpmB * 4 * 8, 4, 30) : 0,
         bassSwap: s.injektBassSwap && (type == .blend || type == .sweep),
         sweep: type == .sweep,
         curve: type == .sweep ? .sharp : .equalPower,

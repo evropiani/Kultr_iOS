@@ -1,3 +1,4 @@
+import Accelerate
 import AVFoundation
 import MediaToolbox
 import os
@@ -24,8 +25,8 @@ final class EqState: @unchecked Sendable {
         }
     }
 
-    var version: Int { state.withLock { $0.version } }
-    func snapshot() -> Snapshot { state.withLock { $0 } }
+    /** For the audio thread: never waits; nil while the main thread is writing. */
+    func snapshotIfAvailable() -> Snapshot? { state.withLockIfAvailable { $0 } }
 }
 
 /** What the engine asks of one deck's audio, read by its taps on the audio thread. */
@@ -38,37 +39,53 @@ final class DeckParams: @unchecked Sendable {
 
     private let state = OSAllocatedUnfairLock(initialState: Values())
 
-    func set(_ change: (inout Values) -> Void) {
-        state.withLock { change(&$0) }
-    }
-
-    var values: Values { state.withLock { $0 } }
-}
-
-/** One RBJ-cookbook biquad, with state for up to eight channels. */
-final class Biquad {
-    private var b0 = 1.0, b1 = 0.0, b2 = 0.0, a1 = 0.0, a2 = 0.0
-    private var x1 = [Double](repeating: 0, count: 8)
-    private var x2 = [Double](repeating: 0, count: 8)
-    private var y1 = [Double](repeating: 0, count: 8)
-    private var y2 = [Double](repeating: 0, count: 8)
-    var bypass = true
-
-    func reset() {
-        for i in 0..<8 {
-            x1[i] = 0
-            x2[i] = 0
-            y1[i] = 0
-            y2[i] = 0
+    /** Applies [change]; true if it changed anything. */
+    @discardableResult
+    func set(_ change: (inout Values) -> Void) -> Bool {
+        state.withLock { values in
+            let before = values
+            change(&values)
+            return before.targetGain != values.targetGain || before.bassDb != values.bassDb || before.sweepHz != values.sweepHz
         }
     }
 
+    var values: Values { state.withLock { $0 } }
+
+    /** For the audio thread: never waits; nil while the main thread is writing. */
+    func valuesIfAvailable() -> Values? { state.withLockIfAvailable { $0 } }
+}
+
+/**
+ * One RBJ-cookbook biquad, with state for up to eight channels. Coefficients
+ * and state live in one block allocated up front, so running it on the audio
+ * thread never allocates and never goes through Swift's exclusivity checks.
+ */
+final class Biquad {
+    // 0..<5: b0 b1 b2 a1 a2; then four values (x1 x2 y1 y2) per channel.
+    private static let stateOffset = 5
+    private let block: UnsafeMutablePointer<Double>
+    private(set) var bypass = true
+
+    init() {
+        block = .allocate(capacity: Self.stateOffset + 8 * 4)
+        block.initialize(repeating: 0, count: Self.stateOffset + 8 * 4)
+        block[0] = 1
+    }
+
+    deinit {
+        block.deallocate()
+    }
+
+    func reset() {
+        for i in Self.stateOffset..<(Self.stateOffset + 8 * 4) { block[i] = 0 }
+    }
+
     private func set(_ nb0: Double, _ nb1: Double, _ nb2: Double, _ na0: Double, _ na1: Double, _ na2: Double) {
-        b0 = nb0 / na0
-        b1 = nb1 / na0
-        b2 = nb2 / na0
-        a1 = na1 / na0
-        a2 = na2 / na0
+        block[0] = nb0 / na0
+        block[1] = nb1 / na0
+        block[2] = nb2 / na0
+        block[3] = na1 / na0
+        block[4] = na2 / na0
     }
 
     func lowShelf(_ rate: Int, _ frequency: Double, _ gainDb: Double) {
@@ -128,11 +145,13 @@ final class Biquad {
 
     @inline(__always)
     func process(_ x: Double, _ channel: Int) -> Double {
-        let y = b0 * x + b1 * x1[channel] + b2 * x2[channel] - a1 * y1[channel] - a2 * y2[channel]
-        x2[channel] = x1[channel]
-        x1[channel] = x
-        y2[channel] = y1[channel]
-        y1[channel] = y
+        let c = block
+        let s = block + Self.stateOffset + channel * 4
+        let y = c[0] * x + c[1] * s[0] + c[2] * s[1] - c[3] * s[2] - c[4] * s[3]
+        s[1] = s[0]
+        s[0] = x
+        s[3] = s[2]
+        s[2] = y
         return y
     }
 }
@@ -142,6 +161,10 @@ final class Biquad {
  * the sweep high-pass, the equaliser, and the fade/ReplayGain level. One per
  * player item, attached to its audio track as an MTAudioProcessingTap; the
  * level ramps across each buffer so fades never click.
+ *
+ * [process] runs on the audio thread, where waiting or allocating can make
+ * the sound drop out: it never blocks on the main thread (if the values are
+ * being written that instant it uses the last ones) and never allocates.
  */
 final class TapProcessor {
     private let params: DeckParams
@@ -152,10 +175,14 @@ final class TapProcessor {
     private var interleaved = false
     private var usable = false
     private var gain: Float = 0
+    private var latest = DeckParams.Values()
 
     private let bass = Biquad()
     private let sweep = Biquad()
     private let bands = (0..<EQ_BANDS.count).map { _ in Biquad() }
+    /** The bands that are not flat, as indices into [bands]; [activeCount] of them are in use. */
+    private let active = UnsafeMutablePointer<Int>.allocate(capacity: EQ_BANDS.count)
+    private var activeCount = 0
     private var appliedBass = Float.nan
     private var appliedSweep = Float.nan
     private var appliedEq = -1
@@ -164,7 +191,13 @@ final class TapProcessor {
     init(params: DeckParams, eq: EqState) {
         self.params = params
         self.eq = eq
-        gain = params.values.targetGain
+        latest = params.values
+        gain = latest.targetGain
+        active.initialize(repeating: 0, count: EQ_BANDS.count)
+    }
+
+    deinit {
+        active.deallocate()
     }
 
     func prepare(_ format: AudioStreamBasicDescription) {
@@ -178,7 +211,8 @@ final class TapProcessor {
         bass.reset()
         sweep.reset()
         bands.forEach { $0.reset() }
-        gain = params.values.targetGain
+        latest = params.values
+        gain = latest.targetGain
     }
 
     private func refreshFilters(_ values: DeckParams.Values) {
@@ -190,47 +224,77 @@ final class TapProcessor {
             sweep.highPass(rate, Double(values.sweepHz), 0.7)
             appliedSweep = values.sweepHz
         }
-        let version = eq.version
-        if version != appliedEq {
-            appliedEq = version
-            let snap = eq.snapshot()
-            for (index, filter) in bands.enumerated() {
-                let g = snap.enabled ? Double(snap.gains[index]) : 0
-                let f = Double(EQ_BANDS[index])
-                if index == 0 {
-                    filter.lowShelf(rate, f, g)
-                } else if index == EQ_BANDS.count - 1 {
-                    filter.highShelf(rate, f, g)
-                } else {
-                    filter.peaking(rate, f, g, 1.1)
-                }
+        guard let snap = eq.snapshotIfAvailable(), snap.version != appliedEq else { return }
+        appliedEq = snap.version
+        activeCount = 0
+        for index in 0..<bands.count {
+            let filter = bands[index]
+            let g = snap.enabled && index < snap.gains.count ? Double(snap.gains[index]) : 0
+            let f = Double(EQ_BANDS[index])
+            if index == 0 {
+                filter.lowShelf(rate, f, g)
+            } else if index == EQ_BANDS.count - 1 {
+                filter.highShelf(rate, f, g)
+            } else {
+                filter.peaking(rate, f, g, 1.1)
             }
-            preamp = snap.enabled ? pow(10, Double(snap.preampDb) / 20) : 1
+            if !filter.bypass {
+                active[activeCount] = index
+                activeCount += 1
+            }
         }
+        preamp = snap.enabled ? pow(10, Double(snap.preampDb) / 20) : 1
     }
 
     func process(_ list: UnsafeMutablePointer<AudioBufferList>, frames: Int) {
         guard usable, frames > 0 else { return }
-        let values = params.values
-        refreshFilters(values)
+        if let values = params.valuesIfAvailable() { latest = values }
+        refreshFilters(latest)
         let from = gain
-        let to = values.targetGain
+        let to = latest.targetGain
         gain = to
         let useBass = !bass.bypass
         let useSweep = !sweep.bypass
-        let active = bands.filter { !$0.bypass }
-        let pre = preamp
+        let filtered = useBass || useSweep || activeCount > 0 || abs(preamp - 1) > 1e-6
         // Nothing to do: unity gain and every filter flat.
-        if !useBass && !useSweep && active.isEmpty && abs(pre - 1) < 1e-6 && abs(from - 1) < 1e-5 && abs(to - 1) < 1e-5 { return }
+        if !filtered && abs(from - 1) < 1e-5 && abs(to - 1) < 1e-5 { return }
         let step = (to - from) / Float(frames)
         let buffers = UnsafeMutableAudioBufferListPointer(list)
 
+        if !filtered {
+            // Only the level: one vectorised ramp per channel.
+            if interleaved {
+                guard let raw = buffers.first?.mData else { return }
+                let data = raw.assumingMemoryBound(to: Float.self)
+                let n = channels
+                let count = min(frames, Int(buffers[0].mDataByteSize) / (4 * n))
+                for c in 0..<n {
+                    var start = from + step
+                    var increment = step
+                    vDSP_vrampmul(data + c, vDSP_Stride(n), &start, &increment, data + c, vDSP_Stride(n), vDSP_Length(count))
+                }
+            } else {
+                for buffer in buffers {
+                    guard let raw = buffer.mData else { continue }
+                    let data = raw.assumingMemoryBound(to: Float.self)
+                    let count = min(frames, Int(buffer.mDataByteSize) / 4)
+                    var start = from + step
+                    var increment = step
+                    vDSP_vrampmul(data, 1, &start, &increment, data, 1, vDSP_Length(count))
+                }
+            }
+            return
+        }
+
+        let pre = preamp
+        let bandCount = activeCount
+        let order = active
         @inline(__always)
         func run(_ sample: Float, _ channel: Int, _ level: Float) -> Float {
             var x = Double(sample)
             if useBass { x = bass.process(x, channel) }
             if useSweep { x = sweep.process(x, channel) }
-            for band in active { x = band.process(x, channel) }
+            for i in 0..<bandCount { x = bands[order[i]].process(x, channel) }
             return Float(x * pre) * level
         }
 

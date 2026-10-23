@@ -233,6 +233,31 @@ final class InjektTests: XCTestCase {
         XCTAssertGreaterThan(plan.outgoingRamp, 0)
     }
 
+    func testSteadyTempoNeverChangesAPlayingTrack() {
+        var steady = context
+        steady.steadyTempo = true
+        let plan = planTransition(current: a, next: b, context: steady, settings: Settings(), analysisA: analysis("a", 124), analysisB: analysis("b", 126, camelot: "9A"))
+        XCTAssertEqual(plan.type, .blend)
+        // The playing track keeps its speed; the next one starts at its tempo and stays there.
+        XCTAssertEqual(plan.outgoingRate, 1, accuracy: 1e-9)
+        XCTAssertEqual(plan.outgoingRamp, 0)
+        XCTAssertEqual(plan.tempoRelease, 0)
+        XCTAssertEqual(126 * plan.incomingRate, 124, accuracy: 1e-6)
+        // A track an earlier blend left faster keeps that speed, and the next one meets it there.
+        steady.outgoingRate = 1.02
+        let carried = planTransition(current: a, next: b, context: steady, settings: Settings(), analysisA: analysis("a", 124), analysisB: analysis("b", 126, camelot: "9A"))
+        XCTAssertEqual(carried.outgoingRate, 1.02, accuracy: 1e-9)
+        XCTAssertEqual(126 * carried.incomingRate, 124 * 1.02, accuracy: 1e-6)
+        XCTAssertEqual(carried.outgoingRamp, 0)
+        XCTAssertEqual(carried.tempoRelease, 0)
+        // Further apart than the maximum shift from where the music is now: no beat-match.
+        steady.outgoingRate = 1.07
+        let far = planTransition(current: a, next: b, context: steady, settings: Settings(), analysisA: analysis("a", 124), analysisB: analysis("b", 120, camelot: "9A"))
+        XCTAssertEqual(far.type, .crossfade)
+        XCTAssertEqual(far.incomingRate, 1)
+        XCTAssertEqual(far.outgoingRate, 1.07, accuracy: 1e-9)
+    }
+
     func testFarTempiClashesAndRadio() {
         let far = planTransition(current: a, next: b, context: context, settings: Settings(), analysisA: analysis("a", 100), analysisB: analysis("b", 128))
         XCTAssertEqual(far.type, .crossfade)

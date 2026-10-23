@@ -471,21 +471,8 @@ private struct InjektSettings: View {
                 SettingToggle(
                     "Beat-match",
                     isOn: setting({ $0.injektBeatMatch }, { $0.injektBeatMatch = $1 }),
-                    hint: "Bring both tracks to a shared tempo and line up their bars."
+                    hint: "Start the next track at the tempo of the one playing and line up their bars. It keeps that tempo, so no track ever changes speed while it plays."
                 )
-                SettingToggle(
-                    "Meet in the middle",
-                    isOn: setting({ $0.injektTempoRamp }, { $0.injektTempoRamp = $1 }),
-                    hint: "Ease the current track toward the next one's tempo before the blend."
-                )
-                SettingSlider(
-                    label: "Tempo share",
-                    value: s.injektTempoBlend,
-                    range: 0...100,
-                    format: { "\(Int($0))%" },
-                    hint: "How much of the tempo change the outgoing track makes."
-                ) { v in update { $0.injektTempoBlend = v.rounded() } }
-                .disabled(!s.injektTempoRamp)
                 SettingSlider(
                     label: "Maximum tempo shift",
                     value: s.injektMaxTempoShift,
