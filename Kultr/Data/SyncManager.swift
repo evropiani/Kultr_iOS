@@ -1,6 +1,7 @@
 import BackgroundTasks
 import Foundation
 import Observation
+import UIKit
 
 /** Runs library syncs and remembers how the last one went, for the Sync page. */
 @MainActor
@@ -163,9 +164,24 @@ final class SyncManager {
     func onAppStart() {
         scheduleBackgroundCheck()
         guard graph.settings.current.autoSyncOnStart else { return }
-        Task {
-            _ = await quickCheckAndSync()
+        // Not when iOS starts Kultr in the background (a widget's play button):
+        // there, all it has to do is play. The check runs once Kultr is opened.
+        startCheckPending = true
+        if UIApplication.shared.applicationState == .active {
+            runStartCheck()
+            return
         }
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.runStartCheck() }
+        }
+    }
+
+    @ObservationIgnored private var startCheckPending = false
+
+    private func runStartCheck() {
+        guard startCheckPending else { return }
+        startCheckPending = false
+        Task { _ = await quickCheckAndSync() }
     }
 
     /** The cheap "anything new?" probe, followed by a delta sync when it says so. */

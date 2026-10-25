@@ -143,6 +143,7 @@ final class PlayerController: EngineHost {
     @ObservationIgnored private var lastTickAt: Int64 = 0
     @ObservationIgnored private var lastSavedAt: Int64 = 0
     @ObservationIgnored private var resumeAfterInterruption = false
+    @ObservationIgnored private var silenceTask: UIBackgroundTaskIdentifier = .invalid
     @ObservationIgnored private var artworkKey: String?
     @ObservationIgnored private var artwork: MPMediaItemArtwork?
     @ObservationIgnored private let clockStart = ProcessInfo.processInfo.systemUptime
@@ -340,6 +341,7 @@ final class PlayerController: EngineHost {
         let delta = lastTickAt == 0 ? 0 : now - lastTickAt
         lastTickAt = now
         engine.tick()
+        guardSilence()
         if engine.playWhenReady && engine.status == .ready {
             tracker.advance(delta, durationMs: engine.durationMs, positionMs: engine.positionMs)
         }
@@ -370,8 +372,15 @@ final class PlayerController: EngineHost {
         if !s.injektEnabled {
             return planTransition(current: current, next: next, context: context, settings: s, analysisA: nil, analysisB: nil)
         }
-        let a = await withTimeout(25) { await self.graph.analysis.getOrAnalyse(current) }
-        let b = await withTimeout(25) { await self.graph.analysis.getOrAnalyse(next) }
+        // Both tracks at once, and only for as long as the track playing allows:
+        // the plan has to be ready while there is time to load the next track,
+        // even when iOS holds back the analysis of an app in the background.
+        let left = context.durationA - context.currentTime
+        let budget = min(25, max(1, left - Double(PlaybackEngine.primeLeadMs) / 1000))
+        async let first = withTimeout(budget) { await self.graph.analysis.getOrAnalyse(current) }
+        async let second = withTimeout(budget) { await self.graph.analysis.getOrAnalyse(next) }
+        let a = await first
+        let b = await second
         // Analysis can take a while; plan against where playback is now.
         var fresh = context
         fresh.currentTime = Double(engine.positionMs) / 1000
@@ -396,6 +405,7 @@ final class PlayerController: EngineHost {
     }
 
     func onStateChanged() {
+        guardSilence()
         publish()
         if let timer = sleepTimer, timer.endOfTrack, !engine.pauseAtEndOfTrack { sleepTimer = nil }
         if !engine.playWhenReady { saveSession() }
@@ -406,7 +416,9 @@ final class PlayerController: EngineHost {
         tracker.start(item.song)
         // This track and the next are analysed for the plan made now; look
         // one further, so skipping ahead lands on a transition that is ready too.
-        let ahead = (1...2).compactMap { step in
+        // In the background iOS holds the work back, and memory is tighter: just the next one there.
+        let reach = UIApplication.shared.applicationState == .active ? 2 : 1
+        let ahead = (1...reach).compactMap { step in
             engine.index + step < engine.queue.count ? engine.queue[engine.index + step].song : nil
         }
         // Analysis decodes whole tracks; while a blend has both decks playing,
@@ -603,6 +615,33 @@ final class PlayerController: EngineHost {
         engine.pauseAtEndOfTrack = false
     }
 
+    // ------------------------------------------------- background time --
+
+    /**
+     * iOS keeps an app running in the background only while it makes sound.
+     * Between two songs, or while a stream buffers, nothing plays for a
+     * moment, and iOS may suspend Kultr right then, so the music never comes
+     * back. While playback is wanted but silent, background time bridges the gap.
+     */
+    private func guardSilence() {
+        let status = engine.status
+        let wanted = engine.playWhenReady && status != .idle && status != .ended
+        if wanted && !engine.isAudible {
+            guard silenceTask == .invalid else { return }
+            silenceTask = UIApplication.shared.beginBackgroundTask(withName: "kultr.between-tracks") { [weak self] in
+                MainActor.assumeIsolated { self?.endSilenceGuard() }
+            }
+        } else {
+            endSilenceGuard()
+        }
+    }
+
+    private func endSilenceGuard() {
+        guard silenceTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(silenceTask)
+        silenceTask = .invalid
+    }
+
     // ---------------------------------------------------- audio session --
 
     private func configureAudioSession() {
@@ -627,6 +666,12 @@ final class PlayerController: EngineHost {
         guard let raw = info?[AVAudioSessionInterruptionTypeKey] as? UInt,
               let type = AVAudioSession.InterruptionType(rawValue: raw)
         else { return }
+        // Told late that the session was interrupted while Kultr was suspended:
+        // nothing is interrupting now, so it must not pause what is playing.
+        if type == .began, let reason = info?[AVAudioSessionInterruptionReasonKey] as? UInt,
+           AVAudioSession.InterruptionReason(rawValue: reason) == .appWasSuspended {
+            return
+        }
         switch type {
         case .began:
             if engine.playWhenReady {

@@ -68,6 +68,13 @@ final class PlaybackEngine: DeckListener {
      * hand-over itself is planned as soon as the current track starts.
      */
     static let primeLeadMs: Int64 = 30_000
+    /**
+     * A plan still not made this close to the end (analysis can be slow,
+     * above all while iOS holds back an app in the background) gives way to
+     * a plain one, so the next track is loaded in time and never starts in
+     * silence after this one stops.
+     */
+    static let planDeadlineMs: Int64 = 15_000
     static let incomingStartTimeoutMs: Int64 = 5_000
     static let bassCutDb = -26.0
     static let sweepFromHz = 20.0
@@ -238,6 +245,9 @@ final class PlaybackEngine: DeckListener {
     }
 
     var isTransitioning: Bool { crossing != nil }
+
+    /** Whether any deck is making sound right now. */
+    var isAudible: Bool { decks.contains { $0.isPlaying } }
 
     func newItems(_ songs: [Song], karousel: Bool = false) -> [QueueItem] {
         songs.map { newItem($0, karousel: karousel) }
@@ -548,6 +558,11 @@ final class PlaybackEngine: DeckListener {
             // Plan as soon as the track plays: the planner then has the whole
             // track to choose a mix-out point from, and the plan shows at once.
             prepareNext()
+        } else if !pauseAtEndOfTrack && duration - position <= Self.planDeadlineMs, let next = peekNext() {
+            // Still planning this close to the end: don't wait any longer.
+            planTask?.cancel()
+            planTask = nil
+            setPending(next, fallbackPlan(Double(duration) / 1000))
         }
     }
 

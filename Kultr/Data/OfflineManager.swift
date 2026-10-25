@@ -90,7 +90,10 @@ final class OfflineManager {
         downloadedIds = Set(map.keys)
         queuedCount = db.queuedCount()
         refreshStatus()
-        if queuedCount > 0 && worker == nil { startWorker() }
+        // Started in the background (a widget's play button), downloads left
+        // behind wait until Kultr is opened, so the stream playing has the
+        // connection to itself; becoming active starts them.
+        if queuedCount > 0 && worker == nil && UIApplication.shared.applicationState == .active { startWorker() }
     }
 
     private func refreshCounts() {

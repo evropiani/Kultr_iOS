@@ -128,6 +128,8 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
     private var extensionSongs: [Song] = []
     private var asked: [(seeds: [String], queued: [String])] = []
     private var planOverride: ((Song, Song, PlanContext) -> TransitionPlan)?
+    /** Planning never finishes (analysis that takes for ever), until the engine gives up on it. */
+    private var planHangs = false
     private var engine: PlaybackEngine!
 
     override func setUp() async throws {
@@ -143,6 +145,7 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         extensionSongs = []
         asked = []
         planOverride = nil
+        planHangs = false
         engine = PlaybackEngine(deckA: a, deckB: b, host: self)
         engine.errorSkipDelayMs = 0
     }
@@ -157,6 +160,7 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
     func settings() -> Settings { settingsValue }
 
     func plan(current: Song, next: Song, context: PlanContext) async throws -> TransitionPlan {
+        if planHangs { try await Task.sleep(nanoseconds: 3_600_000_000_000) }
         if let planOverride { return planOverride(current, next, context) }
         return planTransition(current: current, next: next, context: context, settings: settingsValue, analysisA: nil, analysisB: nil)
     }
@@ -257,6 +261,24 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         await advance(30_000, step: 50)
         XCTAssertEqual(engine.index, 1)
         XCTAssertTrue(engine.isTransitioning)
+    }
+
+    func testAPlanStillBeingMadeNearTheEndGivesWayToAPlainOne() async {
+        planHangs = true
+        await start(["1", "2"])
+        await advance(40_000)
+        XCTAssertNil(engine.currentPlan)
+        XCTAssertNil(b.item)
+        // Fifteen seconds before the end the engine stops waiting: a plain crossfade, the next track loaded at once.
+        await advance(6_000)
+        XCTAssertNotNil(engine.currentPlan)
+        XCTAssertEqual(b.item?.song.id, "2")
+        // So the next track blends in instead of starting from nothing after this one stops.
+        await advance(16_000)
+        XCTAssertEqual(engine.currentItem?.song.id, "2")
+        XCTAssertEqual(started.last?.0, "2")
+        XCTAssertEqual(started.last?.1, .transition)
+        XCTAssertTrue(b.isPlaying)
     }
 
     func testAQueueEditWhilePlanningPlansAgain() async {
