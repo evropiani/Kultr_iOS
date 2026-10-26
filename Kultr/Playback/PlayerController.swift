@@ -730,6 +730,13 @@ final class PlayerController: EngineHost {
         }
     }
 
+    /**
+     * The cover handed to the Lock Screen and Control Center. iOS can show it
+     * full screen behind the Lock Screen (tap the cover there to switch), so it
+     * is sent large enough to stay sharp at that size.
+     */
+    private static let lockScreenCoverPixels = 1600
+
     private func updateNowPlaying() {
         let center = MPNowPlayingInfoCenter.default()
         guard let song = state.current else {
@@ -750,9 +757,11 @@ final class PlayerController: EngineHost {
         if key != artworkKey {
             artworkKey = key
             artwork = nil
-            if let url = coverURL(key, 600, client: graph.auth.client) {
+            if let url = coverURL(key, Self.lockScreenCoverPixels, client: graph.auth.client) {
                 Task { [weak self] in
-                    guard let image = await ImageLoader.shared.image(url, pixelSize: 600), let self, self.artworkKey == key else { return }
+                    guard let image = await ImageLoader.shared.largeImage(url, pixelSize: Self.lockScreenCoverPixels),
+                          let self, self.artworkKey == key
+                    else { return }
                     self.artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
                     self.updateNowPlaying()
                 }

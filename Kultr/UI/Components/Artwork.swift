@@ -13,8 +13,9 @@ func artworkUrl(_ coverId: String?, _ size: Int) -> URL? {
  */
 func coverURL(_ coverId: String?, _ size: Int, client: SubsonicClient?) -> URL? {
     if let local = LocalLibrary.artURL(coverId) { return local }
-    // Snap to a few sizes so the same cover is not fetched at every pixel size.
-    let bucket = size <= 96 ? 96 : size <= 200 ? 200 : size <= 400 ? 400 : 800
+    // Snap to a few sizes so the same cover is not fetched at every pixel size;
+    // 1600 only when asked for outright (the Lock Screen's full-screen cover).
+    let bucket = size <= 96 ? 96 : size <= 200 ? 200 : size <= 400 ? 400 : size < 1600 ? 800 : 1600
     return client?.coverArtUrl(coverId, size: bucket)
 }
 

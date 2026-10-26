@@ -42,6 +42,17 @@ final class ImageLoader: @unchecked Sendable {
         return image
     }
 
+    /**
+     * One large image, decoded for a single use and not kept in memory: the
+     * Lock Screen's full-screen cover would otherwise push dozens of small
+     * ones out of the cache. The file itself still comes from the disk cache.
+     */
+    func largeImage(_ url: URL, pixelSize: Int) async -> UIImage? {
+        guard let result = try? await session.data(from: url) else { return nil }
+        if let http = result.1 as? HTTPURLResponse, !(200..<300).contains(http.statusCode) { return nil }
+        return Self.downsample(result.0, pixelSize: pixelSize)
+    }
+
     static func downsample(_ data: Data, pixelSize: Int) -> UIImage? {
         guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
         let options: [CFString: Any] = [
