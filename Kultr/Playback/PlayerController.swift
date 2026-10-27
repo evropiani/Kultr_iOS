@@ -144,6 +144,11 @@ final class PlayerController: EngineHost {
     @ObservationIgnored private var lastSavedAt: Int64 = 0
     @ObservationIgnored private var resumeAfterInterruption = false
     @ObservationIgnored private var silenceTask: UIBackgroundTaskIdentifier = .invalid
+    @ObservationIgnored private var silenceStartedAt: Int64 = 0
+    /** The background time for this quiet spell ran out; asking again at once only gets the same answer. */
+    @ObservationIgnored private var silenceExpired = false
+    @ObservationIgnored private var loggedState = ""
+    @ObservationIgnored private var lastReportAt: Int64 = 0
     @ObservationIgnored private var artworkKey: String?
     @ObservationIgnored private var artwork: MPMediaItemArtwork?
     @ObservationIgnored private let clockStart = ProcessInfo.processInfo.systemUptime
@@ -346,6 +351,7 @@ final class PlayerController: EngineHost {
             tracker.advance(delta, durationMs: engine.durationMs, positionMs: engine.positionMs)
         }
         if let ends = sleepTimer?.endsAt, Date() >= ends {
+            PlaybackLog.note("Sleep timer finished: pausing")
             sleepTimer = nil
             pause()
             graph.messages.show("Sleep timer finished. Good night.")
@@ -354,7 +360,18 @@ final class PlayerController: EngineHost {
             lastSavedAt = now
             saveSession()
             updateNowPlaying()
+            let background = UIApplication.shared.applicationState != .active
+            PlaybackLog.shared.heartbeat(playing: true, background: background)
+            if background && now - lastReportAt >= 300_000 {
+                lastReportAt = now
+                PlaybackLog.note("Playing in the background, \(clock(engine.positionMs)) into “\(state.current?.title ?? "?")” · \(PlaybackLog.memory())")
+            }
         }
+    }
+
+    private func clock(_ ms: Int64) -> String {
+        let seconds = max(0, ms / 1000)
+        return "\(seconds / 60):" + String(format: "%02d", seconds % 60)
     }
 
     // ------------------------------------------------------ EngineHost --
@@ -406,6 +423,7 @@ final class PlayerController: EngineHost {
 
     func onStateChanged() {
         guardSilence()
+        logState()
         publish()
         if let timer = sleepTimer, timer.endOfTrack, !engine.pauseAtEndOfTrack { sleepTimer = nil }
         if !engine.playWhenReady { saveSession() }
@@ -434,10 +452,49 @@ final class PlayerController: EngineHost {
             for song in ahead { graph.analysis.analyseAhead(song) }
         }
         saveSession()
+        let how: String
+        switch reason {
+        case .user: how = "chosen"
+        case .auto: how = "next"
+        case .transition: how = engine.activeTransition.map { "mixed in, \($0.label)" } ?? "mixed in"
+        }
+        PlaybackLog.note("Now playing “\(item.song.title)” by \(item.song.artist ?? "?") (\(how))")
     }
 
     func onError(_ message: String) {
+        PlaybackLog.note("Error: \(message)")
         graph.messages.error(message)
+    }
+
+    func onRecovery(_ message: String) {
+        PlaybackLog.note("Recovering: \(message)")
+        // iOS may have let go of the audio session while it was quiet.
+        activateSession()
+    }
+
+    /** One line whenever playback starts, pauses, loads or ends. */
+    private func logState() {
+        let summary: String
+        if engine.queue.isEmpty {
+            summary = "Nothing queued"
+        } else if !engine.playWhenReady {
+            summary = engine.status == .ended ? "Finished the queue" : "Paused"
+        } else {
+            switch engine.status {
+            case .ready: summary = "Playing"
+            case .buffering: summary = "Loading"
+            case .ended: summary = "Finished the queue"
+            case .idle: summary = "Stopped"
+            }
+        }
+        guard summary != loggedState else { return }
+        let wasPlaying = loggedState == "Playing" || loggedState == "Loading"
+        let isPlaying = summary == "Playing" || summary == "Loading"
+        loggedState = summary
+        PlaybackLog.note(summary)
+        if wasPlaying != isPlaying {
+            PlaybackLog.shared.heartbeat(playing: isPlaying, background: UIApplication.shared.applicationState != .active)
+        }
     }
 
     // --------------------------------------------------------- commands --
@@ -627,11 +684,21 @@ final class PlayerController: EngineHost {
         let status = engine.status
         let wanted = engine.playWhenReady && status != .idle && status != .ended
         if wanted && !engine.isAudible {
-            guard silenceTask == .invalid else { return }
+            guard silenceTask == .invalid, !silenceExpired else { return }
+            silenceStartedAt = now()
             silenceTask = UIApplication.shared.beginBackgroundTask(withName: "kultr.between-tracks") { [weak self] in
-                MainActor.assumeIsolated { self?.endSilenceGuard() }
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    PlaybackLog.note("Quiet too long in the background; iOS may now suspend Kultr · \(self.decks.map { $0.diagnosis }.joined(separator: " · "))")
+                    self.silenceExpired = true
+                    self.endSilenceGuard()
+                }
             }
         } else {
+            if silenceTask != .invalid || silenceExpired, engine.isAudible, now() - silenceStartedAt > 3_000 {
+                PlaybackLog.note("Sound again after \((now() - silenceStartedAt) / 1000) s of quiet")
+            }
+            silenceExpired = false
             endSilenceGuard()
         }
     }
@@ -670,16 +737,20 @@ final class PlayerController: EngineHost {
         // nothing is interrupting now, so it must not pause what is playing.
         if type == .began, let reason = info?[AVAudioSessionInterruptionReasonKey] as? UInt,
            AVAudioSession.InterruptionReason(rawValue: reason) == .appWasSuspended {
+            PlaybackLog.note("iOS had suspended Kultr (its audio was quiet in the background)")
             return
         }
         switch type {
         case .began:
+            let reason = (info?[AVAudioSessionInterruptionReasonKey] as? UInt).map { "reason \($0)" } ?? "a call, an alarm or another app"
+            PlaybackLog.note("Interrupted (\(reason))\(engine.playWhenReady ? "; pausing until it ends" : "")")
             if engine.playWhenReady {
                 engine.setPlayWhenReady(false)
                 resumeAfterInterruption = true
             }
         case .ended:
             let options = (info?[AVAudioSessionInterruptionOptionKey] as? UInt).map { AVAudioSession.InterruptionOptions(rawValue: $0) } ?? []
+            PlaybackLog.note("Interruption over\(options.contains(.shouldResume) ? "" : "; iOS says not to resume by itself")")
             if resumeAfterInterruption && options.contains(.shouldResume) {
                 resumeAfterInterruption = false
                 activateSession()
@@ -692,10 +763,14 @@ final class PlayerController: EngineHost {
 
     /** Headphones unplugged (or a Bluetooth speaker gone): pause, like every music app. */
     private func handleRouteChange(_ info: [AnyHashable: Any]?) {
-        guard let raw = info?[AVAudioSessionRouteChangeReasonKey] as? UInt,
-              AVAudioSession.RouteChangeReason(rawValue: raw) == .oldDeviceUnavailable
-        else { return }
-        if engine.playWhenReady { pause() }
+        guard let raw = info?[AVAudioSessionRouteChangeReasonKey] as? UInt else { return }
+        let outputs = AVAudioSession.sharedInstance().currentRoute.outputs.map { $0.portName }.joined(separator: ", ")
+        PlaybackLog.note("Audio now goes to \(outputs.isEmpty ? "nothing" : outputs) (route change \(raw))")
+        guard AVAudioSession.RouteChangeReason(rawValue: raw) == .oldDeviceUnavailable else { return }
+        if engine.playWhenReady {
+            PlaybackLog.note("Headphones or speaker gone: pausing")
+            pause()
+        }
     }
 
     // --------------------------------------------------- lock screen etc --
@@ -703,14 +778,17 @@ final class PlayerController: EngineHost {
     private func configureRemoteCommands() {
         let center = MPRemoteCommandCenter.shared()
         center.playCommand.addTarget { [weak self] _ in
+            PlaybackLog.note("Play from the Lock Screen, Control Center or headphones")
             MainActor.assumeIsolated { self?.resume() }
             return .success
         }
         center.pauseCommand.addTarget { [weak self] _ in
+            PlaybackLog.note("Pause from the Lock Screen, Control Center or headphones")
             MainActor.assumeIsolated { self?.pause() }
             return .success
         }
         center.togglePlayPauseCommand.addTarget { [weak self] _ in
+            PlaybackLog.note("Play/pause from the Lock Screen, Control Center or headphones")
             MainActor.assumeIsolated { self?.toggle() }
             return .success
         }

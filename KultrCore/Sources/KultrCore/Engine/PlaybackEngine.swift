@@ -42,6 +42,13 @@ protocol EngineHost: AnyObject {
     func onTrackStarted(_ item: QueueItem, reason: TrackChangeReason)
 
     func onError(_ message: String)
+
+    /** Playback had gone quiet when it should not have, and the engine stepped in. */
+    func onRecovery(_ message: String)
+}
+
+extension EngineHost {
+    func onRecovery(_ message: String) {}
 }
 
 private func ms(_ seconds: Double) -> Int64 {
@@ -76,6 +83,18 @@ final class PlaybackEngine: DeckListener {
      */
     static let planDeadlineMs: Int64 = 15_000
     static let incomingStartTimeoutMs: Int64 = 5_000
+    /**
+     * Playing, but nothing heard for this long: the player may have been
+     * stopped from outside (iOS does that to apps in the background), so it
+     * is told to play again.
+     */
+    static let nudgeAfterMs: Int64 = 4_000
+    /**
+     * Still nothing, with the track loaded and ready: load it again where it
+     * was. Both happen well within the half minute iOS gives a quiet app in
+     * the background before suspending it, when the music could not come back.
+     */
+    static let reloadAfterMs: Int64 = 12_000
     static let bassCutDb = -26.0
     static let sweepFromHz = 20.0
     static let sweepToHz = 2400.0
@@ -126,6 +145,11 @@ final class PlaybackEngine: DeckListener {
 
     private var stoppedPositionMs: Int64 = 0
     private var nextUid: Int64 = 1
+
+    /** On [clock], since when playback has been wanted but silent; -1 while it is heard. */
+    private var silentSince: Int64 = -1
+    /** What has been tried about the current silence: 1 asked to play, 2 reloaded. */
+    private var silenceStep = 0
 
     // ---------------------------------------------------------- transitions --
 
@@ -530,6 +554,7 @@ final class PlaybackEngine: DeckListener {
 
         runTransition()
         runTempoRelease()
+        watchSilence()
 
         if stopped || queue.isEmpty || !playWhenReady || crossing != nil { return }
         let deck = active
@@ -600,6 +625,43 @@ final class PlaybackEngine: DeckListener {
         } else if t >= 0 {
             let eased = t * t * (3 - 2 * t)
             setDeckRate(r.deck, Float(r.from + (r.to - r.from) * eased))
+        }
+    }
+
+    /**
+     * Playback is wanted but nothing has been heard for a while. Loading and
+     * buffering are quiet too, so first the player is only told to play
+     * (which changes nothing while it waits for data); only a track that is
+     * loaded, ready and still silent is loaded again.
+     */
+    private func watchSilence() {
+        let wanted = playWhenReady && !stopped && !ended && currentItem != nil
+        if !wanted || isAudible {
+            silentSince = -1
+            silenceStep = 0
+            return
+        }
+        if silentSince < 0 {
+            silentSince = clock
+            return
+        }
+        let silent = clock - silentSince
+        if silenceStep == 0 && silent >= Self.nudgeAfterMs {
+            silenceStep = 1
+            host.onRecovery("Silent for \(silent / 1000) s while playing (\(active.name): \(active.status)); asked it to play again.")
+            active.play()
+            if let crossing, crossing.from.item != nil { crossing.from.play() }
+        } else if silenceStep == 1 && silent >= Self.reloadAfterMs && crossing == nil && active.status == .ready {
+            silenceStep = 2
+            let position = active.item?.uid == currentItem?.uid ? active.positionMs : 0
+            host.onRecovery("Still silent after \(silent / 1000) s; loading the track again at \(position / 1000) s.")
+            let rate = rates[activeSlot]
+            clearPending()
+            loadCurrent(position)
+            // Steady tempo: back at the speed it was matched to, set before it starts.
+            if rate != 1 { setDeckRate(active, rate) }
+            active.play()
+            host.onStateChanged()
         }
     }
 

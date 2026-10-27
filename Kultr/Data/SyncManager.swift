@@ -222,12 +222,19 @@ final class SyncManager {
 
     private func handleBackgroundRefresh(_ task: BGAppRefreshTask) {
         scheduleBackgroundCheck()
+        PlaybackLog.note("iOS woke Kultr to look for changes on the server")
+        // Told complete exactly once: when the check is done, or the moment
+        // time is up. A task still open when its time runs out gets Kultr
+        // ended by iOS, and with it any music playing.
+        let completion = TaskCompletion(task)
         let work = Task { [weak self] in
             _ = await self?.quickCheckAndSync()
-            task.setTaskCompleted(success: true)
+            completion.finish(success: true)
         }
         task.expirationHandler = {
+            PlaybackLog.note("The server check ran out of background time; stopping it")
             work.cancel()
+            completion.finish(success: false)
             Task { @MainActor [weak self] in self?.cancel() }
         }
     }
@@ -240,5 +247,24 @@ final class SyncManager {
         let request = BGAppRefreshTaskRequest(identifier: Self.refreshTaskId)
         request.earliestBeginDate = Date(timeIntervalSinceNow: Double(max(15, minutes)) * 60)
         try? BGTaskScheduler.shared.submit(request)
+    }
+}
+
+/** Completes a background task once, whichever way it ends first. */
+private final class TaskCompletion: @unchecked Sendable {
+    private let task: BGTask
+    private let lock = NSLock()
+    private var done = false
+
+    init(_ task: BGTask) {
+        self.task = task
+    }
+
+    func finish(success: Bool) {
+        lock.lock()
+        let first = !done
+        done = true
+        lock.unlock()
+        if first { task.setTaskCompleted(success: success) }
     }
 }

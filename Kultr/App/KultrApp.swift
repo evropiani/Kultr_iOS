@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         // Background tasks have to be registered before launch finishes.
         SyncManager.registerBackgroundTask()
+        PlaybackLog.shared.start(application)
         _ = AppGraph.shared
         application.beginReceivingRemoteControlEvents()
         #if DEBUG

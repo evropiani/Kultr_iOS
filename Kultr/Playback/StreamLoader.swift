@@ -197,7 +197,12 @@ final class StreamingResource: NSObject, AVAssetResourceLoaderDelegate, URLSessi
         let operations = OperationQueue()
         operations.maxConcurrentOperationCount = 1
         operations.underlyingQueue = queue
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: operations)
+        let config = URLSessionConfiguration.default
+        // A connection that stalls without failing would otherwise hang for a
+        // minute; in the background iOS suspends a quiet app long before that.
+        // Failing sooner lets the deck try again while Kultr is still running.
+        config.timeoutIntervalForRequest = 20
+        let session = URLSession(configuration: config, delegate: self, delegateQueue: operations)
         self.session = session
         let task = session.dataTask(with: makeRequest())
         mainTask = task
@@ -339,7 +344,12 @@ final class StreamingResource: NSObject, AVAssetResourceLoaderDelegate, URLSessi
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         if task === mainTask {
             if let error {
-                if failure == nil && (error as? URLError)?.code != .cancelled { failure = error }
+                if failure == nil && (error as? URLError)?.code != .cancelled {
+                    failure = error
+                    let ns = error as NSError
+                    let of = expected > 0 ? " of \(expected / 1024) KB" : ""
+                    PlaybackLog.note("Stream download stopped after \(received / 1024) KB\(of): \(ns.domain) \(ns.code)")
+                }
             } else {
                 finished = true
                 if expected <= 0 { expected = received }

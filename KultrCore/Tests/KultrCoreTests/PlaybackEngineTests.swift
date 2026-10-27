@@ -18,6 +18,12 @@ final class FakeDeck: Deck {
     private(set) var sweep: Float = 20
     private(set) var next: QueueItem?
     var failNextLoad = false
+    /** Stays loading until this is cleared, like a stream that is slow to arrive. */
+    var holdLoading = false
+    /** Asking it to play again does not bring it back; only loading the track again does. */
+    var deaf = false
+    private(set) var silenced = false
+    private(set) var loads = 0
     private weak var listener: DeckListener?
 
     init(_ name: String, clock: @escaping () -> Int64) {
@@ -30,9 +36,12 @@ final class FakeDeck: Deck {
     }
 
     var bufferedPositionMs: Int64 { positionMs }
-    var isPlaying: Bool { status == .ready && wantPlay }
+    var isPlaying: Bool { status == .ready && wantPlay && !silenced }
 
     func load(_ item: QueueItem, startMs: Int64) {
+        loads += 1
+        silenced = false
+        deaf = false
         self.item = item
         base = startMs
         since = nil
@@ -44,7 +53,15 @@ final class FakeDeck: Deck {
 
     func play() {
         wantPlay = true
-        if status == .ready && since == nil { since = clock() }
+        if !deaf { silenced = false }
+        if status == .ready && since == nil && !silenced { since = clock() }
+    }
+
+    /** The player stops behind the engine's back, the way iOS can stop an app's audio. */
+    func silence() {
+        freeze()
+        since = nil
+        silenced = true
     }
 
     func pause() {
@@ -88,6 +105,7 @@ final class FakeDeck: Deck {
     /** Advance the simulation: finish loading, reach the end, move on gaplessly. */
     func update() {
         if status == .buffering {
+            if holdLoading { return }
             if failNextLoad {
                 failNextLoad = false
                 status = .error
@@ -125,6 +143,7 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
     private var settingsValue = Settings()
     private var started: [(String, TrackChangeReason)] = []
     private var errors: [String] = []
+    private var recoveries: [String] = []
     private var extensionSongs: [Song] = []
     private var asked: [(seeds: [String], queued: [String])] = []
     private var planOverride: ((Song, Song, PlanContext) -> TransitionPlan)?
@@ -142,6 +161,7 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         b = FakeDeck("B") { [unowned self] in self.clockMs }
         started = []
         errors = []
+        recoveries = []
         extensionSongs = []
         asked = []
         planOverride = nil
@@ -179,6 +199,10 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
 
     func onError(_ message: String) {
         errors.append(message)
+    }
+
+    func onRecovery(_ message: String) {
+        recoveries.append(message)
     }
 
     private func songs(_ ids: [String], seconds: Int = 60) -> [Song] {
@@ -498,6 +522,65 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         await advance(10_000)
         XCTAssertEqual(b.rate, 0.98, accuracy: 0.0001)
         XCTAssertEqual(contexts.last?.outgoingRate ?? 0, 0.98, accuracy: 0.0001)
+    }
+
+    func testAPlayerStoppedFromOutsideIsToldToPlayAgain() async {
+        await start(["1", "2"], seconds: 300)
+        await advance(10_000)
+        a.silence()
+        await advance(3_000)
+        XCTAssertFalse(a.isPlaying)
+        XCTAssertTrue(recoveries.isEmpty)
+        await advance(1_500)
+        XCTAssertTrue(a.isPlaying)
+        XCTAssertEqual(recoveries.count, 1)
+        XCTAssertEqual(a.loads, 1, "asking it to play was enough")
+        // It went on from where it stopped (10 s), and has played the half second since it was asked.
+        XCTAssertLessThan(abs(engine.positionMs - 10_500), 100, "position \(engine.positionMs)")
+        await advance(20_000)
+        XCTAssertEqual(recoveries.count, 1)
+    }
+
+    func testATrackThatStaysSilentIsLoadedAgainWhereItWas() async {
+        await start(["1", "2"], seconds: 300)
+        await advance(20_000)
+        a.deaf = true
+        a.silence()
+        await advance(11_000)
+        XCTAssertFalse(a.isPlaying)
+        XCTAssertEqual(a.loads, 1)
+        await advance(2_000)
+        XCTAssertEqual(a.loads, 2)
+        XCTAssertTrue(a.isPlaying)
+        XCTAssertEqual(engine.currentItem?.song.id, "1")
+        XCTAssertLessThan(abs(engine.positionMs - 21_000), 1_000, "position \(engine.positionMs)")
+        XCTAssertEqual(recoveries.count, 2)
+        // Playing again: the next silence starts over, and nothing else happens meanwhile.
+        await advance(20_000)
+        XCTAssertEqual(recoveries.count, 2)
+        XCTAssertEqual(a.loads, 2)
+    }
+
+    func testASlowLoadIsNeverStartedOver() async {
+        a.holdLoading = true
+        await start(["1", "2"], seconds: 300)
+        await advance(30_000)
+        XCTAssertEqual(a.loads, 1)
+        XCTAssertEqual(recoveries.count, 1, "only asked to play, which is harmless while it loads")
+        a.holdLoading = false
+        await advance(100)
+        XCTAssertTrue(a.isPlaying)
+    }
+
+    func testSilenceAfterPausingOrAtTheEndIsLeftAlone() async {
+        await start(["1"], seconds: 20)
+        await advance(5_000)
+        engine.setPlayWhenReady(false)
+        await advance(30_000)
+        engine.setPlayWhenReady(true)
+        await advance(40_000)
+        XCTAssertEqual(engine.status, .ended)
+        XCTAssertTrue(recoveries.isEmpty, "\(recoveries)")
     }
 
     func testAFailedTrackIsSkipped() async {

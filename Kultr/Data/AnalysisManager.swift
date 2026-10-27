@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import Observation
+import UIKit
 
 /** Longest track worth analysing; DJ mixes and audiobooks do not need InjeKt. */
 let MAX_ANALYSIS_SECONDS = 20 * 60
@@ -111,8 +112,10 @@ final class AnalysisManager {
         let session = graph.auth.session
         let streamUrl = graph.auth.client?.streamUrl(song.id, maxBitRate: ANALYSIS_BITRATE, format: "mp3")
         if local == nil && streamUrl == nil { return nil }
+        let started = Date()
+        let place = UIApplication.shared.applicationState == .active ? "" : " in the background"
 
-        return await Task.detached(priority: .utility) { () -> TrackAnalysis? in
+        let result = await Task.detached(priority: .utility) { () -> TrackAnalysis? in
             var temp: URL?
             defer { if let temp { try? FileManager.default.removeItem(at: temp) } }
             do {
@@ -138,6 +141,9 @@ final class AnalysisManager {
                 return nil
             }
         }.value
+        let seconds = String(format: "%.1f", Date().timeIntervalSince(started))
+        PlaybackLog.note("InjeKt \(result == nil ? "could not analyse" : "analysed") “\(song.title)”\(place) in \(seconds) s")
+        return result
     }
 
     /** "Analyse missing": work through every track without current analysis. */

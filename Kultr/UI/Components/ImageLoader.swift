@@ -22,6 +22,12 @@ final class ImageLoader: @unchecked Sendable {
         config.requestCachePolicy = .returnCacheDataElseLoad
         config.httpMaximumConnectionsPerHost = 6
         session = URLSession(configuration: config)
+        // In the background only the music matters, and of the apps playing
+        // there, iOS ends the biggest first when it needs memory. The covers
+        // come back from the disk cache when Kultr is opened again.
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.memory.removeAllObjects()
+        }
     }
 
     private func key(_ url: URL, _ pixelSize: Int) -> NSString {

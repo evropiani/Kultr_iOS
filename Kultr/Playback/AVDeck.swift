@@ -99,7 +99,7 @@ final class AVDeck: NSObject, Deck {
         player.actionAtItemEnd = .pause
         player.automaticallyWaitsToMinimizeStalling = true
         playerObservers.append(player.observe(\.timeControlStatus, options: [.new]) { [weak self] _, _ in
-            DispatchQueue.main.async { MainActor.assumeIsolated { self?.changed() } }
+            DispatchQueue.main.async { MainActor.assumeIsolated { self?.timeControlChanged() } }
         })
         playerObservers.append(player.observe(\.currentItem, options: [.new]) { [weak self] _, _ in
             DispatchQueue.main.async { MainActor.assumeIsolated { self?.currentItemChanged() } }
@@ -107,6 +107,7 @@ final class AVDeck: NSObject, Deck {
         let center = NotificationCenter.default
         center.addObserver(self, selector: #selector(itemEnded(_:)), name: .AVPlayerItemDidPlayToEndTime, object: nil)
         center.addObserver(self, selector: #selector(itemFailed(_:)), name: .AVPlayerItemFailedToPlayToEndTime, object: nil)
+        center.addObserver(self, selector: #selector(itemStalled(_:)), name: .AVPlayerItemPlaybackStalled, object: nil)
     }
 
     // ----------------------------------------------------------- state --
@@ -153,6 +154,42 @@ final class AVDeck: NSObject, Deck {
 
     private func changed() {
         listener?.onStatusChanged(self)
+    }
+
+    /** For the playback log: what this deck is doing right now. */
+    var diagnosis: String {
+        guard let item else { return "\(name): empty" }
+        let control: String
+        switch player.timeControlStatus {
+        case .playing: control = "playing"
+        case .paused: control = "paused"
+        case .waitingToPlayAtSpecifiedRate: control = "waiting (\(waitReason))"
+        @unknown default: control = "?"
+        }
+        let at = "\(positionMs / 1000) s of \(max(0, durationMs) / 1000) s, buffered to \(bufferedPositionMs / 1000) s"
+        return "\(name): “\(item.song.title)” \(status), player \(control)\(wantPlay ? "" : " (not wanted)"), \(at)"
+    }
+
+    private var waitReason: String {
+        (player.reasonForWaitingToPlay?.rawValue ?? "?")
+            .replacingOccurrences(of: "AVPlayerWaiting", with: "")
+            .replacingOccurrences(of: "Reason", with: "")
+    }
+
+    /** The player started, paused or began waiting; note it when that is not what Kultr asked for. */
+    private func timeControlChanged() {
+        if wantPlay, !ended, item != nil, currentPlayerItem?.status == .readyToPlay, pendingSeekMs == nil {
+            let nearEnd = durationMs > 0 && positionMs >= durationMs - 1_500
+            switch player.timeControlStatus {
+            case .paused where !nearEnd:
+                PlaybackLog.note("\(name): the player stopped by itself · \(diagnosis)")
+            case .waitingToPlayAtSpecifiedRate where positionMs > 1_000 && !nearEnd:
+                PlaybackLog.note("\(name): waiting for audio · \(diagnosis)")
+            default:
+                break
+            }
+        }
+        changed()
     }
 
     // --------------------------------------------------------- loading --
@@ -289,6 +326,7 @@ final class AVDeck: NSObject, Deck {
         if !triedDirect, !isRadio, let direct = sources.source(for: queued, direct: true), case .direct = direct {
             let hadCache = currentPlayerItem.map { resources[ObjectIdentifier($0)] != nil } ?? true
             if hadCache {
+                PlaybackLog.note("\(name): the stream stopped (\(Self.code(error))); trying again without the cache")
                 triedDirect = true
                 let position = currentPlayerItem.map { _ in positionMs } ?? startMs
                 teardown()
@@ -301,6 +339,7 @@ final class AVDeck: NSObject, Deck {
     }
 
     private func fail(_ message: String) {
+        PlaybackLog.note("\(name): failed: \(message)")
         failed = true
         listener?.onError(self, message: message)
         changed()
@@ -454,12 +493,30 @@ final class AVDeck: NSObject, Deck {
         }
     }
 
+    @objc nonisolated private func itemStalled(_ note: Notification) {
+        let object = note.object as AnyObject?
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                guard let object, object === self.currentPlayerItem else { return }
+                PlaybackLog.note("\(self.name): ran out of audio · \(self.diagnosis)")
+            }
+        }
+    }
+
+    /** An error's domain and code, which say more than its text. */
+    private static func code(_ error: Error?) -> String {
+        guard let error else { return "no error given" }
+        let ns = error as NSError
+        return "\(ns.domain) \(ns.code)"
+    }
+
     @objc nonisolated private func itemFailed(_ note: Notification) {
         let object = note.object as AnyObject?
         let error = note.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? Error
         DispatchQueue.main.async {
             MainActor.assumeIsolated {
                 guard let object, object === self.currentPlayerItem else { return }
+                PlaybackLog.note("\(self.name): could not play to the end (\(Self.code(error)))")
                 self.fail(self.describe(error))
             }
         }

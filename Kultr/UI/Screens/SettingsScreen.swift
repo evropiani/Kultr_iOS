@@ -1024,6 +1024,57 @@ private struct BackupSettings: View {
 
 // ---------------------------------------------------------------- about --
 
+/** The playback log, newest at the bottom, to read or send. */
+private struct PlaybackLogPage: View {
+    @State private var text = ""
+    @State private var loaded = false
+
+    private var latest: String {
+        text.split(separator: "\n", omittingEmptySubsequences: false).suffix(400).joined(separator: "\n")
+    }
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    // The latest lines only; sharing sends all of it.
+                    Text(text.isEmpty ? (loaded ? "Nothing yet. Play some music." : "") : latest)
+                        .font(.caption2.monospaced())
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                    Color.clear.frame(height: 1).id("end")
+                }
+            }
+            .onChange(of: loaded) {
+                proxy.scrollTo("end", anchor: .bottom)
+            }
+        }
+        .navigationTitle("Playback log")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button(role: .destructive) {
+                    PlaybackLog.shared.clear()
+                    text = ""
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .disabled(text.isEmpty)
+                ShareLink(item: "Kultr \(appVersion) (\(appBuild)) playback log\n\n" + text) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .disabled(text.isEmpty)
+            }
+        }
+        .kultrScreen()
+        .task {
+            text = await Task.detached(priority: .userInitiated) { PlaybackLog.shared.text }.value
+            loaded = true
+        }
+    }
+}
+
 private struct AboutSection: View {
     @Environment(\.openURL) private var openURL
 
@@ -1068,6 +1119,21 @@ private struct AboutSection: View {
                     }
                 }
                 .disabled(updates.check == .checking)
+            }
+            Section {
+                NavigationLink {
+                    PlaybackLogPage()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "list.bullet.rectangle").frame(width: 26).foregroundStyle(.tint)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Playback log").foregroundStyle(Color.primary)
+                            Text("What played, and what stopped it. If the music stops by itself, share this with the developer.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
             }
             Section {
                 link("Source code", "chevron.left.forwardslash.chevron.right", "github.com/evropiani/Kultr_iOS", SOURCE)
