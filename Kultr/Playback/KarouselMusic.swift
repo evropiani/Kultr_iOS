@@ -19,6 +19,15 @@ final class KarouselMusic: KarouselSources {
     /** Where a song not analysed yet sits among analysed ones: in the middle. */
     private static let unknownAffinity = 0.5
 
+    /**
+     * How long one search waits for the server, all told; after that it goes
+     * on with the library alone. A server asking Last.fm can take its time,
+     * and when the queue has already run out, Kultr is quiet while it waits,
+     * which iOS does not allow an app in the background for long.
+     */
+    private static let serverBudget: TimeInterval = 20
+    private var deadline = Date.distantFuture
+
     init(graph: AppGraph) {
         self.graph = graph
     }
@@ -42,13 +51,35 @@ final class KarouselMusic: KarouselSources {
             exclude.insert(song.id)
             exclude.insert(Karousel.key(song))
         }
+        deadline = Date().addingTimeInterval(Self.serverBudget)
+        let started = Date()
         let karousel = Karousel(sources: self) { Self.logger.info("Karousel: \($0, privacy: .public)") }
-        return await karousel.next(Karousel.Input(seeds: seeds, exclude: exclude, count: count))
+        let found = await karousel.next(Karousel.Input(seeds: seeds, exclude: exclude, count: count))
+        let seconds = String(format: "%.1f", Date().timeIntervalSince(started))
+        PlaybackLog.note("Karousel found \(found.count) songs like “\(seeds.first?.title ?? "?")” in \(seconds) s\(online ? "" : " (server out of reach)")")
+        return found
+    }
+
+    /** [body] from the server, or [empty] once this search has waited long enough for it. */
+    private func fromServer<T: Sendable>(_ empty: T, _ body: @escaping @MainActor () async -> T) async -> T {
+        let left = deadline.timeIntervalSinceNow
+        guard left > 0 else { return empty }
+        return await withTaskGroup(of: T?.self) { group in
+            group.addTask { await body() }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(left * 1_000_000_000))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first ?? empty
+        }
     }
 
     func station(_ seed: Song) async throws -> [Song] {
         guard online else { return [] }
-        return await mixingWell(seed, await library.similarSongs(seed.id, count: 50).filter(playable))
+        let similar = await fromServer([Song]()) { await self.library.similarSongs(seed.id, count: 50) }
+        return await mixingWell(seed, similar.filter(playable))
     }
 
     /**
@@ -68,12 +99,15 @@ final class KarouselMusic: KarouselSources {
 
     func similarArtists(_ artist: ArtistRef) async throws -> [ArtistRef] {
         guard let id = artist.id, online else { return [] }
-        return (await library.artistInfo(id)?.similarArtist ?? []).map { ArtistRef(name: $0.name, id: $0.id) }
+        return await fromServer([ArtistRef]()) {
+            (await self.library.artistInfo(id)?.similarArtist ?? []).map { ArtistRef(name: $0.name, id: $0.id) }
+        }
     }
 
     func topSongs(_ artist: ArtistRef, count: Int) async throws -> [Song] {
         guard online else { return [] }
-        return Array(await library.topSongs(artist.name).filter(playable).prefix(count))
+        let top = await fromServer([Song]()) { await self.library.topSongs(artist.name) }
+        return Array(top.filter(playable).prefix(count))
     }
 
     func byArtists(_ artists: [ArtistRef]) async throws -> [Song] {

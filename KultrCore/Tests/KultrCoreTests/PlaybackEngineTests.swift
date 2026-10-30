@@ -146,6 +146,9 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
     private var recoveries: [String] = []
     private var extensionSongs: [Song] = []
     private var asked: [(seeds: [String], queued: [String])] = []
+    /** Karousel's search doesn't answer until [heldExtension] is resumed, like a slow server. */
+    private var holdExtension = false
+    private var heldExtension: CheckedContinuation<Void, Never>?
     private var planOverride: ((Song, Song, PlanContext) -> TransitionPlan)?
     /** Planning never finishes (analysis that takes for ever), until the engine gives up on it. */
     private var planHangs = false
@@ -164,6 +167,8 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         recoveries = []
         extensionSongs = []
         asked = []
+        holdExtension = false
+        heldExtension = nil
         planOverride = nil
         planHangs = false
         engine = PlaybackEngine(deckA: a, deckB: b, host: self)
@@ -187,6 +192,7 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
 
     func extendQueue(seeds: [Song], queued: [Song]) async throws -> [Song] {
         asked.append((seeds.map { $0.id }, queued.map { $0.id }))
+        if holdExtension { await withCheckedContinuation { heldExtension = $0 } }
         defer { extensionSongs = [] }
         return extensionSongs
     }
@@ -403,6 +409,54 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         // The track playing, then the ones before it nearest first; a couple more the user chose may follow.
         XCTAssertEqual(Array(asked[0].seeds.prefix(5)), ["6", "5", "4", "3", "2"])
         XCTAssertEqual(asked[0].queued, ["1", "2", "3", "4", "5", "6"])
+    }
+
+    func testKarouselKeepsLookingWhileTheLastTrackPlays() async {
+        settingsValue.karousel = true
+        await start(["1"], seconds: 120)
+        await advance(5_000)
+        XCTAssertEqual(asked.count, 1)
+        XCTAssertEqual(engine.queue.count, 1, "nothing came back the first time")
+        extensionSongs = songs(["x"])
+        await advance(15_000)
+        XCTAssertEqual(asked.count, 2)
+        XCTAssertEqual(engine.queue.map { $0.song.id }, ["1", "x"])
+        // Planned and mixed in like any other track: no silence at the end.
+        await advance(30_000)
+        XCTAssertEqual(engine.currentPlan?.type, .crossfade)
+        await advance(75_000)
+        XCTAssertEqual(engine.currentItem?.song.id, "x")
+        XCTAssertTrue(started.contains { $0.0 == "x" && $0.1 == .transition })
+    }
+
+    func testTheEndWaitsForKarouselsSearchInsteadOfStartingOver() async {
+        settingsValue.karousel = true
+        holdExtension = true
+        await start(["1"], seconds: 20)
+        await advance(21_000)
+        XCTAssertEqual(asked.count, 1, "still the search from when the track began")
+        XCTAssertNotEqual(engine.status, .ended)
+        extensionSongs = songs(["x"])
+        holdExtension = false
+        heldExtension?.resume()
+        heldExtension = nil
+        await advance(200)
+        XCTAssertEqual(engine.currentItem?.song.id, "x")
+        XCTAssertTrue(activeDeck.isPlaying)
+        XCTAssertEqual(asked.count, 1)
+    }
+
+    func testANewQueueDoesNotGetTheOldOnesKarouselSongs() async {
+        settingsValue.karousel = true
+        holdExtension = true
+        await start(["1"], seconds: 120)
+        await advance(1_000)
+        engine.setQueue(engine.newItems(songs(["a", "b", "c"])), startIndex: 0, startPositionMs: 0)
+        extensionSongs = songs(["x"])
+        heldExtension?.resume()
+        heldExtension = nil
+        await advance(1_000)
+        XCTAssertEqual(engine.queue.map { $0.song.id }, ["a", "b", "c"])
     }
 
     func testSwitchingKarouselOffTakesItsSongsOut() async {

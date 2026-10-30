@@ -95,6 +95,8 @@ final class PlaybackEngine: DeckListener {
      * the background before suspending it, when the music could not come back.
      */
     static let reloadAfterMs: Int64 = 12_000
+    /** A Karousel search that found nothing is tried again this much later, while the last track plays. */
+    static let karouselRetryMs: Int64 = 15_000
     static let bassCutDb = -26.0
     static let sweepFromHz = 20.0
     static let sweepToHz = 2400.0
@@ -207,7 +209,11 @@ final class PlaybackEngine: DeckListener {
     private var tempoRelease: Ramp?
     private var approach: Approach?
     private var errorStreak = 0
-    private var extendTask: Task<Void, Never>?
+    /** Karousel's search for more music, in flight; whoever needs more music waits on this one. */
+    private var extendTask: Task<Bool, Never>?
+    private var extendGeneration = 0
+    /** On [clock], when a Karousel search that found nothing may be tried again. */
+    private var extendRetryAt: Int64 = 0
 
     /** The plan for the track playing now, with the uid of the track it leads out of. */
     private(set) var lastPlan: (uid: Int64, plan: TransitionPlan)?
@@ -288,6 +294,7 @@ final class PlaybackEngine: DeckListener {
     func setQueue(_ items: [QueueItem], startIndex: Int, startPositionMs: Int64) {
         cancelTransition()
         clearPending()
+        cancelExtension()
         lastError = nil
         errorStreak = 0
         if items.isEmpty {
@@ -498,7 +505,7 @@ final class PlaybackEngine: DeckListener {
      */
     func onKarouselChanged(_ on: Bool) {
         if !on {
-            extendTask?.cancel()
+            cancelExtension()
             let upcoming = Set(queue.dropFirst(index + 1).filter { $0.karousel }.map { $0.uid })
             if upcoming.isEmpty { return }
             queue = queue.filter { !upcoming.contains($0.uid) }
@@ -508,6 +515,7 @@ final class PlaybackEngine: DeckListener {
             return
         }
         guard let current = currentItem else { return }
+        extendRetryAt = 0
         if ended {
             continueAfterEnd(current)
         } else if peekNext() == nil {
@@ -560,6 +568,7 @@ final class PlaybackEngine: DeckListener {
         let deck = active
         guard let item = currentItem else { return }
         if deck.item?.uid != item.uid || deck.status != .ready { return }
+        keepGoing(item)
 
         let position = deck.positionMs
         runApproach(deck, position)
@@ -729,11 +738,8 @@ final class PlaybackEngine: DeckListener {
         planTask?.cancel()
         planTask = Task { [weak self] in
             guard let self else { return }
-            var next = self.peekNext()
-            if next == nil && self.host.settings().karousel {
-                if await self.extendQueueNow(current) { next = self.peekNext() }
-            }
-            guard !Task.isCancelled, let next, self.currentItem?.uid == current.uid else { return }
+            // The last track: nothing to plan until Karousel adds more (see [keepGoing]), which plans again.
+            guard !Task.isCancelled, let next = self.peekNext(), self.currentItem?.uid == current.uid else { return }
             let context = PlanContext(
                 durationA: Double(self.durationMs) / 1000,
                 currentTime: Double(self.active.positionMs) / 1000,
@@ -778,12 +784,55 @@ final class PlaybackEngine: DeckListener {
         } catch {
             songs = []
         }
-        if Task.isCancelled || songs.isEmpty || queue.isEmpty || !host.settings().karousel { return false }
+        if Task.isCancelled || songs.isEmpty || !host.settings().karousel { return false }
+        // A different queue by now (the user chose other music): these songs were for the old one.
+        guard queue.contains(where: { $0.uid == seed.uid }) else { return false }
         let items = newItems(songs, karousel: true)
         queue += items
         if unshuffled != nil { unshuffled! += items }
+        // The track playing had nothing to lead into; now it has.
+        if pending == nil { preparedFor = nil }
         host.onStateChanged()
         return true
+    }
+
+    /**
+     * Karousel: once the last track is playing, look for more music while it
+     * plays, and look again every little while until some comes. Left to the
+     * end, the search would run in silence, and iOS suspends a quiet app in
+     * the background, often before a slow server has answered.
+     */
+    private func keepGoing(_ current: QueueItem) {
+        guard host.settings().karousel, !pauseAtEndOfTrack, extendTask == nil, clock >= extendRetryAt,
+              nextIndexAfter(index) == nil
+        else { return }
+        extend(from: current)
+    }
+
+    /** The search in flight, or a new one from [seed]. True once it has added songs. */
+    @discardableResult
+    private func extend(from seed: QueueItem) -> Task<Bool, Never> {
+        if let extendTask { return extendTask }
+        extendGeneration += 1
+        let generation = extendGeneration
+        let task = Task { [weak self] () -> Bool in
+            guard let self else { return false }
+            let added = await self.extendQueueNow(seed)
+            if self.extendGeneration == generation {
+                self.extendTask = nil
+                if !added { self.extendRetryAt = self.clock + Self.karouselRetryMs }
+            }
+            return added
+        }
+        extendTask = task
+        return task
+    }
+
+    private func cancelExtension() {
+        extendTask?.cancel()
+        extendTask = nil
+        extendGeneration += 1
+        extendRetryAt = 0
     }
 
     private func setPending(_ item: QueueItem, _ plan: TransitionPlan) {
@@ -967,13 +1016,23 @@ final class PlaybackEngine: DeckListener {
         markEnded()
     }
 
-    /** The queue ran out with [current]: add music like it and play on, or end there. */
+    /**
+     * The queue ran out with [current]: play on with what Karousel finds, or
+     * end there. Usually it has been looking since the track began; that
+     * search is waited for, not started over.
+     */
     private func continueAfterEnd(_ current: QueueItem) {
-        extendTask?.cancel()
-        extendTask = Task { [weak self] in
+        let search = extend(from: current)
+        Task { [weak self] in
             guard let self else { return }
-            if await self.extendQueueNow(current), self.currentItem?.uid == current.uid {
-                if let next = self.nextIndexAfter(self.index) { self.skipTo(next, 0, manual: false) }
+            // What was in flight found nothing: one more try before the music stops.
+            if !(await search.value), self.currentItem?.uid == current.uid, self.nextIndexAfter(self.index) == nil,
+               self.host.settings().karousel {
+                _ = await self.extend(from: current).value
+            }
+            guard self.currentItem?.uid == current.uid, !self.stopped else { return }
+            if let next = self.nextIndexAfter(self.index) {
+                self.skipTo(next, 0, manual: false)
             } else {
                 self.markEnded()
             }
