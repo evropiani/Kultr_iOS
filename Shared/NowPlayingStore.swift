@@ -56,7 +56,7 @@ struct UpNextSong: Codable, Equatable, Identifiable {
  * inside the app, and only then the name Kultr asks for.
  */
 enum SharedStore {
-    static let requestedGroup = "group.app.kultr.ios"
+    static let requestedGroup = "group.app.kultr.ios.pre"
 
     static let container: URL? = {
         for group in candidateGroups() {

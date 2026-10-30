@@ -36,7 +36,7 @@ jobs:
         shell: bash
 
       - name: Build (simulator, debug)
-        if: github.ref != 'refs/heads/main'
+        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/KultrPre'
         run: |
           set -o pipefail
           xcodebuild build \
@@ -51,7 +51,7 @@ jobs:
           grep -q "BUILD SUCCEEDED" build.log
 
       - name: Screenshots in the simulator
-        if: github.ref != 'refs/heads/main'
+        if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/KultrPre'
         continue-on-error: true
         timeout-minutes: 30
         run: |
@@ -106,7 +106,7 @@ jobs:
           LOOK=light shoot 18 "ios18-light-" mini lens pull
 
       - name: Publish screenshots
-        if: always() && github.ref != 'refs/heads/main'
+        if: always() && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/KultrPre'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -120,7 +120,7 @@ jobs:
           git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-screenshots
 
       - name: Build unsigned IPA (release)
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/KultrPre'
         run: |
           set -o pipefail
           xcodebuild build \
@@ -161,7 +161,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload IPA artifact
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/KultrPre'
         uses: actions/upload-artifact@v4
         with:
           name: Kultr-ipa
@@ -192,6 +192,23 @@ jobs:
           else
             gh release create "$TAG" out/Kultr.ipa --title "Kultr for iOS ${VERSION}" --notes-file "$NOTES_FILE" --target "$GITHUB_SHA"
           fi
+
+      # KultrPre: a test build that installs next to Kultr (its own bundle id,
+      # name and App Group), published as a pre-release, which the in-app
+      # update check and the source gist both leave out.
+      - name: Publish pre-release
+        if: github.ref == 'refs/heads/KultrPre'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(grep -m1 "MARKETING_VERSION" Kultr.xcodeproj/project.pbxproj | sed -E 's/.*= ([^;]+);/\1/')
+          TAG="pre-v${VERSION}-${{ github.run_number }}"
+          cp out/Kultr.ipa out/KultrPre.ipa
+          NOTES_FILE=$(mktemp)
+          cat .github/release-notes/KultrPre.md > "$NOTES_FILE"
+          printf '\n_Build %s, commit %s._\n' "${{ github.run_number }}" "${GITHUB_SHA::7}" >> "$NOTES_FILE"
+          gh release create "$TAG" out/KultrPre.ipa --prerelease --latest=false \
+            --title "KultrPre ${VERSION} (build ${{ github.run_number }})" --notes-file "$NOTES_FILE" --target "$GITHUB_SHA"
 
       # The AltStore / SideStore source lives in a gist; this adds each new
       # release to it (gist.github.com/evropiani/6e3a3c18525a228d03924674430c4d48,
