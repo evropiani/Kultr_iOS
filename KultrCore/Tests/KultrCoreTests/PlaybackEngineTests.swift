@@ -443,7 +443,8 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         await advance(200)
         XCTAssertEqual(engine.currentItem?.song.id, "x")
         XCTAssertTrue(activeDeck.isPlaying)
-        XCTAssertEqual(asked.count, 1)
+        // One search from "1", never started over; "x", the last track now, looks for its own.
+        XCTAssertEqual(asked.filter { $0.seeds.first == "1" }.count, 1)
     }
 
     func testANewQueueDoesNotGetTheOldOnesKarouselSongs() async {

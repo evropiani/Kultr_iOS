@@ -34,9 +34,18 @@ final class KarouselMusic: KarouselSources {
 
     private var library: LibraryRepository { graph.library }
 
-    /** Whether the server can be asked: the library is a server's, and it can be reached. */
-    private var online: Bool {
-        !graph.isLocal && graph.auth.client != nil && graph.network.isOnline
+    /**
+     * Whether the server can be asked, found out at the start of each search:
+     * the phone being online doesn't mean a server at home can be reached.
+     * When it can't, Karousel offers only downloaded songs, from the library
+     * on the phone, since nothing else would play.
+     */
+    private var online = false
+
+    private func reachServer() async -> Bool {
+        guard !graph.isLocal, let client = graph.auth.client, graph.network.isOnline else { return false }
+        deadline = Date().addingTimeInterval(4)
+        return await fromServer(false) { (try? await client.ping()) != nil }
     }
 
     private func playable(_ song: Song) -> Bool {
@@ -45,6 +54,8 @@ final class KarouselMusic: KarouselSources {
 
     /** Songs like [seeds] (the track playing first) to follow [queued], leaving out what played in the last few hours. */
     func next(seeds: [Song], queued: [Song], count: Int = 10) async -> [Song] {
+        let started = Date()
+        online = await reachServer()
         var exclude = Set<String>()
         let recent = await library.songsByIds(await library.songIdsPlayedSince(Format.nowMs() - Self.recentMs))
         for song in queued + recent {
@@ -52,11 +63,10 @@ final class KarouselMusic: KarouselSources {
             exclude.insert(Karousel.key(song))
         }
         deadline = Date().addingTimeInterval(Self.serverBudget)
-        let started = Date()
         let karousel = Karousel(sources: self) { Self.logger.info("Karousel: \($0, privacy: .public)") }
         let found = await karousel.next(Karousel.Input(seeds: seeds, exclude: exclude, count: count))
         let seconds = String(format: "%.1f", Date().timeIntervalSince(started))
-        PlaybackLog.note("Karousel found \(found.count) songs like “\(seeds.first?.title ?? "?")” in \(seconds) s\(online ? "" : " (server out of reach)")")
+        PlaybackLog.note("Karousel found \(found.count) songs like “\(seeds.first?.title ?? "?")” in \(seconds) s\(online || graph.isLocal ? "" : " (server out of reach: downloaded songs only)")")
         return found
     }
 
