@@ -5,14 +5,20 @@ import SwiftUI
 struct PositionReader<Content: View>: View {
     var interval: Double = 0.2
     @ViewBuilder let content: (Int64) -> Content
+    @Environment(\.scenePhase) private var phase
     @State private var position: Int64 = 0
 
     var body: some View {
         content(position)
-            .task {
+            .task(id: phase == .active) {
+                // In the background nobody sees it, and iOS counts every
+                // update against the processor time a background app may use.
+                position = AppGraph.shared.player.positionMs()
+                guard phase == .active else { return }
                 while !Task.isCancelled {
-                    position = AppGraph.shared.player.positionMs()
                     try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                    if Task.isCancelled { break }
+                    position = AppGraph.shared.player.positionMs()
                 }
             }
     }

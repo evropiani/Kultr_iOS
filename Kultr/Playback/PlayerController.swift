@@ -149,6 +149,9 @@ final class PlayerController: EngineHost {
     @ObservationIgnored private var silenceExpired = false
     @ObservationIgnored private var loggedState = ""
     @ObservationIgnored private var lastReportAt: Int64 = 0
+    @ObservationIgnored private let threadTimes = ThreadTimes()
+    @ObservationIgnored private var lastCpuAt: Int64 = 0
+    @ObservationIgnored private var lastCpu = 0
     @ObservationIgnored private var artworkKey: String?
     @ObservationIgnored private var artwork: MPMediaItemArtwork?
     @ObservationIgnored private let clockStart = ProcessInfo.processInfo.systemUptime
@@ -362,9 +365,22 @@ final class PlayerController: EngineHost {
             updateNowPlaying()
             let background = UIApplication.shared.applicationState != .active
             PlaybackLog.shared.heartbeat(playing: true, background: background)
+            if background && now - lastCpuAt >= 30_000 {
+                // iOS closes a background app that keeps about 80% of a core busy for a
+                // minute: say where the time goes well before it gets there.
+                lastCpuAt = now
+                let cpu = threadTimes.sample()
+                lastCpu = cpu.percent
+                if cpu.percent >= 40 {
+                    PlaybackLog.note("Busy in the background: \(cpu.percent)% of a core over \(cpu.seconds) s (\(cpu.busiest))")
+                }
+            }
             if background && now - lastReportAt >= 300_000 {
                 lastReportAt = now
-                PlaybackLog.note("Playing in the background, \(clock(engine.positionMs)) into “\(state.current?.title ?? "?")” · \(PlaybackLog.memory())")
+                PlaybackLog.note(
+                    "Playing in the background, \(clock(engine.positionMs)) into “\(state.current?.title ?? "?")” · "
+                        + "processor \(lastCpu)% · \(PlaybackLog.memory())"
+                )
             }
         }
     }
