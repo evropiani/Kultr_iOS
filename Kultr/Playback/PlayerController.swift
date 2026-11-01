@@ -33,7 +33,6 @@ struct PlayerUiState: Equatable {
     var repeatMode: RepeatMode = .off
     var durationMs: Int64 = 0
 
-    var hasMedia: Bool { current != nil }
     var upNext: [QueueEntry] { index < 0 ? queue : Array(queue.dropFirst(index + 1)) }
 }
 
@@ -165,9 +164,6 @@ final class PlayerController: EngineHost {
         let sources = DeckSources(graph: graph)
         decks = [AVDeck(name: "A", sources: sources, eq: eq), AVDeck(name: "B", sources: sources, eq: eq)]
         engine = PlaybackEngine(deckA: decks[0], deckB: decks[1], host: self)
-        // AVPlayer rebuffers on every speed change, which is heard as a stutter:
-        // InjeKt sets a track's tempo before it starts and never while it plays.
-        engine.steadyTempo = true
         tracker = ListeningTracker(graph: graph)
         karousel = KarouselMusic(graph: graph)
         applyEq(graph.settings.current)
@@ -199,7 +195,7 @@ final class PlayerController: EngineHost {
         [
             "\(s.crossfadeEnabled)", "\(s.crossfadeSeconds)", s.crossfadeCurve.rawValue, "\(s.gapless)", "\(s.injektEnabled)",
             "\(s.injektBeatMatch)", "\(s.injektBassSwap)", "\(s.injektHarmonic)", "\(s.injektMaxTempoShift)",
-            "\(s.injektTempoRamp)", "\(s.injektTempoBlend)", "\(s.injektBars)", "\(s.injektSkipIntro)",
+            "\(s.injektBars)", "\(s.injektSkipIntro)",
         ]
     }
 
@@ -418,19 +414,6 @@ final class PlayerController: EngineHost {
         var fresh = context
         fresh.currentTime = Double(engine.positionMs) / 1000
         return planTransition(current: current, next: next, context: fresh, settings: s, analysisA: a ?? nil, analysisB: b ?? nil)
-    }
-
-    private func withTimeout<T: Sendable>(_ seconds: Double, _ body: @escaping @MainActor () async -> T) async -> T? {
-        await withTaskGroup(of: T?.self) { group in
-            group.addTask { await body() }
-            group.addTask {
-                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                return nil
-            }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
-        }
     }
 
     func extendQueue(seeds: [Song], queued: [Song]) async throws -> [Song] {

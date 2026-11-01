@@ -106,13 +106,9 @@ enum AlbumListType: String {
     case random
     case newest
     case highest
-    case frequent
     case recent
     case alphabeticalByName
-    case alphabeticalByArtist
     case starred
-    case byYear
-    case byGenre
 }
 
 extension CodingUserInfoKey {

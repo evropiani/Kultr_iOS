@@ -88,7 +88,6 @@ final class AVDeck: NSObject, Deck {
     private var isRadio = false
 
     private var level: Float = 0
-    private var duck: Float = 1
     private var rate: Float = 1
 
     init(name: String, sources: DeckSources, eq: EqState) {
@@ -525,7 +524,7 @@ final class AVDeck: NSObject, Deck {
     // ------------------------------------------------------------ sound --
 
     private func applyLevel() {
-        let gain = level * duck
+        let gain = level
         params.set { $0.targetGain = gain }
         // The tap does the fading; the player's own volume only matters for radio,
         // which has no tap. Touch it only when it changes: during a fade this runs
@@ -539,16 +538,8 @@ final class AVDeck: NSObject, Deck {
         applyLevel()
     }
 
-    /** Lower everything while another app briefly needs the speaker. */
-    func setDuck(_ duck: Float) {
-        self.duck = duck
-        applyLevel()
-    }
-
     func setRate(_ rate: Float) {
-        // Small steps are inaudible; do not churn the time-stretcher for them.
-        let snap = rate == 1 && self.rate != 1
-        guard abs(rate - self.rate) >= 0.0015 || snap else { return }
+        guard rate != self.rate else { return }
         self.rate = rate
         player.defaultRate = rate
         if player.rate != 0 { player.rate = rate }

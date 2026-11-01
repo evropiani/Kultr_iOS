@@ -180,8 +180,6 @@ final class AnalysisManager {
         bulkTask = nil
         bulkProgress = nil
     }
-
-    var bulkRunning: Bool { bulkTask != nil }
 }
 
 /** Decode any audio file iOS understands into mono PCM at ~22 kHz. */

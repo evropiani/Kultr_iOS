@@ -189,7 +189,7 @@ private struct DownloadQueue: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     Pill("Download favourites", icon: "arrow.down.circle") {
-                        Task { await graph.offline.download(await graph.library.starredSongsNow(), label: "Your favourites") }
+                        Task { await graph.offline.download(await graph.library.starredSongs(), label: "Your favourites") }
                     }
                     Pill("Download everything", icon: "arrow.down.circle") {
                         Task { await graph.offline.download(await graph.library.allSongs(), label: "Your library") }

@@ -105,8 +105,6 @@ final class UpdateChecker {
         let body: String?
         let published_at: String?
         let html_url: String
-        let draft: Bool?
-        let prerelease: Bool?
         let assets: [Asset]?
     }
 

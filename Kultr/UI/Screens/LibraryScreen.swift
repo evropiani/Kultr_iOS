@@ -538,7 +538,7 @@ private struct GenresTab: View {
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     IconButton(icon: "shuffle", tint: c.ink2, label: "Shuffle \(genre.value)") {
-                                        Task { graph.actions.shuffle(await graph.library.songsOfGenreNow(genre.value)) }
+                                        Task { graph.actions.shuffle(await graph.library.songsOfGenre(genre.value)) }
                                     }
                                 }
                                 .padding(.leading, 16)

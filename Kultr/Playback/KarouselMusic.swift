@@ -74,16 +74,7 @@ final class KarouselMusic: KarouselSources {
     private func fromServer<T: Sendable>(_ empty: T, _ body: @escaping @MainActor () async -> T) async -> T {
         let left = deadline.timeIntervalSinceNow
         guard left > 0 else { return empty }
-        return await withTaskGroup(of: T?.self) { group in
-            group.addTask { await body() }
-            group.addTask {
-                try? await Task.sleep(nanoseconds: UInt64(left * 1_000_000_000))
-                return nil
-            }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first ?? empty
-        }
+        return await withTimeout(left, body) ?? empty
     }
 
     func station(_ seed: Song) async throws -> [Song] {
