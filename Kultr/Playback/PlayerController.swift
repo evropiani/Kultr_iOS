@@ -713,9 +713,7 @@ final class PlayerController: EngineHost {
 
     private func configureAudioSession() {
         let session = AVAudioSession.sharedInstance()
-        // Standard routing, as most music apps have it, rather than the
-        // long-form policy that follows the Music app's choice of output.
-        try? session.setCategory(.playback, mode: .default)
+        try? session.setCategory(.playback, mode: .default, policy: .longFormAudio)
         let center = NotificationCenter.default
         center.addObserver(forName: AVAudioSession.interruptionNotification, object: session, queue: .main) { [weak self] note in
             let info = note.userInfo
@@ -786,11 +784,6 @@ final class PlayerController: EngineHost {
         }
         center.pauseCommand.addTarget { [weak self] _ in
             PlaybackLog.note("Pause from the Lock Screen, Control Center or headphones")
-            MainActor.assumeIsolated { self?.pause() }
-            return .success
-        }
-        center.stopCommand.addTarget { [weak self] _ in
-            PlaybackLog.note("Stop from the Lock Screen, headphones or iOS")
             MainActor.assumeIsolated { self?.pause() }
             return .success
         }
