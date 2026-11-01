@@ -302,17 +302,7 @@ final class AVDeck: NSObject, Deck {
     /** The current item can play: apply a pending seek, then resume if wanted. */
     private func ready(_ playerItem: AVPlayerItem) {
         if let target = pendingSeekMs {
-            let expected = token
-            playerItem.seek(to: CMTime(value: target, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated {
-                        guard let self, self.token == expected else { return }
-                        self.pendingSeekMs = nil
-                        if self.wantPlay { self.startPlayer() }
-                        self.changed()
-                    }
-                }
-            }
+            seek(playerItem, to: target)
             return
         }
         if wantPlay { startPlayer() }
@@ -392,9 +382,14 @@ final class AVDeck: NSObject, Deck {
             pendingSeekMs = positionMs
             return
         }
-        pendingSeekMs = positionMs
+        seek(current, to: positionMs)
+    }
+
+    /** Seek [playerItem] exactly to [ms]; once there, play on if that is wanted. */
+    private func seek(_ playerItem: AVPlayerItem, to ms: Int64) {
+        pendingSeekMs = ms
         let expected = token
-        current.seek(to: CMTime(value: positionMs, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+        playerItem.seek(to: CMTime(value: ms, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
                     guard let self, self.token == expected else { return }

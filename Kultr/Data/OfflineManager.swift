@@ -267,17 +267,18 @@ final class OfflineManager {
             await withTaskGroup(of: (String, Int64).self) { group in
                 var nextIndex = 0
                 var running = 0
-                while nextIndex < batch.count && running < concurrency {
-                    let row = batch[nextIndex]
-                    nextIndex += 1
-                    running += 1
-                    group.addTask { [weak self] in
-                        guard let self else { return (row.songId, -1) }
-                        return (row.songId, await self.fetch(row, db: db, client: client, directory: directory, downloader: downloader, settings: settings))
+                while true {
+                    // Keep [concurrency] downloads going until the batch is done.
+                    while !Task.isCancelled && nextIndex < batch.count && running < concurrency {
+                        let row = batch[nextIndex]
+                        nextIndex += 1
+                        running += 1
+                        group.addTask { [weak self] in
+                            guard let self else { return (row.songId, -1) }
+                            return (row.songId, await self.fetch(row, db: db, client: client, directory: directory, downloader: downloader, settings: settings))
+                        }
                     }
-                }
-                while running > 0 {
-                    guard let finished = await group.next() else { break }
+                    guard running > 0, let finished = await group.next() else { break }
                     running -= 1
                     let (songId, result) = finished
                     if result >= 0 {
@@ -289,15 +290,6 @@ final class OfflineManager {
                     total = max(total, done + failed)
                     progress = DownloadProgress(done: done, total: total, failed: failed, bytes: bytes, current: songId)
                     refreshStatus()
-                    if !Task.isCancelled && nextIndex < batch.count {
-                        let row = batch[nextIndex]
-                        nextIndex += 1
-                        running += 1
-                        group.addTask { [weak self] in
-                            guard let self else { return (row.songId, -1) }
-                            return (row.songId, await self.fetch(row, db: db, client: client, directory: directory, downloader: downloader, settings: settings))
-                        }
-                    }
                 }
             }
             reload()

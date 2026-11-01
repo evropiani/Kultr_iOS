@@ -71,10 +71,6 @@ enum ArtworkColor {
         return 0xff00_0000 | value
     }
 
-    static func toHex(_ argb: UInt32) -> String {
-        String(format: "#%06x", argb & 0xff_ffff)
-    }
-
     /** Mix [b] into [a] by [amount] (0..1). */
     static func mix(_ a: UInt32, _ b: UInt32, _ amount: Double) -> UInt32 {
         let t = min(1, max(0, amount))

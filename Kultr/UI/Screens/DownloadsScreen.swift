@@ -186,15 +186,26 @@ private struct DownloadQueue: View {
             Text("Use Download on an album, artist or playlist — or drag anything onto “Sync offline” — to keep it on this phone.")
                 .font(KFont.bodySmall)
                 .foregroundStyle(c.ink2)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    Pill("Download favourites", icon: "arrow.down.circle") {
-                        Task { await graph.offline.download(await graph.library.starredSongs(), label: "Your favourites") }
-                    }
-                    Pill("Download everything", icon: "arrow.down.circle") {
-                        Task { await graph.offline.download(await graph.library.allSongs(), label: "Your library") }
-                    }
+            DownloadAllPills()
+        }
+    }
+}
+
+/** Quick ways to fill the phone: the favourites, or the whole library. */
+struct DownloadAllPills: View {
+    var openDownloads = false
+
+    var body: some View {
+        let graph = AppGraph.shared
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                Pill("Download favourites", icon: "arrow.down.circle") {
+                    Task { await graph.offline.download(await graph.library.starredSongs(), label: "Your favourites") }
                 }
+                Pill("Download everything", icon: "arrow.down.circle") {
+                    Task { await graph.offline.download(await graph.library.allSongs(), label: "Your library") }
+                }
+                if openDownloads { Pill("Open downloads") { graph.actions.openDownloads() } }
             }
         }
     }

@@ -54,7 +54,8 @@ final class UtilTests: XCTestCase {
         let colour = try XCTUnwrap(ArtworkColor.dominant(pixels))
         XCTAssertGreaterThan(colour >> 16 & 0xff, colour & 0xff)
         XCTAssertNil(ArtworkColor.dominant(Array(repeating: grey, count: 10)))
-        XCTAssertEqual(ArtworkColor.toHex(try XCTUnwrap(ArtworkColor.parseHex("#7C8CFF"))), "#7c8cff")
+        XCTAssertEqual(ArtworkColor.parseHex("#7C8CFF"), 0xff7c_8cff)
+        XCTAssertNil(ArtworkColor.parseHex("#7C8CF"))
     }
 
     func testCurvesStartAndEndInTheRightPlace() {

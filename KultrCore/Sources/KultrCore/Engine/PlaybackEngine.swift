@@ -628,7 +628,7 @@ final class PlaybackEngine: DeckListener {
         let plan = tr.plan
         let t = tr.durationMs > 0 ? Double(clock - tr.startedAt) / Double(tr.durationMs) : 1
         if t >= 1 {
-            finishTransition(tr)
+            finishTransition()
             return
         }
         let fromFade = Double(tr.fromLevel) * curveValue(plan.curve, t, rising: false)
@@ -646,14 +646,8 @@ final class PlaybackEngine: DeckListener {
         }
     }
 
-    private func finishTransition(_ tr: Crossing) {
-        crossing = nil
-        tr.from.stop()
-        resetDeck(tr.from)
-        fades[slotOf(tr.from)] = 0
-        setFade(tr.to, 1)
-        tr.to.setBassDb(0)
-        tr.to.setSweepHz(Float(Self.sweepFromHz))
+    private func finishTransition() {
+        cancelTransition()
         host.onStateChanged()
     }
 
@@ -996,8 +990,8 @@ final class PlaybackEngine: DeckListener {
         if deck !== active {
             // A primed or outgoing deck failed; the hand-over falls back to a
             // normal load when the time comes.
-            if let tr = crossing, tr.from === deck {
-                finishTransition(tr)
+            if crossing?.from === deck {
+                finishTransition()
             } else {
                 clearPending()
             }
@@ -1082,17 +1076,16 @@ final class PlaybackEngine: DeckListener {
         ended = false
     }
 
-    /** Abandon an overlapping transition, keeping the incoming track at full level. */
+    /** End an overlapping transition, done or not: the outgoing deck stops, the incoming one plays on at full level. */
     private func cancelTransition() {
-        if let tr = crossing {
-            crossing = nil
-            tr.from.stop()
-            resetDeck(tr.from)
-            fades[slotOf(tr.from)] = 0
-            setFade(tr.to, 1)
-            tr.to.setBassDb(0)
-            tr.to.setSweepHz(Float(Self.sweepFromHz))
-        }
+        guard let tr = crossing else { return }
+        crossing = nil
+        tr.from.stop()
+        resetDeck(tr.from)
+        fades[slotOf(tr.from)] = 0
+        setFade(tr.to, 1)
+        tr.to.setBassDb(0)
+        tr.to.setSweepHz(Float(Self.sweepFromHz))
     }
 
     private func shuffledWithCurrentFirst(_ items: [QueueItem], _ current: Int) -> (items: [QueueItem], index: Int) {
