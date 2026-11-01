@@ -121,17 +121,7 @@ struct SyncScreen: View {
                                     ProgressBar(value: d.total > 0 ? Double(d.done) / Double(d.total) : 0)
                                     Text("\(d.done) of \(d.total)").font(KFont.bodySmall).foregroundStyle(c.ink3)
                                 }
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 8) {
-                                        Pill("Download favourites", icon: "arrow.down.circle") {
-                                            Task { await graph.offline.download(await graph.library.starredSongsNow(), label: "Your favourites") }
-                                        }
-                                        Pill("Download everything", icon: "arrow.down.circle") {
-                                            Task { await graph.offline.download(await graph.library.allSongs(), label: "Your library") }
-                                        }
-                                        Pill("Open downloads") { graph.actions.openDownloads() }
-                                    }
-                                }
+                                DownloadAllPills(openDownloads: true)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         } }

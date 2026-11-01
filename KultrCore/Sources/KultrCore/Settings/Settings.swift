@@ -142,10 +142,6 @@ struct Settings: Codable, Hashable {
     var injektBassSwap: Bool = true
     var injektHarmonic: Bool = true
     var injektMaxTempoShift: Double = 8.0
-    /** Ease the *current* track toward the next one's tempo before the blend. */
-    var injektTempoRamp: Bool = true
-    /** Share of the tempo gap the current track closes, 0–100. */
-    var injektTempoBlend: Double = 50.0
     var injektBars: Int = 8
     var injektSkipIntro: Bool = true
     /**
@@ -188,8 +184,8 @@ struct Settings: Codable, Hashable {
         case crossfadeEnabled, crossfadeSeconds, crossfadeCurve, crossfadeOnSkip, gapless, replayGainMode
         case replayGainPreamp, preferredBitrate, preferredBitrateMobile, preferredFormat, scrobble, resumeOnStart
         case eqEnabled, eqPreset, eqGains, eqPreamp
-        case injektEnabled, injektBeatMatch, injektBassSwap, injektHarmonic, injektMaxTempoShift, injektTempoRamp
-        case injektTempoBlend, injektBars, injektSkipIntro, karousel = "injektAutoQueue", injektAnalyseAhead, injektAnalyseOnWifiOnly
+        case injektEnabled, injektBeatMatch, injektBassSwap, injektHarmonic, injektMaxTempoShift
+        case injektBars, injektSkipIntro, karousel = "injektAutoQueue", injektAnalyseAhead, injektAnalyseOnWifiOnly
         case offlineConcurrency, offlineBitrate, offlineWifiOnly, offlineFirst, streamCacheMb
         case autoSyncOnStart, autoSyncMinutes, syncPlaylistContents
         case showLyrics, homeTiles, favouriteRadios, hasSeenWelcome
@@ -244,8 +240,6 @@ struct Settings: Codable, Hashable {
         injektBassSwap = v(.injektBassSwap, d.injektBassSwap)
         injektHarmonic = v(.injektHarmonic, d.injektHarmonic)
         injektMaxTempoShift = double(.injektMaxTempoShift, d.injektMaxTempoShift)
-        injektTempoRamp = v(.injektTempoRamp, d.injektTempoRamp)
-        injektTempoBlend = double(.injektTempoBlend, d.injektTempoBlend)
         injektBars = int(.injektBars, d.injektBars)
         injektSkipIntro = v(.injektSkipIntro, d.injektSkipIntro)
         karousel = v(.karousel, d.karousel)
@@ -322,10 +316,6 @@ let HOME_TILES: [HomeTile] = [
 ]
 
 private let tilesById: [String: HomeTile] = Dictionary(uniqueKeysWithValues: HOME_TILES.map { ($0.id, $0) })
-
-func homeTile(_ id: String) -> HomeTile? {
-    tilesById[id]
-}
 
 /** The enabled tiles, in order, ignoring any id that no longer exists. */
 func resolveHomeTiles(_ ids: [String]) -> [HomeTile] {

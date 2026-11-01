@@ -88,7 +88,6 @@ final class AVDeck: NSObject, Deck {
     private var isRadio = false
 
     private var level: Float = 0
-    private var duck: Float = 1
     private var rate: Float = 1
 
     init(name: String, sources: DeckSources, eq: EqState) {
@@ -303,17 +302,7 @@ final class AVDeck: NSObject, Deck {
     /** The current item can play: apply a pending seek, then resume if wanted. */
     private func ready(_ playerItem: AVPlayerItem) {
         if let target = pendingSeekMs {
-            let expected = token
-            playerItem.seek(to: CMTime(value: target, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated {
-                        guard let self, self.token == expected else { return }
-                        self.pendingSeekMs = nil
-                        if self.wantPlay { self.startPlayer() }
-                        self.changed()
-                    }
-                }
-            }
+            seek(playerItem, to: target)
             return
         }
         if wantPlay { startPlayer() }
@@ -393,9 +382,14 @@ final class AVDeck: NSObject, Deck {
             pendingSeekMs = positionMs
             return
         }
-        pendingSeekMs = positionMs
+        seek(current, to: positionMs)
+    }
+
+    /** Seek [playerItem] exactly to [ms]; once there, play on if that is wanted. */
+    private func seek(_ playerItem: AVPlayerItem, to ms: Int64) {
+        pendingSeekMs = ms
         let expected = token
-        current.seek(to: CMTime(value: positionMs, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+        playerItem.seek(to: CMTime(value: ms, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
                     guard let self, self.token == expected else { return }
@@ -525,7 +519,7 @@ final class AVDeck: NSObject, Deck {
     // ------------------------------------------------------------ sound --
 
     private func applyLevel() {
-        let gain = level * duck
+        let gain = level
         params.set { $0.targetGain = gain }
         // The tap does the fading; the player's own volume only matters for radio,
         // which has no tap. Touch it only when it changes: during a fade this runs
@@ -539,16 +533,8 @@ final class AVDeck: NSObject, Deck {
         applyLevel()
     }
 
-    /** Lower everything while another app briefly needs the speaker. */
-    func setDuck(_ duck: Float) {
-        self.duck = duck
-        applyLevel()
-    }
-
     func setRate(_ rate: Float) {
-        // Small steps are inaudible; do not churn the time-stretcher for them.
-        let snap = rate == 1 && self.rate != 1
-        guard abs(rate - self.rate) >= 0.0015 || snap else { return }
+        guard rate != self.rate else { return }
         self.rate = rate
         player.defaultRate = rate
         if player.rate != 0 { player.rate = rate }

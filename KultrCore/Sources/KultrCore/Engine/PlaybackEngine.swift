@@ -114,15 +114,13 @@ final class PlaybackEngine: DeckListener {
     /** Fade level (0..1) per deck, before ReplayGain. */
     private var fades: [Float] = [1, 0]
 
-    /** The speed each deck was last set to. */
-    private var rates: [Float] = [1, 1]
-
     /**
-     * Never change the speed of a deck that is playing: a blend sets the
-     * incoming deck's tempo before it starts, and it keeps it. For decks that
-     * rebuffer, and so stutter, on every speed change (AVPlayer).
+     * The speed each deck was last set to. A deck's speed is only ever set
+     * before it starts: a blend matches the incoming track's tempo, and it
+     * keeps that tempo to the end. AVPlayer rebuffers, and so stutters, on
+     * every speed change.
      */
-    var steadyTempo = false
+    private var rates: [Float] = [1, 1]
 
     private(set) var queue: [QueueItem] = []
     private var unshuffled: [QueueItem]?
@@ -186,28 +184,10 @@ final class PlaybackEngine: DeckListener {
         }
     }
 
-    private struct Ramp {
-        let deck: Deck
-        let from: Double
-        let to: Double
-        let start: Int64
-        let duration: Int64
-    }
-
-    /** Drift of the outgoing deck toward the meeting tempo, in its own timeline. */
-    private struct Approach {
-        let deck: Deck
-        let rate: Double
-        let fromMs: Int64
-        let toMs: Int64
-    }
-
     private var pending: Pending?
     private var preparedFor: Int64?
     private var planTask: Task<Void, Never>?
     private var crossing: Crossing?
-    private var tempoRelease: Ramp?
-    private var approach: Approach?
     private var errorStreak = 0
     /** Karousel's search for more music, in flight; whoever needs more music waits on this one. */
     private var extendTask: Task<Bool, Never>?
@@ -546,11 +526,11 @@ final class PlaybackEngine: DeckListener {
 
     /** How often the platform should call [tick] right now. 0 means "no need". */
     func tickIntervalMs() -> Int64 {
-        if crossing != nil || tempoRelease != nil || approach != nil { return 16 }
+        if crossing != nil { return 16 }
         if !playWhenReady || stopped || queue.isEmpty { return 0 }
-        if let p = pending, p.plan.type != .gapless, p.plan.type != .cut {
-            let untilStart = ms(p.plan.startAt) - active.positionMs
-            if untilStart < ms(p.plan.outgoingRamp) + 1500 { return 16 }
+        if let p = pending, p.plan.type != .gapless, p.plan.type != .cut,
+           ms(p.plan.startAt) - active.positionMs < 1500 {
+            return 16
         }
         return 250
     }
@@ -561,7 +541,6 @@ final class PlaybackEngine: DeckListener {
         lastTickAt = now
 
         runTransition()
-        runTempoRelease()
         watchSilence()
 
         if stopped || queue.isEmpty || !playWhenReady || crossing != nil { return }
@@ -571,7 +550,6 @@ final class PlaybackEngine: DeckListener {
         keepGoing(item)
 
         let position = deck.positionMs
-        runApproach(deck, position)
 
         let duration = durationMs
         if duration <= 0 { return }
@@ -581,13 +559,7 @@ final class PlaybackEngine: DeckListener {
                 prime(p)
             }
             if p.plan.type == .gapless || p.plan.type == .cut { return }
-            let startMs = min(ms(p.plan.startAt), duration - 50)
-            let rampMs = ms(p.plan.outgoingRamp)
-            if approach == nil && rampMs > 0 && abs(p.plan.outgoingRate - 1) > 0.001 &&
-                position >= startMs - rampMs && position < startMs {
-                approach = Approach(deck: deck, rate: p.plan.outgoingRate, fromMs: position, toMs: startMs)
-            }
-            if position >= startMs { executeTransition(p) }
+            if position >= min(ms(p.plan.startAt), duration - 50) { executeTransition(p) }
         } else if preparedFor != item.uid && !pauseAtEndOfTrack {
             // Plan as soon as the track plays: the planner then has the whole
             // track to choose a mix-out point from, and the plan shows at once.
@@ -605,35 +577,6 @@ final class PlaybackEngine: DeckListener {
         switch p.plan.type {
         case .gapless, .cut: return duration
         default: return min(ms(p.plan.startAt), duration - 50)
-        }
-    }
-
-    private func runApproach(_ deck: Deck, _ position: Int64) {
-        guard let a = approach else { return }
-        if a.deck !== deck {
-            approach = nil
-            return
-        }
-        let span = a.toMs - a.fromMs
-        let t = span > 0 ? Double(position - a.fromMs) / Double(span) : 1
-        if t >= 1 {
-            setDeckRate(deck, Float(a.rate))
-            approach = nil
-        } else if t >= 0 {
-            let eased = t * t * (3 - 2 * t)
-            setDeckRate(deck, Float(1 + (a.rate - 1) * eased))
-        }
-    }
-
-    private func runTempoRelease() {
-        guard let r = tempoRelease else { return }
-        let t = Double(clock - r.start) / Double(max(1, r.duration))
-        if t >= 1 {
-            setDeckRate(r.deck, Float(r.to))
-            tempoRelease = nil
-        } else if t >= 0 {
-            let eased = t * t * (3 - 2 * t)
-            setDeckRate(r.deck, Float(r.from + (r.to - r.from) * eased))
         }
     }
 
@@ -685,7 +628,7 @@ final class PlaybackEngine: DeckListener {
         let plan = tr.plan
         let t = tr.durationMs > 0 ? Double(clock - tr.startedAt) / Double(tr.durationMs) : 1
         if t >= 1 {
-            finishTransition(tr)
+            finishTransition()
             return
         }
         let fromFade = Double(tr.fromLevel) * curveValue(plan.curve, t, rising: false)
@@ -703,18 +646,8 @@ final class PlaybackEngine: DeckListener {
         }
     }
 
-    private func finishTransition(_ tr: Crossing) {
-        crossing = nil
-        tr.from.stop()
-        resetDeck(tr.from)
-        fades[slotOf(tr.from)] = 0
-        setFade(tr.to, 1)
-        tr.to.setBassDb(0)
-        tr.to.setSweepHz(Float(Self.sweepFromHz))
-        let plan = tr.plan
-        if plan.tempoRelease > 0 && abs(plan.incomingRate - 1) > 0.001 {
-            tempoRelease = Ramp(deck: tr.to, from: plan.incomingRate, to: 1, start: clock, duration: ms(plan.tempoRelease))
-        }
+    private func finishTransition() {
+        cancelTransition()
         host.onStateChanged()
     }
 
@@ -743,8 +676,7 @@ final class PlaybackEngine: DeckListener {
             let context = PlanContext(
                 durationA: Double(self.durationMs) / 1000,
                 currentTime: Double(self.active.positionMs) / 1000,
-                outgoingRate: Double(self.rates[self.activeSlot]),
-                steadyTempo: self.steadyTempo
+                outgoingRate: Double(self.rates[self.activeSlot])
             )
             var plan: TransitionPlan
             do {
@@ -870,10 +802,6 @@ final class PlaybackEngine: DeckListener {
         let hadPending = pending != nil
         pending = nil
         preparedFor = nil
-        if let a = approach {
-            setDeckRate(a.deck, 1)
-            approach = nil
-        }
         if !stopped { active.setNext(nil) }
         if crossing == nil && idle.item != nil { idle.stop() }
         if hadPending { lastPlan = nil }
@@ -897,14 +825,12 @@ final class PlaybackEngine: DeckListener {
         guard let nextIndex = nextIndexAfter(index) else { return }
         pending = nil
         preparedFor = nil
-        approach = nil
 
         if to.item?.uid != p.item.uid {
             resetDeck(to)
             to.load(p.item, startMs: ms(plan.inStartOffset))
         }
         if abs(plan.incomingRate - 1) > 0.001 { setDeckRate(to, Float(plan.incomingRate)) }
-        if abs(Float(plan.outgoingRate) - rates[slotOf(from)]) > 0.0005 { setDeckRate(from, Float(plan.outgoingRate)) }
         if plan.bassSwap { to.setBassDb(Float(Self.bassCutDb)) }
         setFade(to, 0)
         to.play()
@@ -1064,8 +990,8 @@ final class PlaybackEngine: DeckListener {
         if deck !== active {
             // A primed or outgoing deck failed; the hand-over falls back to a
             // normal load when the time comes.
-            if let tr = crossing, tr.from === deck {
-                finishTransition(tr)
+            if crossing?.from === deck {
+                finishTransition()
             } else {
                 clearPending()
             }
@@ -1148,25 +1074,18 @@ final class PlaybackEngine: DeckListener {
         for deck in decks { deck.stop() }
         stopped = true
         ended = false
-        approach = nil
-        tempoRelease = nil
     }
 
-    /** Abandon an overlapping transition, keeping the incoming track at full level. */
+    /** End an overlapping transition, done or not: the outgoing deck stops, the incoming one plays on at full level. */
     private func cancelTransition() {
-        if let tr = crossing {
-            crossing = nil
-            tr.from.stop()
-            resetDeck(tr.from)
-            fades[slotOf(tr.from)] = 0
-            setFade(tr.to, 1)
-            tr.to.setBassDb(0)
-            tr.to.setSweepHz(Float(Self.sweepFromHz))
-        }
-        if let r = tempoRelease {
-            setDeckRate(r.deck, 1)
-            tempoRelease = nil
-        }
+        guard let tr = crossing else { return }
+        crossing = nil
+        tr.from.stop()
+        resetDeck(tr.from)
+        fades[slotOf(tr.from)] = 0
+        setFade(tr.to, 1)
+        tr.to.setBassDb(0)
+        tr.to.setSweepHz(Float(Self.sweepFromHz))
     }
 
     private func shuffledWithCurrentFirst(_ items: [QueueItem], _ current: Int) -> (items: [QueueItem], index: Int) {

@@ -85,6 +85,11 @@ final class PlaybackLog: @unchecked Sendable {
         add("Kultr \(appVersion) (\(appBuild)) started \(how), iOS \(UIDevice.current.systemVersion)")
         checkLastRun()
         MXMetricManager.shared.add(reports)
+        // Reports iOS handed over before, to this Kultr or an older one: written
+        // down once each, with the code they point at in full.
+        let past = MXMetricManager.shared.pastDiagnosticPayloads
+        let reports = self.reports
+        queue.async { reports.didReceive(past) }
 
         let center = NotificationCenter.default
         let events: [(Notification.Name, String)] = [
@@ -177,21 +182,24 @@ private final class ExitReports: NSObject, MXMetricManagerSubscriber {
     }
 
     func didReceive(_ payloads: [MXDiagnosticPayload]) {
-        for payload in payloads {
+        for payload in Self.unseen(payloads) {
             for crash in payload.crashDiagnostics ?? [] {
                 var parts = ["iOS crash report"]
                 if let reason = crash.terminationReason { parts.append(reason) }
                 if let type = crash.exceptionType { parts.append("exception \(type)") }
                 if let code = crash.exceptionCode { parts.append("code \(code)") }
                 if let signal = crash.signal { parts.append("signal \(signal)") }
-                parts.append("at " + Self.frames(crash.callStackTree))
+                parts.append("at " + Self.hotPaths(crash.callStackTree))
                 PlaybackLog.note(parts.joined(separator: " · "))
             }
             for cpu in payload.cpuExceptionDiagnostics ?? [] {
-                PlaybackLog.note("iOS report: Kultr used \(cpu.totalCPUTime) of processor time in \(cpu.totalSampledTime) · at \(Self.frames(cpu.callStackTree))")
+                PlaybackLog.note(
+                    "iOS report from \(Self.day(payload.timeStampEnd)): Kultr used \(cpu.totalCPUTime) of processor time in \(cpu.totalSampledTime), "
+                        + "so iOS closed it · where the time went: \(Self.hotPaths(cpu.callStackTree))"
+                )
             }
             for hang in payload.hangDiagnostics ?? [] {
-                PlaybackLog.note("iOS report: Kultr hung for \(hang.hangDuration) · at \(Self.frames(hang.callStackTree))")
+                PlaybackLog.note("iOS report from \(Self.day(payload.timeStampEnd)): Kultr hung for \(hang.hangDuration) · at \(Self.hotPaths(hang.callStackTree))")
             }
         }
     }
@@ -200,21 +208,111 @@ private final class ExitReports: NSObject, MXMetricManagerSubscriber {
         date.formatted(date: .abbreviated, time: .shortened)
     }
 
-    /** The innermost few frames of the stack that matters, as binary+offset, to look up later. */
-    private static func frames(_ tree: MXCallStackTree) -> String {
+    /** Diagnostics not written down yet: iOS hands the same ones over again in pastDiagnosticPayloads. */
+    private static func unseen(_ payloads: [MXDiagnosticPayload]) -> [MXDiagnosticPayload] {
+        let key = "log.diagnosticsSeen"
+        let defaults = UserDefaults.standard
+        var seen = Set(defaults.array(forKey: key) as? [Double] ?? [])
+        let fresh = payloads.filter { seen.insert($0.timeStampEnd.timeIntervalSince1970).inserted }
+        if !fresh.isEmpty { defaults.set(Array(seen.sorted().suffix(200)), forKey: key) }
+        return fresh
+    }
+
+    /**
+     * Where the time went: for the busiest few threads (or the one that
+     * crashed), the path most samples took, from the innermost frame
+     * outwards, as binary+offset to look up in that build.
+     */
+    private static func hotPaths(_ tree: MXCallStackTree) -> String {
         guard let json = try? JSONSerialization.jsonObject(with: tree.jsonRepresentation()) as? [String: Any],
-              let stacks = json["callStacks"] as? [[String: Any]],
-              let stack = stacks.first(where: { $0["threadAttributed"] as? Bool == true }) ?? stacks.first,
-              var frame = (stack["callStackRootFrames"] as? [[String: Any]])?.first
+              let stacks = json["callStacks"] as? [[String: Any]]
         else { return "?" }
-        var out: [String] = []
-        while out.count < 10 {
-            let binary = frame["binaryName"] as? String ?? "?"
-            let offset = frame["offsetIntoBinaryTextSegment"].map { "\($0)" } ?? "?"
-            out.append("\(binary)+\(offset)")
-            guard let sub = (frame["subFrames"] as? [[String: Any]])?.first else { break }
-            frame = sub
+        let attributed = stacks.filter { $0["threadAttributed"] as? Bool == true }
+        let roots = (attributed.isEmpty ? stacks : attributed).flatMap { $0["callStackRootFrames"] as? [[String: Any]] ?? [] }
+        func samples(_ frame: [String: Any]) -> Int { frame["sampleCount"] as? Int ?? 1 }
+        func name(_ frame: [String: Any]) -> String {
+            "\(frame["binaryName"] as? String ?? "?")+\(frame["offsetIntoBinaryTextSegment"].map { "\($0)" } ?? "?")"
         }
-        return out.joined(separator: " < ")
+        let total = max(1, roots.map(samples).reduce(0, +))
+        let paths = roots.sorted { samples($0) > samples($1) }.prefix(3).map { root -> String in
+            var path = [root]
+            while let children = path.last?["subFrames"] as? [[String: Any]],
+                  let busiest = children.max(by: { samples($0) < samples($1) }) {
+                path.append(busiest)
+            }
+            let share = samples(root) * 100 / total
+            return "[\(share)% of samples] " + path.suffix(18).reversed().map(name).joined(separator: " < ")
+        }
+        return paths.isEmpty ? "?" : paths.joined(separator: "  ")
+    }
+}
+
+/**
+ * Processor time per thread, to tell where it goes while Kultr plays in the
+ * background, where iOS closes an app that keeps a core busy for a minute.
+ * Create and use it on the main thread.
+ */
+final class ThreadTimes {
+    private var last: [UInt64: UInt64] = [:]
+    private var lastAt = DispatchTime.now().uptimeNanoseconds
+    private let mainId: UInt64
+
+    init() {
+        var id: UInt64 = 0
+        pthread_threadid_np(nil, &id)
+        mainId = id
+        _ = sample()
+    }
+
+    /** Since the last call: the seconds covered, the share of one core used in all, and the busiest threads. */
+    func sample() -> (seconds: Int, percent: Int, busiest: String) {
+        let now = DispatchTime.now().uptimeNanoseconds
+        let span = Double(max(1, now - lastAt))
+        lastAt = now
+        var list: thread_act_array_t?
+        var count: mach_msg_type_number_t = 0
+        guard task_threads(mach_task_self_, &list, &count) == KERN_SUCCESS, let list else { return (0, 0, "") }
+        defer {
+            vm_deallocate(mach_task_self_, vm_address_t(UInt(bitPattern: list)), vm_size_t(Int(count) * MemoryLayout<thread_t>.stride))
+        }
+        var times: [UInt64: UInt64] = [:]
+        var used: [(String, UInt64)] = []
+        for i in 0..<Int(count) {
+            let thread = list[i]
+            defer { mach_port_deallocate(mach_task_self_, thread) }
+            guard let (id, time, name) = Self.info(thread) else { continue }
+            times[id] = time
+            let before = last[id] ?? 0
+            if time > before { used.append((id == mainId ? "main" : (name.isEmpty ? "unnamed" : name), time - before)) }
+        }
+        last = times
+        let total = used.reduce(UInt64(0)) { $0 + $1.1 }
+        let busiest = used.sorted { $0.1 > $1.1 }.prefix(4)
+            .map { "\($0.0) \(Int(Double($0.1) * 100 / span))%" }
+            .joined(separator: ", ")
+        return (Int(span / 1e9), Int(Double(total) * 100 / span), busiest)
+    }
+
+    private static func info(_ thread: thread_act_t) -> (UInt64, UInt64, String)? {
+        var extended = thread_extended_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<thread_extended_info_data_t>.size / MemoryLayout<natural_t>.size)
+        let result = withUnsafeMutablePointer(to: &extended) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                thread_info(thread, thread_flavor_t(THREAD_EXTENDED_INFO), $0, &count)
+            }
+        }
+        guard result == KERN_SUCCESS else { return nil }
+        var identifier = thread_identifier_info_data_t()
+        var identifierCount = mach_msg_type_number_t(MemoryLayout<thread_identifier_info_data_t>.size / MemoryLayout<natural_t>.size)
+        let identified = withUnsafeMutablePointer(to: &identifier) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(identifierCount)) {
+                thread_info(thread, thread_flavor_t(THREAD_IDENTIFIER_INFO), $0, &identifierCount)
+            }
+        }
+        let id = identified == KERN_SUCCESS ? identifier.thread_id : UInt64(thread)
+        let name = withUnsafeBytes(of: extended.pth_name) { raw in
+            String(decoding: raw.prefix { $0 != 0 }, as: UTF8.self)
+        }
+        return (id, extended.pth_user_time + extended.pth_system_time, name)
     }
 }

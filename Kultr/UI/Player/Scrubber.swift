@@ -7,6 +7,7 @@ import SwiftUI
  */
 struct Scrubber: View {
     @Environment(\.kultr) private var theme
+    @Environment(\.scenePhase) private var phase
     let positionMs: Int64
     let durationMs: Int64
     let onSeek: (Int64) -> Void
@@ -24,7 +25,8 @@ struct Scrubber: View {
         VStack(spacing: 0) {
             GeometryReader { proxy in
                 let width = proxy.size.width
-                TimelineView(.animation(minimumInterval: reduceMotion ? 1000 : 1.0 / 30, paused: reduceMotion)) { timeline in
+                // The moving playhead is drawn 30 times a second, and only while it can be seen.
+                TimelineView(.animation(minimumInterval: reduceMotion ? 1000 : 1.0 / 30, paused: reduceMotion || phase != .active)) { timeline in
                     let phase = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.6) / 1.6
                     Canvas { context, size in
                         draw(context, size, fraction: fraction, phase: phase, colors: c)

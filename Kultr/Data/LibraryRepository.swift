@@ -130,7 +130,6 @@ final class LibraryRepository {
     func history(_ limit: Int) async -> [HistoryEntry] { await read([]) { $0.recentHistory(limit) } }
     func randomAlbums(_ count: Int) async -> [Album] { await read([]) { $0.randomAlbums(count) } }
     func randomArtists(_ count: Int) async -> [Artist] { await read([]) { $0.randomArtists(count) } }
-    func starredSongsNow() async -> [Song] { await starredSongs() }
     func allSongs() async -> [Song] { await read([]) { $0.allSongs() } }
 
     /** Playlists with their tracks resolved from the mirror, in playlist order. */
@@ -179,7 +178,6 @@ final class LibraryRepository {
         }
     }
 
-    func songsOfGenreNow(_ genre: String) async -> [Song] { await songsOfGenre(genre) }
 
     /** The library's songs by any of these artists, by id or by name. */
     func songsByArtists(ids: [String], names: [String]) async -> [Song] {

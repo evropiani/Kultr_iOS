@@ -54,7 +54,8 @@ final class UtilTests: XCTestCase {
         let colour = try XCTUnwrap(ArtworkColor.dominant(pixels))
         XCTAssertGreaterThan(colour >> 16 & 0xff, colour & 0xff)
         XCTAssertNil(ArtworkColor.dominant(Array(repeating: grey, count: 10)))
-        XCTAssertEqual(ArtworkColor.toHex(try XCTUnwrap(ArtworkColor.parseHex("#7C8CFF"))), "#7c8cff")
+        XCTAssertEqual(ArtworkColor.parseHex("#7C8CFF"), 0xff7c_8cff)
+        XCTAssertNil(ArtworkColor.parseHex("#7C8CF"))
     }
 
     func testCurvesStartAndEndInTheRightPlace() {
@@ -166,7 +167,7 @@ final class DspTests: XCTestCase {
     func testMonoAccumulatorDownmixesAndDecimates() {
         let acc = MonoAccumulator(inputRate: 44100, channels: 2)
         XCTAssertEqual(acc.sampleRate, 22050)
-        acc.addPcm16((0..<8).map { $0 % 2 == 0 ? Int16.max : 0 })
+        acc.addFloat((0..<8).map { $0 % 2 == 0 ? 1 : 0 })
         let out = acc.toArray()
         XCTAssertEqual(out.count, 2)
         XCTAssertEqual(out[0], 0.5, accuracy: 0.001)
@@ -199,13 +200,14 @@ final class InjektTests: XCTestCase {
     private let b = Song(id: "b", title: "B", duration: 240)
     private let context = PlanContext(durationA: 240, currentTime: 150)
 
-    func testTempoMeetsInTheMiddle() {
-        let match = matchTempo(120, 130, blend: 0.5)
-        XCTAssertLessThan(abs(match.meetBpm - 124.9), 0.1)
-        XCTAssertLessThan(abs(match.outgoingRate * 120 - match.incomingRate * 130), 1e-9)
-        let half = matchTempo(140, 70, blend: 0)
-        XCTAssertEqual(half.targetBpm, 140)
-        XCTAssertEqual(half.worstShift, 0, accuracy: 1e-9)
+    func testTheNextTrackIsMatchedToTheTempoPlaying() {
+        let match = matchTempo(124, 126)
+        XCTAssertEqual(126 * match.rate, 124, accuracy: 1e-9)
+        XCTAssertEqual(match.shift, 2.0 / 126, accuracy: 1e-9)
+        // Half and double time count: 70 BPM is matched at 140, unchanged.
+        let half = matchTempo(140, 70)
+        XCTAssertEqual(half.rate, 1, accuracy: 1e-9)
+        XCTAssertEqual(half.shift, 0, accuracy: 1e-9)
     }
 
     func testWithoutInjektItIsAPlainCrossfade() {
@@ -224,32 +226,24 @@ final class InjektTests: XCTestCase {
         let plan = planTransition(current: a, next: b, context: context, settings: Settings(), analysisA: analysis("a", 124), analysisB: analysis("b", 126, camelot: "9A"))
         XCTAssertEqual(plan.type, .blend)
         XCTAssertTrue(plan.bassSwap)
-        XCTAssertTrue(plan.outgoingRate > 1 && plan.incomingRate < 1)
-        XCTAssertEqual(124 * plan.outgoingRate, 126 * plan.incomingRate, accuracy: 1e-6)
         let bar = 60.0 / 124 * 4
         let bars = plan.startAt / bar
         XCTAssertEqual(bars, bars.rounded(), accuracy: 1e-6)
         XCTAssertGreaterThanOrEqual(plan.startAt, context.currentTime)
-        XCTAssertGreaterThan(plan.outgoingRamp, 0)
     }
 
     func testSteadyTempoNeverChangesAPlayingTrack() {
         var steady = context
-        steady.steadyTempo = true
         let plan = planTransition(current: a, next: b, context: steady, settings: Settings(), analysisA: analysis("a", 124), analysisB: analysis("b", 126, camelot: "9A"))
         XCTAssertEqual(plan.type, .blend)
         // The playing track keeps its speed; the next one starts at its tempo and stays there.
         XCTAssertEqual(plan.outgoingRate, 1, accuracy: 1e-9)
-        XCTAssertEqual(plan.outgoingRamp, 0)
-        XCTAssertEqual(plan.tempoRelease, 0)
         XCTAssertEqual(126 * plan.incomingRate, 124, accuracy: 1e-6)
         // A track an earlier blend left faster keeps that speed, and the next one meets it there.
         steady.outgoingRate = 1.02
         let carried = planTransition(current: a, next: b, context: steady, settings: Settings(), analysisA: analysis("a", 124), analysisB: analysis("b", 126, camelot: "9A"))
         XCTAssertEqual(carried.outgoingRate, 1.02, accuracy: 1e-9)
         XCTAssertEqual(126 * carried.incomingRate, 124 * 1.02, accuracy: 1e-6)
-        XCTAssertEqual(carried.outgoingRamp, 0)
-        XCTAssertEqual(carried.tempoRelease, 0)
         // Further apart than the maximum shift from where the music is now: no beat-match.
         steady.outgoingRate = 1.07
         let far = planTransition(current: a, next: b, context: steady, settings: Settings(), analysisA: analysis("a", 124), analysisB: analysis("b", 120, camelot: "9A"))

@@ -522,12 +522,12 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         XCTAssertFalse(a.isPlaying || b.isPlaying)
     }
 
-    func testInjektPlansDriveRatesAndTheBassSwap() async {
+    func testInjektPlansSetTheIncomingTempoAndSwapTheBass() async {
         settingsValue.injektEnabled = true
         planOverride = { _, _, _ in
             TransitionPlan(
                 type: .blend, duration: 8, startAt: 48, inStartOffset: 4,
-                incomingRate: 0.98, outgoingRate: 1.02, outgoingRamp: 6, tempoRelease: 4,
+                incomingRate: 0.98, outgoingRate: 1,
                 bassSwap: true, sweep: false, curve: .equalPower, label: "InjeKt", reason: ""
             )
         }
@@ -535,11 +535,9 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         await advance(30_000)
         XCTAssertEqual(b.item?.song.id, "2")
         XCTAssertLessThan(abs(b.positionMs - 4_000), 10)
-        await advance(15_000)
-        XCTAssertTrue(a.rate > 1 && a.rate < 1.02, "approach rate \(a.rate)")
-        await advance(3_100)
+        await advance(18_100)
         XCTAssertTrue(engine.isTransitioning)
-        XCTAssertEqual(a.rate, 1.02, accuracy: 0.001)
+        XCTAssertEqual(a.rate, 1, accuracy: 0.001)
         XCTAssertEqual(b.rate, 0.98, accuracy: 0.001)
         await advance(4_000)
         XCTAssertLessThan(a.bass, -10)
@@ -547,25 +545,24 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         await advance(4_200)
         XCTAssertFalse(engine.isTransitioning)
         XCTAssertEqual(b.bass, 0)
+        // It keeps the tempo it was matched at.
         await advance(4_100)
-        XCTAssertEqual(b.rate, 1, accuracy: 0.001)
+        XCTAssertEqual(b.rate, 0.98, accuracy: 0.001)
     }
 
     func testSteadyTempoKeepsTheIncomingTempoAndTellsTheNextPlan() async {
         settingsValue.injektEnabled = true
-        engine.steadyTempo = true
         var contexts: [PlanContext] = []
         planOverride = { _, _, context in
             contexts.append(context)
             return TransitionPlan(
                 type: .blend, duration: 8, startAt: 48, inStartOffset: 0,
-                incomingRate: 0.98, outgoingRate: context.outgoingRate, outgoingRamp: 0, tempoRelease: 0,
+                incomingRate: 0.98, outgoingRate: context.outgoingRate,
                 bassSwap: false, sweep: false, curve: .equalPower, label: "InjeKt", reason: ""
             )
         }
         await start(["1", "2", "3"])
         await advance(30_000)
-        XCTAssertEqual(contexts.first?.steadyTempo, true)
         XCTAssertEqual(contexts.first?.outgoingRate ?? 0, 1, accuracy: 0.0001)
         await advance(30_000)
         XCTAssertFalse(engine.isTransitioning)

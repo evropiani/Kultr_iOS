@@ -33,7 +33,6 @@ struct PlayerUiState: Equatable {
     var repeatMode: RepeatMode = .off
     var durationMs: Int64 = 0
 
-    var hasMedia: Bool { current != nil }
     var upNext: [QueueEntry] { index < 0 ? queue : Array(queue.dropFirst(index + 1)) }
 }
 
@@ -149,6 +148,9 @@ final class PlayerController: EngineHost {
     @ObservationIgnored private var silenceExpired = false
     @ObservationIgnored private var loggedState = ""
     @ObservationIgnored private var lastReportAt: Int64 = 0
+    @ObservationIgnored private let threadTimes = ThreadTimes()
+    @ObservationIgnored private var lastCpuAt: Int64 = 0
+    @ObservationIgnored private var lastCpu = 0
     @ObservationIgnored private var artworkKey: String?
     @ObservationIgnored private var artwork: MPMediaItemArtwork?
     @ObservationIgnored private let clockStart = ProcessInfo.processInfo.systemUptime
@@ -162,9 +164,6 @@ final class PlayerController: EngineHost {
         let sources = DeckSources(graph: graph)
         decks = [AVDeck(name: "A", sources: sources, eq: eq), AVDeck(name: "B", sources: sources, eq: eq)]
         engine = PlaybackEngine(deckA: decks[0], deckB: decks[1], host: self)
-        // AVPlayer rebuffers on every speed change, which is heard as a stutter:
-        // InjeKt sets a track's tempo before it starts and never while it plays.
-        engine.steadyTempo = true
         tracker = ListeningTracker(graph: graph)
         karousel = KarouselMusic(graph: graph)
         applyEq(graph.settings.current)
@@ -196,7 +195,7 @@ final class PlayerController: EngineHost {
         [
             "\(s.crossfadeEnabled)", "\(s.crossfadeSeconds)", s.crossfadeCurve.rawValue, "\(s.gapless)", "\(s.injektEnabled)",
             "\(s.injektBeatMatch)", "\(s.injektBassSwap)", "\(s.injektHarmonic)", "\(s.injektMaxTempoShift)",
-            "\(s.injektTempoRamp)", "\(s.injektTempoBlend)", "\(s.injektBars)", "\(s.injektSkipIntro)",
+            "\(s.injektBars)", "\(s.injektSkipIntro)",
         ]
     }
 
@@ -362,9 +361,22 @@ final class PlayerController: EngineHost {
             updateNowPlaying()
             let background = UIApplication.shared.applicationState != .active
             PlaybackLog.shared.heartbeat(playing: true, background: background)
+            if background && now - lastCpuAt >= 30_000 {
+                // iOS closes a background app that keeps about 80% of a core busy for a
+                // minute: say where the time goes well before it gets there.
+                lastCpuAt = now
+                let cpu = threadTimes.sample()
+                lastCpu = cpu.percent
+                if cpu.percent >= 40 {
+                    PlaybackLog.note("Busy in the background: \(cpu.percent)% of a core over \(cpu.seconds) s (\(cpu.busiest))")
+                }
+            }
             if background && now - lastReportAt >= 300_000 {
                 lastReportAt = now
-                PlaybackLog.note("Playing in the background, \(clock(engine.positionMs)) into “\(state.current?.title ?? "?")” · \(PlaybackLog.memory())")
+                PlaybackLog.note(
+                    "Playing in the background, \(clock(engine.positionMs)) into “\(state.current?.title ?? "?")” · "
+                        + "processor \(lastCpu)% · \(PlaybackLog.memory())"
+                )
             }
         }
     }
@@ -402,19 +414,6 @@ final class PlayerController: EngineHost {
         var fresh = context
         fresh.currentTime = Double(engine.positionMs) / 1000
         return planTransition(current: current, next: next, context: fresh, settings: s, analysisA: a ?? nil, analysisB: b ?? nil)
-    }
-
-    private func withTimeout<T: Sendable>(_ seconds: Double, _ body: @escaping @MainActor () async -> T) async -> T? {
-        await withTaskGroup(of: T?.self) { group in
-            group.addTask { await body() }
-            group.addTask {
-                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                return nil
-            }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
-        }
     }
 
     func extendQueue(seeds: [Song], queued: [Song]) async throws -> [Song] {

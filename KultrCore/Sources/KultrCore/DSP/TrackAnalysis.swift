@@ -99,18 +99,6 @@ final class MonoAccumulator {
 
     var length: Int { buffer.count }
 
-    /** Add interleaved 16-bit frames. */
-    func addPcm16(_ samples: [Int16], count: Int? = nil) {
-        let total = count ?? samples.count
-        var i = 0
-        while i + channels <= total {
-            var sum = 0
-            for c in 0..<channels { sum += Int(samples[i + c]) }
-            push(Double(sum) / (Double(channels) * 32768))
-            i += channels
-        }
-    }
-
     /** Add interleaved float frames. */
     func addFloat(_ samples: [Float], count: Int? = nil) {
         let total = count ?? samples.count

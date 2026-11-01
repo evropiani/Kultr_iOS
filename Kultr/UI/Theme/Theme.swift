@@ -41,7 +41,6 @@ struct KultrColors: Equatable {
     var success = Color(argb: 0x45D67A)
 
     var accentSoft: Color { accent.opacity(0.18) }
-    var accentGlow: Color { accent.opacity(0.35) }
 
     static func make(dark: Bool, accent picked: UInt32, settings: Settings) -> KultrColors {
         // A pale colour from the artwork washes out on the light background, so
@@ -163,7 +162,6 @@ extension EnvironmentValues {
 /** Material 3's type scale, in SF Pro. */
 enum KFont {
     static let headlineLarge = Font.system(size: 32, weight: .bold)
-    static let headlineMedium = Font.system(size: 28, weight: .bold)
     static let headlineSmall = Font.system(size: 24, weight: .bold)
     static let titleLarge = Font.system(size: 22, weight: .bold)
     static let titleMedium = Font.system(size: 16, weight: .semibold)
