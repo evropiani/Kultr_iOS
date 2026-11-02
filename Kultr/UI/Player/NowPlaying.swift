@@ -84,18 +84,41 @@ struct NowPlayingScreen: View {
 
     @ViewBuilder
     private func header(_ current: Song, state: PlayerUiState, settings: Settings, show: @escaping (PlayerTab) -> Void) -> some View {
+        // Kultr Studio decides which parts show, and in what order.
+        VStack(spacing: 0) {
+            ForEach(settings.playerBlocks, id: \.self) { block in
+                switch block {
+                case .artwork:
+                    SwipeArtwork(song: current, show: show)
+                        .padding(.top, 8)
+                case .title:
+                    titleBlock(current)
+                        .padding(.top, 20)
+                case .facts:
+                    SongFacts(song: current, close: close, template: settings.factsTemplate)
+                        .padding(.top, 8)
+                case .progress:
+                    progressBlock(current, state: state, settings: settings)
+                        .padding(.top, 16)
+                case .transport:
+                    Transport(state: state, song: current)
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+
+    @ViewBuilder
+    private func titleBlock(_ current: Song) -> some View {
         let graph = AppGraph.shared
         let c = theme.colors
         VStack(spacing: 0) {
-            SwipeArtwork(song: current, show: show)
-                .padding(.top, 8)
             Text(current.title)
                 .font(KFont.headlineSmall)
                 .foregroundStyle(c.ink)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-                .padding(.top, 20)
             HStack(spacing: 0) {
                 Button {
                     close()
@@ -118,10 +141,14 @@ struct NowPlayingScreen: View {
                 }
             }
             .padding(.top, 4)
-            SongFacts(song: current, close: close)
-                .padding(.top, 8)
-            let plan = graph.player.transition.fromSongId == current.id ? graph.player.transition.upcoming : nil
-            PositionReader { position in
+        }
+    }
+
+    @ViewBuilder
+    private func progressBlock(_ current: Song, state: PlayerUiState, settings: Settings) -> some View {
+        let graph = AppGraph.shared
+        let plan = graph.player.transition.fromSongId == current.id ? graph.player.transition.upcoming : nil
+        PositionReader { position in
                 Scrubber(
                     positionMs: position,
                     durationMs: state.durationMs,
@@ -133,11 +160,7 @@ struct NowPlayingScreen: View {
                     reduceMotion: settings.reduceMotion,
                     songId: current.isRadio ? nil : current.id
                 )
-            }
-            .padding(.top, 16)
-            Transport(state: state, song: current)
         }
-        .padding(.horizontal, 20)
     }
 }
 
@@ -199,6 +222,9 @@ private struct SongFacts: View {
     @Environment(\.kultr) private var theme
     let song: Song
     let close: () -> Void
+    /** A Kultr Studio template for the line; empty for Kultr's own, with the genre and rating to tap. */
+    var template = ""
+    @State private var analysis: TrackAnalysis?
 
     private struct Fact {
         let text: String
@@ -222,6 +248,36 @@ private struct SongFacts: View {
     }
 
     var body: some View {
+        if !template.isEmpty {
+            Text(renderTemplate(template, values))
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(theme.colors.ink3)
+                .lineLimit(1)
+                .task(id: song.id) { analysis = await AppGraph.shared.analysis.cached(song.id) }
+        } else {
+            ownLine
+        }
+    }
+
+    /** What a Studio template can use. */
+    private var values: [String: String] {
+        var out: [String: String] = [:]
+        out["year"] = song.year.map(String.init)
+        out["genre"] = song.genre
+        out["format"] = song.suffix?.uppercased()
+        out["bitrate"] = song.bitRate.map(String.init)
+        out["rating"] = song.userRating.flatMap { $0 > 0 ? String($0) : nil }
+        out["plays"] = song.playCount.flatMap { $0 > 0 ? String($0) : nil }
+        out["album"] = song.album
+        if let analysis {
+            out["bpm"] = analysis.bpm > 0 ? String(Int(analysis.bpm.rounded())) : nil
+            out["key"] = analysis.camelot.isEmpty ? nil : analysis.camelot
+            out["energy"] = String(max(1, Int((analysis.energy * 10).rounded())))
+        }
+        return out
+    }
+
+    private var ownLine: some View {
         HStack(spacing: 5) {
             ForEach(Array(facts.enumerated()), id: \.offset) { index, fact in
                 if index > 0 { Text("·") }

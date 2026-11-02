@@ -72,6 +72,11 @@ enum ScreenshotDriver {
         case "whatsnew": graph.ui.whatsNew = true
         case "stations": actions.navigate(.stations)
         case "planner": actions.navigate(.planner(60))
+        case "studio":
+            actions.selectTab(.settings)
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            graph.ui.paths[.settings] = []
+            graph.ui.incomingStyle = STUDIO_PRESETS.first { $0.name == "Console" }
         case "command":
             // A command typed into Search: its row sits above the results.
             actions.selectTab(.search)

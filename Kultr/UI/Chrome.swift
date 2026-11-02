@@ -57,6 +57,10 @@ struct MainUI: View {
             UpdateScreen(release: release)
                 .environment(\.kultr, theme)
         }
+        .sheet(item: Binding(get: { ui.incomingStyle.map(IncomingStyle.init) }, set: { ui.incomingStyle = $0?.style })) { item in
+            StylePreviewSheet(style: item.style) { ui.incomingStyle = nil }
+                .environment(\.kultr, theme)
+        }
         .sheet(isPresented: $ui.whatsNew, onDismiss: { ui.finishWhatsNew() }) {
             WhatsNewScreen { ui.finishWhatsNew() }
                 .environment(\.kultr, theme)

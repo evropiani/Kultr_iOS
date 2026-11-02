@@ -23,6 +23,7 @@ enum CommandRunner {
         switch command {
         case .play(let what): return ("play.fill", "Play “\(what)”")
         case .shuffle(let what): return ("shuffle", "Shuffle “\(what)”")
+        case .shuffleAll: return ("shuffle", "Shuffle your whole library")
         case .station(let name): return ("dial.medium.fill", "Play the station \(name)")
         case .sleep(let minutes): return ("moon.fill", "Sleep timer: \(minutes) min")
         case .sleepAfterTrack: return ("moon.fill", "Stop after this track")
@@ -65,6 +66,8 @@ enum CommandRunner {
                 return
             }
             if case .shuffle = command { actions.shuffle(songs) } else { actions.play(songs) }
+        case .shuffleAll:
+            actions.shuffle(await graph.library.randomSongs(200))
         case .station(let name):
             guard let station = graph.stations.all.first(where: { $0.name.lowercased() == name.lowercased() }) else {
                 graph.messages.show("There's no station called “\(name)”. Stations has the list.")

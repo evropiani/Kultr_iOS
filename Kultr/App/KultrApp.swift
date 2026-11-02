@@ -9,6 +9,10 @@ struct KultrApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                // A Kultr Studio style someone shared: shown first, used only if you choose to.
+                .onOpenURL { url in
+                    if let style = StudioStyle.read(url.absoluteString) { AppGraph.shared.ui.incomingStyle = style }
+                }
         }
     }
 }

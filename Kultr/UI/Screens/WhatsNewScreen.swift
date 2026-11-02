@@ -13,6 +13,28 @@ struct WhatsNewItem: Identifiable {
  */
 enum WhatsNew {
     static let notes: [String: [WhatsNewItem]] = [
+        "1.4.5": [
+            WhatsNewItem(
+                icon: "wand.and.stars",
+                title: "Kultr Studio",
+                text: "The whole look in one place: Settings → Kultr Studio. Start from Cream, Night, Ember, Paper or Console, change colours, corners, glass and the playhead, and see it in the preview as you go."
+            ),
+            WhatsNewItem(
+                icon: "square.stack.3d.up.fill",
+                title: "Build your player",
+                text: "Choose which parts of the player show and in what order, and write its info line yourself: {bpm} BPM{?key: · {key}} shows the key only when there is one."
+            ),
+            WhatsNewItem(
+                icon: "link",
+                title: "Share a look",
+                text: "Send your style as a link or a file. Opening someone's link shows it first; you choose whether to use it."
+            ),
+            WhatsNewItem(
+                icon: "square.grid.2x2.fill",
+                title: "Widgets on Home",
+                text: "Now playing, your listening this week, the next mix, a station, a crate or a shortcut, small, medium or large. Hold one to edit: drag to move, minus to remove, and Add a widget."
+            ),
+        ],
         "1.4.4": [
             WhatsNewItem(
                 icon: "waveform.path.ecg",

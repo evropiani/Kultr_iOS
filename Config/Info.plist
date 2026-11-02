@@ -34,5 +34,16 @@
 	<false/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Kultr Studio styles</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kultr</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

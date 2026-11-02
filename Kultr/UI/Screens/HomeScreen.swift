@@ -43,6 +43,10 @@ struct HomeScreen: View {
                 .padding(.top, 2)
                 .padding(.bottom, 8)
 
+                if loaded && counts.albums > 0 {
+                    HomeWidgetsGrid()
+                }
+
                 if loaded && counts.albums == 0 && graph.isLocal {
                     LocalEmptyState(scanning: sync.running)
                 } else if loaded && counts.albums == 0 {

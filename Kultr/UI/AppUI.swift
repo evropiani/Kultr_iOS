@@ -141,6 +141,8 @@ final class AppUI {
     var sleepTimer = false
     /** What is being put in a crate, while the crate list is open. */
     var addToCrate: CrateItem?
+    /** A Kultr Studio style opened from a link, waiting for a yes or no. */
+    var incomingStyle: StudioStyle?
     /** The new version being looked at, on the update page. */
     var update: AppRelease?
 
