@@ -294,6 +294,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Ember AppIcon-Night AppIcon-Classic";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Config/Kultr.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -311,7 +312,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.9;
+				MARKETING_VERSION = 1.3.10;
 				OTHER_LDFLAGS = "-lsqlite3";
 				PRODUCT_BUNDLE_IDENTIFIER = app.kultr.ios.pre;
 				PRODUCT_NAME = Kultr;
@@ -327,6 +328,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon-Ember AppIcon-Night AppIcon-Classic";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Config/Kultr.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -344,7 +346,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.9;
+				MARKETING_VERSION = 1.3.10;
 				OTHER_LDFLAGS = "-lsqlite3";
 				PRODUCT_BUNDLE_IDENTIFIER = app.kultr.ios.pre;
 				PRODUCT_NAME = Kultr;
@@ -372,7 +374,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.3.9;
+				MARKETING_VERSION = 1.3.10;
 				PRODUCT_BUNDLE_IDENTIFIER = app.kultr.ios.pre.widget;
 				PRODUCT_NAME = KultrWidget;
 				SKIP_INSTALL = YES;
@@ -401,7 +403,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.3.9;
+				MARKETING_VERSION = 1.3.10;
 				PRODUCT_BUNDLE_IDENTIFIER = app.kultr.ios.pre.widget;
 				PRODUCT_NAME = KultrWidget;
 				SKIP_INSTALL = YES;
