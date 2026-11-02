@@ -186,7 +186,6 @@ final class PlayerController: EngineHost {
                 self.publish()
             }
             if old.streamCacheMb != new.streamCacheMb { StreamCache.shared.setLimit(megabytes: new.streamCacheMb) }
-            if old.liveActivity != new.liveActivity { self.scheduleWidgetUpdate() }
         }
         // A different server has a different library; its queue makes no sense here.
         graph.auth.observeActive { [weak self] _ in
@@ -196,6 +195,7 @@ final class PlayerController: EngineHost {
         }
         configureAudioSession()
         configureRemoteCommands()
+        LiveActivityBridge.endLeftovers()
         restore()
     }
 
@@ -317,13 +317,6 @@ final class PlayerController: EngineHost {
                 if let cover = coverURL(entry.song.artworkId, 96, client: client) { queueArt[entry.song.id] = cover }
             }
             WidgetBridge.shared.update(self.state, positionMs: self.engine.positionMs, artworkURL: url, queueArtworkURLs: queueArt)
-            LiveActivityBridge.shared.update(
-                self.state,
-                positionMs: self.engine.positionMs,
-                plan: self.transition.fromSongId == self.state.current?.id ? self.transition.upcoming : nil,
-                settings: self.graph.settings.current,
-                station: self.station
-            )
             if self.restoring {
                 self.restoring = false
                 UserDefaults.standard.removeObject(forKey: Self.restoringKey)

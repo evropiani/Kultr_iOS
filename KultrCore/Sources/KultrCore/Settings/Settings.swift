@@ -71,23 +71,6 @@ enum ReplayGainMode: String, Codable, CaseIterable, Hashable {
     }
 }
 
-/** What a gesture on the player's cover does. */
-enum CoverAction: String, Codable, CaseIterable, Hashable {
-    case none, favourite, queue, lyrics, mixNow, playPause, addToPlaylist
-
-    var label: String {
-        switch self {
-        case .none: return "Nothing"
-        case .favourite: return "Heart the track"
-        case .queue: return "Show the queue"
-        case .lyrics: return "Show the lyrics"
-        case .mixNow: return "Mix into the next track"
-        case .playPause: return "Play or pause"
-        case .addToPlaylist: return "Add to a playlist"
-        }
-    }
-}
-
 let EQ_BANDS: [Int] = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
 
 /** Equaliser presets, in the order they are offered. */
@@ -193,18 +176,8 @@ struct Settings: Codable, Hashable {
     var favouriteRadios: [String] = []
     var hasSeenWelcome: Bool = false
 
-    // ---- the cover in the player
-    var coverDoubleTap: CoverAction = .favourite
-    var coverHold: CoverAction = .mixNow
-    var coverSwipeUp: CoverAction = .queue
     /** In a sleep timer's last 15 minutes, Karousel picks calmer music. */
     var sleepWindDown: Bool = true
-    /** The play button pulses on each downbeat InjeKt found. */
-    var beatPulse: Bool = true
-    /** And the phone taps along, while the player is open. */
-    var beatHaptics: Bool = false
-    /** What's playing and the next mix, on the Lock Screen and in the Dynamic Island. */
-    var liveActivity: Bool = true
     /** Your stations, in the order the dial shows them. Decades are added from the library. */
     var stations: [Station] = STATION_PRESETS
     /** Your notes and tags, by album ("album:<id>") or artist ("artist:<id>"). */
@@ -233,7 +206,7 @@ struct Settings: Codable, Hashable {
         case offlineConcurrency, offlineBitrate, offlineWifiOnly, offlineFirst, streamCacheMb
         case autoSyncOnStart, autoSyncMinutes, syncPlaylistContents
         case showLyrics, homeTiles, favouriteRadios, hasSeenWelcome
-        case coverDoubleTap, coverHold, coverSwipeUp, sleepWindDown, beatPulse, beatHaptics, stations, liveActivity
+        case sleepWindDown, stations
         case annotations, crates, homeWidgets, clearGlass, playerBlocks, factsTemplate
     }
 
@@ -303,14 +276,8 @@ struct Settings: Codable, Hashable {
         homeTiles = v(.homeTiles, d.homeTiles)
         favouriteRadios = v(.favouriteRadios, d.favouriteRadios)
         hasSeenWelcome = v(.hasSeenWelcome, d.hasSeenWelcome)
-        coverDoubleTap = v(.coverDoubleTap, d.coverDoubleTap)
-        coverHold = v(.coverHold, d.coverHold)
-        coverSwipeUp = v(.coverSwipeUp, d.coverSwipeUp)
         sleepWindDown = v(.sleepWindDown, d.sleepWindDown)
-        beatPulse = v(.beatPulse, d.beatPulse)
-        beatHaptics = v(.beatHaptics, d.beatHaptics)
         stations = v(.stations, d.stations)
-        liveActivity = v(.liveActivity, d.liveActivity)
         annotations = v(.annotations, d.annotations)
         crates = v(.crates, d.crates)
         homeWidgets = v(.homeWidgets, d.homeWidgets)

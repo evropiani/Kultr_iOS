@@ -502,42 +502,6 @@ private struct PlaybackSettings: View {
                 )
             }
             Section {
-                Picker("Double-tap", selection: setting(\.coverDoubleTap)) {
-                    ForEach(CoverAction.allCases, id: \.self) { Text($0.label).tag($0) }
-                }
-                Picker("Hold", selection: setting(\.coverHold)) {
-                    ForEach(CoverAction.allCases, id: \.self) { Text($0.label).tag($0) }
-                }
-                Picker("Swipe up", selection: setting(\.coverSwipeUp)) {
-                    ForEach(CoverAction.allCases, id: \.self) { Text($0.label).tag($0) }
-                }
-            } header: {
-                Text("The cover in the player")
-            } footer: {
-                Text("Swiping the cover left or right always skips. Mixing fades into the next track over the whole crossfade length, at least 2 seconds.")
-            }
-            Section {
-                SettingToggle(
-                    "Pulse on the beat",
-                    isOn: setting(\.beatPulse),
-                    hint: "The play button swells a little on the first beat of every bar, once InjeKt has analysed the track. Off with Reduce motion."
-                )
-                SettingToggle(
-                    "Tap on the beat",
-                    isOn: setting(\.beatHaptics),
-                    hint: "The phone taps your hand on the same beat while the player is open."
-                )
-            } header: {
-                Text("Beat pulse")
-            }
-            Section {
-                SettingToggle(
-                    "Live Activity",
-                    isOn: setting(\.liveActivity),
-                    hint: "The track, its progress and a countdown to the next mix, on the Lock Screen and in the Dynamic Island. It starts the next time music starts with Kultr open."
-                )
-            }
-            Section {
                 SettingToggle(
                     "Resume where you left off",
                     isOn: setting(\.resumeOnStart),
@@ -1166,6 +1130,8 @@ private struct PlaybackLogPage: View {
 
 private struct AboutSection: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.kultr) private var theme
+    @State private var showingLog = false
 
     var body: some View {
         Form {
@@ -1208,6 +1174,19 @@ private struct AboutSection: View {
                     }
                 }
                 .disabled(updates.check == .checking)
+                Button { showingLog = true } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "clock.arrow.circlepath").frame(width: 26).foregroundStyle(.tint)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Update log").foregroundStyle(Color.primary)
+                            Text("What changed in every version, from 1.0.0 to \(appVersion)")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.up").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                    }
+                }
             }
             Section {
                 NavigationLink {
@@ -1231,6 +1210,10 @@ private struct AboutSection: View {
             }
         }
         .settingsPage("About")
+        .sheet(isPresented: $showingLog) {
+            UpdateLogSheet { showingLog = false }
+                .environment(\.kultr, theme)
+        }
     }
 
     private func link(_ title: String, _ icon: String, _ detail: String, _ address: String) -> some View {

@@ -6,7 +6,6 @@ import WidgetKit
 struct KultrWidgets: WidgetBundle {
     var body: some Widget {
         NowPlayingWidget()
-        NowPlayingLiveActivity()
     }
 }
 
