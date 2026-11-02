@@ -218,7 +218,7 @@ private struct TabRoot: View {
     var body: some View {
         switch tab {
         case .home: HomeScreen()
-        case .library: LibraryScreen(initialTab: .albums, isRoot: true)
+        case .library: LibraryHome()
         case .search: SearchScreen()
         case .settings: SettingsScreen()
         }
@@ -230,7 +230,7 @@ private struct RouteView: View {
 
     var body: some View {
         switch route {
-        case .library(let tab): LibraryScreen(initialTab: tab, isRoot: false)
+        case .library(let tab): LibraryScreen(tab: tab)
         case .album(let id): AlbumScreen(id: id)
         case .artist(let id): ArtistScreen(id: id)
         case .playlist(let id): PlaylistScreen(id: id)

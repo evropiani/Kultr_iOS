@@ -66,11 +66,11 @@ struct StatsScreen: View {
                         .padding(.bottom, 12)
 
                         if !recent.isEmpty {
-                            SectionHeader("Played recently", icon: "clock.arrow.circlepath")
+                            SectionHeader("Played recently")
                             SongRows(songs: recent, keyPrefix: "recent") { graph.actions.play(recent, $0) }
                         }
                         if !mostPlayed.isEmpty {
-                            SectionHeader("Played the most", icon: "play.fill")
+                            SectionHeader("Played the most")
                             ForEach(Array(mostPlayed.enumerated()), id: \.element.id) { index, song in
                                 HStack(spacing: 0) {
                                     SongRow(
@@ -88,7 +88,7 @@ struct StatsScreen: View {
                             }
                         }
                         if !artists.isEmpty {
-                            SectionHeader("Top artists", icon: "person.2.fill")
+                            SectionHeader("Top artists")
                             let peak = max(1, artists[0].plays)
                             VStack(alignment: .leading, spacing: 10) {
                                 ForEach(Array(artists.enumerated()), id: \.offset) { _, artist in
@@ -119,7 +119,7 @@ struct StatsScreen: View {
                             .padding(.horizontal, 16)
                         }
 
-                        SectionHeader("The last two weeks on this phone", icon: "chart.bar.fill")
+                        SectionHeader("The last two weeks on this phone")
                         GlassPanel {
                             VStack(alignment: .leading, spacing: 12) {
                                 DayChart(days: lastTwoWeeks(history))

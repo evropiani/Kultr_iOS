@@ -52,7 +52,10 @@ enum ScreenshotDriver {
         let actions = graph.actions
         let library = graph.library
         switch screen {
-        case "library", "library-switch": actions.selectTab(.library)
+        case "library": actions.selectTab(.library)
+        case "albums":
+            actions.selectTab(.library)
+            actions.openLibrary(.albums)
         case "songs":
             actions.selectTab(.home)
             actions.openLibrary(.songs)

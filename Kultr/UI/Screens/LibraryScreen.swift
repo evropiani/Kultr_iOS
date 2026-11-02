@@ -8,179 +8,98 @@ private enum SongSort: String, CaseIterable {
     case title = "Title", artist = "Artist", album = "Album", added = "Recently added", plays = "Most played", rating = "Rating"
 }
 
-/** Where the Library pager is, for the tab strip's underline: 2.5 is halfway between the third and fourth tab. */
-@MainActor
-@Observable
-private final class PagerModel {
-    var progress: CGFloat = 0
-}
-
 /**
- * Albums, artists, songs, playlists, genres, favourites, downloads and radio
- * as pages you swipe through. The underline follows your finger, and each
- * page keeps its own filter.
+ * The Library tab, as in Apple Music: its sections as a list, then the
+ * albums added most recently.
  */
-struct LibraryScreen: View {
+struct LibraryHome: View {
     @Environment(\.kultr) private var theme
-    let initialTab: LibraryTab
-    var isRoot = false
-    @State private var page: LibraryTab?
-    @State private var filters: [LibraryTab: String] = [:]
-    @State private var pager = PagerModel()
+    @State private var recent: [Album] = []
 
     var body: some View {
-        // Music on the phone has no internet radio, and nothing to download.
-        let current = page.flatMap { LibraryTab.shown.contains($0) ? $0 : nil } ?? (LibraryTab.shown.contains(initialTab) ? initialTab : .albums)
-        let tabs = LibraryTab.shown
-        VStack(spacing: 0) {
-            LibraryTabStrip(current: current, pager: pager) { tab in
-                withAnimation(theme.spring ?? .linear(duration: 0)) { page = tab }
-            }
-            if current != .favourites && current != .downloads {
-                FilterField(
-                    text: Binding(get: { filters[current] ?? "" }, set: { filters[current] = $0 }),
-                    placeholder: "Filter \(current.label.lowercased())"
-                )
-                .transition(.opacity)
-            }
-            GeometryReader { outer in
-                ScrollView(.horizontal) {
-                    LazyHStack(spacing: 0) {
-                        ForEach(tabs, id: \.self) { tab in
-                            pageView(tab)
-                                .frame(width: outer.size.width, height: outer.size.height, alignment: .top)
-                                .id(tab)
-                        }
-                    }
-                    .scrollTargetLayout()
-                }
-                .scrollIndicators(.hidden)
-                .scrollTargetBehavior(.paging)
-                .scrollPosition(id: $page)
-                // The underline follows your finger frame by frame.
-                .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, x in
-                    pager.progress = min(CGFloat(tabs.count - 1), max(0, x / max(1, outer.size.width)))
-                }
-            }
-        }
-        .animation(theme.ease, value: current == .favourites || current == .downloads)
-        .navigationTitle("Library")
-        .navigationBarTitleDisplayMode(isRoot ? .large : .inline)
-        .kultrScreen()
-        .onAppear {
-            if page == nil {
-                page = initialTab
-                pager.progress = CGFloat(tabs.firstIndex(of: initialTab) ?? 0)
-            }
-        }
-        .onChange(of: page) { _, value in
-            guard let value else { return }
-            Haptics.select()
-            // Wherever the scroll reports land, the underline ends on the page you are on.
-            let index = CGFloat(tabs.firstIndex(of: value) ?? 0)
-            if abs(pager.progress - index) > 0.01 {
-                withAnimation(theme.spring) { pager.progress = index }
-            }
-        }
-        #if DEBUG
-        .task {
-            // CI screenshot: switch pages the way a tap on the strip does.
-            guard ProcessInfo.processInfo.environment["KULTR_SCREEN"] == "library-switch" else { return }
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
-            withAnimation(theme.spring ?? .linear(duration: 0)) { page = .playlists }
-        }
-        #endif
-    }
-
-    @ViewBuilder
-    private func pageView(_ tab: LibraryTab) -> some View {
-        // Trimmed and lowercased once, for every page's matches().
-        let query = (filters[tab] ?? "").trimmingCharacters(in: .whitespaces).lowercased()
-        switch tab {
-        case .albums: AlbumsTab(query: query)
-        case .artists: ArtistsTab(query: query)
-        case .songs: SongsTab(query: query)
-        case .playlists: PlaylistsTab(query: query)
-        case .genres: GenresTab(query: query)
-        case .favourites: FavouritesTab()
-        case .downloads: OfflineContent()
-        case .radio: RadioTab(query: query)
-        }
-    }
-}
-
-private struct TabFramesKey: PreferenceKey {
-    static let defaultValue: [LibraryTab: CGRect] = [:]
-    static func reduce(value: inout [LibraryTab: CGRect], nextValue: () -> [LibraryTab: CGRect]) {
-        value.merge(nextValue()) { $1 }
-    }
-}
-
-/** The page names, with an underline that slides between them as the pages move. */
-private struct LibraryTabStrip: View {
-    @Environment(\.kultr) private var theme
-    let current: LibraryTab
-    let pager: PagerModel
-    let onPick: (LibraryTab) -> Void
-    @State private var frames: [LibraryTab: CGRect] = [:]
-
-    var body: some View {
+        let graph = AppGraph.shared
         let c = theme.colors
-        let tabs = LibraryTab.shown
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 0) {
-                    ForEach(tabs, id: \.self) { entry in
-                        let on = entry == current
-                        Button { onPick(entry) } label: {
-                            Text(entry.label)
-                                .font(.system(size: 15, weight: on ? .semibold : .medium))
-                                .foregroundStyle(on ? c.ink : c.ink3)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
-                                .fixedSize()
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(PressScaleStyle())
-                        .background(
-                            GeometryReader { g in
-                                Color.clear.preference(key: TabFramesKey.self, value: [entry: g.frame(in: .named("strip"))])
+        let sections = LibraryTab.shown
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                VStack(spacing: 0) {
+                    ForEach(sections, id: \.self) { tab in
+                        Button { graph.actions.openLibrary(tab) } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: tab.icon)
+                                    .font(.title3)
+                                    .foregroundStyle(c.accent)
+                                    .frame(width: 28)
+                                Text(tab.label)
+                                    .font(.title3)
+                                    .foregroundStyle(c.ink)
+                                Spacer(minLength: 8)
+                                Image(systemName: "chevron.right")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(c.ink4)
                             }
-                        )
-                        .id(entry)
-                        .accessibilityAddTraits(on ? .isSelected : [])
+                            .padding(.vertical, 12)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PressableStyle())
+                        if tab != sections.last { Rule().padding(.leading, 42) }
                     }
                 }
-                .padding(.horizontal, 6)
-                .overlay(alignment: .topLeading) { underline(tabs) }
-                .coordinateSpace(name: "strip")
-                .onPreferenceChange(TabFramesKey.self) { frames = $0 }
+                .padding(.horizontal, 16)
+                if !recent.isEmpty {
+                    SectionHeader("Recently added")
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 0, alignment: .top), GridItem(.flexible(), spacing: 0, alignment: .top)], spacing: 0) {
+                        ForEach(recent) { AlbumCard(album: $0) }
+                    }
+                    .padding(.horizontal, 10)
+                }
             }
-            .onChange(of: current) { _, value in
-                withAnimation(theme.spring) { proxy.scrollTo(value, anchor: .center) }
-            }
-            .onAppear { proxy.scrollTo(current, anchor: .center) }
+            .padding(.bottom, 24)
         }
-        .overlay(alignment: .bottom) { Rule().opacity(0.6) }
+        .navigationTitle("Library")
+        .kultrScreen()
+        .task(id: graph.library.version) { recent = await graph.library.recentlyAdded(12) }
     }
+}
 
-    /** Between the tabs the pager is between, as far along as it is. */
-    private func underline(_ tabs: [LibraryTab]) -> some View {
-        let progress = pager.progress
-        let lower = min(tabs.count - 1, max(0, Int(progress.rounded(.down))))
-        let upper = min(tabs.count - 1, lower + 1)
-        let t = progress - CGFloat(lower)
-        let a = frames[tabs[lower]] ?? .zero
-        let b = frames[tabs[upper]] ?? a
-        let x = a.minX + (b.minX - a.minX) * t + 12
-        let width = max(0, a.width + (b.width - a.width) * t - 24)
-        let y = max(a.maxY, b.maxY) - 3
-        return Capsule()
-            .fill(theme.colors.accent)
-            .frame(width: width, height: 3)
-            .offset(x: x, y: y)
-            .opacity(frames.isEmpty ? 0 : 1)
-            .allowsHitTesting(false)
+/** One section of the library, opened from the list, filtered from the search field under its title. */
+struct LibraryScreen: View {
+    let tab: LibraryTab
+    @State private var filter = ""
+
+    var body: some View {
+        // Trimmed and lowercased once, for the page's matches().
+        let query = filter.trimmingCharacters(in: .whitespaces).lowercased()
+        Group {
+            switch tab {
+            case .albums: AlbumsTab(query: query)
+            case .artists: ArtistsTab(query: query)
+            case .songs: SongsTab(query: query)
+            case .playlists: PlaylistsTab(query: query)
+            case .genres: GenresTab(query: query)
+            case .favourites: FavouritesTab()
+            case .downloads: OfflineContent()
+            case .radio: RadioTab(query: query)
+            }
+        }
+        .modifier(SectionFilter(tab: tab, text: $filter))
+        .navigationTitle(tab.label)
+        .navigationBarTitleDisplayMode(.inline)
+        .kultrScreen()
+    }
+}
+
+/** The search field under a section's title; Favourites and Downloads have nothing to filter. */
+private struct SectionFilter: ViewModifier {
+    let tab: LibraryTab
+    @Binding var text: String
+
+    func body(content: Content) -> some View {
+        if tab == .favourites || tab == .downloads {
+            content
+        } else {
+            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Filter \(tab.label.lowercased())")
+        }
     }
 }
 
@@ -219,10 +138,10 @@ struct PillLabel: View {
             }
             Text(text).font(KFont.labelLarge).lineLimit(1)
         }
-        .foregroundStyle(theme.colors.ink)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .kultrGlass(Capsule(), interactive: true)
+        .foregroundStyle(theme.colors.accent)
+        .padding(.horizontal, 14)
+        .frame(height: 36)
+        .background(Capsule().fill(theme.colors.sand))
     }
 }
 
@@ -564,7 +483,7 @@ private struct FavouritesTab: View {
                                 Shelf(items: artists, cardWidth: 130) { ArtistCard(artist: $0) }
                             }
                             if !songs.isEmpty {
-                                SectionHeader("Tracks", icon: "heart.fill")
+                                SectionHeader("Tracks")
                                 SongRows(songs: songs, selection: selection) { graph.actions.play(songs, $0) }
                             }
                         }

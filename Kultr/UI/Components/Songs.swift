@@ -101,7 +101,7 @@ struct SongMenuButton: View {
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(theme.colors.ink3)
+                .foregroundStyle(theme.colors.accent)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }

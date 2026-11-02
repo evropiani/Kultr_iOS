@@ -72,7 +72,7 @@ private struct DownloadQueue: View {
                 .padding(.vertical, 8)
 
                 if !offline.active.isEmpty {
-                    SectionHeader("Now", icon: "arrow.down.circle")
+                    SectionHeader("Now")
                     ForEach(offline.active.values.sorted { $0.song.id < $1.song.id }, id: \.song.id) { ActiveRow(item: $0) }
                 }
 
@@ -98,7 +98,7 @@ private struct DownloadQueue: View {
                 }
 
                 if !failed.isEmpty {
-                    SectionHeader("Failed", icon: "exclamationmark.circle") {
+                    SectionHeader("Failed") {
                         HStack(spacing: 6) {
                             Pill("Retry all", icon: "arrow.clockwise") {
                                 Task {
