@@ -531,6 +531,13 @@ private struct PlaybackSettings: View {
             }
             Section {
                 SettingToggle(
+                    "Live Activity",
+                    isOn: setting(\.liveActivity),
+                    hint: "The track, its progress and a countdown to the next mix, on the Lock Screen and in the Dynamic Island. It starts the next time music starts with Kultr open."
+                )
+            }
+            Section {
+                SettingToggle(
                     "Resume where you left off",
                     isOn: setting(\.resumeOnStart),
                     hint: "Restores the queue and position when Kultr opens. Pressing play on headphones or in Control Center picks it up too."

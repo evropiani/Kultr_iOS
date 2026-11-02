@@ -203,6 +203,8 @@ struct Settings: Codable, Hashable {
     var beatPulse: Bool = true
     /** And the phone taps along, while the player is open. */
     var beatHaptics: Bool = false
+    /** What's playing and the next mix, on the Lock Screen and in the Dynamic Island. */
+    var liveActivity: Bool = true
     /** Your stations, in the order the dial shows them. Decades are added from the library. */
     var stations: [Station] = STATION_PRESETS
 
@@ -219,7 +221,7 @@ struct Settings: Codable, Hashable {
         case offlineConcurrency, offlineBitrate, offlineWifiOnly, offlineFirst, streamCacheMb
         case autoSyncOnStart, autoSyncMinutes, syncPlaylistContents
         case showLyrics, homeTiles, favouriteRadios, hasSeenWelcome
-        case coverDoubleTap, coverHold, coverSwipeUp, sleepWindDown, beatPulse, beatHaptics, stations
+        case coverDoubleTap, coverHold, coverSwipeUp, sleepWindDown, beatPulse, beatHaptics, stations, liveActivity
     }
 
     /** Missing or unreadable values fall back to their defaults, one by one. */
@@ -295,6 +297,7 @@ struct Settings: Codable, Hashable {
         beatPulse = v(.beatPulse, d.beatPulse)
         beatHaptics = v(.beatHaptics, d.beatHaptics)
         stations = v(.stations, d.stations)
+        liveActivity = v(.liveActivity, d.liveActivity)
     }
 
     /** EQ gains, always exactly one per band. */

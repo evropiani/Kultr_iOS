@@ -186,6 +186,7 @@ final class PlayerController: EngineHost {
                 self.publish()
             }
             if old.streamCacheMb != new.streamCacheMb { StreamCache.shared.setLimit(megabytes: new.streamCacheMb) }
+            if old.liveActivity != new.liveActivity { self.scheduleWidgetUpdate() }
         }
         // A different server has a different library; its queue makes no sense here.
         graph.auth.observeActive { [weak self] _ in
@@ -316,6 +317,13 @@ final class PlayerController: EngineHost {
                 if let cover = coverURL(entry.song.artworkId, 96, client: client) { queueArt[entry.song.id] = cover }
             }
             WidgetBridge.shared.update(self.state, positionMs: self.engine.positionMs, artworkURL: url, queueArtworkURLs: queueArt)
+            LiveActivityBridge.shared.update(
+                self.state,
+                positionMs: self.engine.positionMs,
+                plan: self.transition.fromSongId == self.state.current?.id ? self.transition.upcoming : nil,
+                settings: self.graph.settings.current,
+                station: self.station
+            )
             if self.restoring {
                 self.restoring = false
                 UserDefaults.standard.removeObject(forKey: Self.restoringKey)
@@ -712,6 +720,7 @@ final class PlayerController: EngineHost {
         let picks = await stationNext(after: first.0, queued: [first.0.id], count: 4, known: first.1)
         startQueue([first.0] + picks, karousel: true)
         self.station = station
+        scheduleWidgetUpdate()
         if engine.repeatMode != .off { engine.setRepeat(.off) }
         graph.messages.show("Station: \(station.name)")
         return true
@@ -743,6 +752,7 @@ final class PlayerController: EngineHost {
         }
         engine.addItems(at: engine.index + 1, engine.newItems(picks, karousel: true))
         mixNow()
+        scheduleWidgetUpdate()
         graph.messages.show("Station: \(station.name)")
     }
 
@@ -750,6 +760,7 @@ final class PlayerController: EngineHost {
     func endStation() {
         guard station != nil else { return }
         station = nil
+        scheduleWidgetUpdate()
         if !graph.settings.current.karousel { engine.onKarouselChanged(false) }
     }
 
