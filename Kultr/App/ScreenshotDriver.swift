@@ -71,6 +71,23 @@ enum ScreenshotDriver {
             actions.navigate(.recap)
         case "whatsnew": graph.ui.whatsNew = true
         case "stations": actions.navigate(.stations)
+        case "crates", "crate":
+            // A crate of the newest albums, with a note and a tag on the first, so the pages have something in them.
+            if graph.crates.all.isEmpty {
+                var crate = Crate(name: "Late nights")
+                let newest = await library.recentlyAdded(4)
+                for album in newest { crate.toggle(album: album.id) }
+                graph.crates.save(crate)
+                if let first = newest.first {
+                    graph.crates.setAnnotation(Annotation.albumKey(first.id), Annotation(note: "Track 4 is the one. Best loud.", tags: ["late night", "headphones"]))
+                }
+            }
+            if screen == "crate", let crate = graph.crates.all.first {
+                actions.openCrate(crate.id)
+            } else {
+                actions.selectTab(.library)
+                actions.openLibrary(.crates)
+            }
         case "sync": actions.navigate(.sync)
         case "downloads": actions.openDownloads(.now)
         case "album":

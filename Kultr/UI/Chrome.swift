@@ -121,6 +121,14 @@ private struct Dialogs: ViewModifier {
                         .presentationBackground(.regularMaterial)
                 }
             }
+            .sheet(isPresented: Binding(get: { active && ui.addToCrate != nil }, set: { if !$0 { ui.addToCrate = nil } })) {
+                if let item = ui.addToCrate {
+                    AddToCrateSheet(item: item) { ui.addToCrate = nil }
+                        .environment(\.kultr, theme)
+                        .presentationDetents([.medium, .large])
+                        .presentationBackground(.regularMaterial)
+                }
+            }
             .sheet(isPresented: Binding(get: { active && ui.sleepTimer }, set: { ui.sleepTimer = $0 })) {
                 SleepTimerSheet { ui.sleepTimer = false }
                     .environment(\.kultr, theme)
@@ -248,6 +256,8 @@ private struct RouteView: View {
         case .stats: StatsScreen()
         case .recap: RecapScreen()
         case .stations: StationsScreen()
+        case .crate(let id): CrateScreen(id: id)
+        case .tag(let tag): TagScreen(tag: tag)
         case .downloads(let page): DownloadsScreen(initialPage: page)
         }
     }

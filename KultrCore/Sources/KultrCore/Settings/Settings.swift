@@ -207,6 +207,10 @@ struct Settings: Codable, Hashable {
     var liveActivity: Bool = true
     /** Your stations, in the order the dial shows them. Decades are added from the library. */
     var stations: [Station] = STATION_PRESETS
+    /** Your notes and tags, by album ("album:<id>") or artist ("artist:<id>"). */
+    var annotations: [String: Annotation] = [:]
+    /** Your crates, in the order Library shows them. */
+    var crates: [Crate] = []
 
     init() {}
 
@@ -222,6 +226,7 @@ struct Settings: Codable, Hashable {
         case autoSyncOnStart, autoSyncMinutes, syncPlaylistContents
         case showLyrics, homeTiles, favouriteRadios, hasSeenWelcome
         case coverDoubleTap, coverHold, coverSwipeUp, sleepWindDown, beatPulse, beatHaptics, stations, liveActivity
+        case annotations, crates
     }
 
     /** Missing or unreadable values fall back to their defaults, one by one. */
@@ -298,6 +303,8 @@ struct Settings: Codable, Hashable {
         beatHaptics = v(.beatHaptics, d.beatHaptics)
         stations = v(.stations, d.stations)
         liveActivity = v(.liveActivity, d.liveActivity)
+        annotations = v(.annotations, d.annotations)
+        crates = v(.crates, d.crates)
     }
 
     /** EQ gains, always exactly one per band. */

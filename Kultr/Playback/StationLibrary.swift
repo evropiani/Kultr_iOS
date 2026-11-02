@@ -29,7 +29,8 @@ final class StationLibrary {
 
     private var key: String {
         let library = graph.library
-        return "\(library.version):\(library.analysisVersion):\(graph.settings.current.stations.hashValue)"
+        let settings = graph.settings.current
+        return "\(library.version):\(library.analysisVersion):\(settings.stations.hashValue):\(settings.annotations.hashValue)"
     }
 
     /** Count again if anything changed since the last time. */
@@ -37,6 +38,7 @@ final class StationLibrary {
         let key = self.key
         guard key != countedKey, counting == nil else { return }
         let mine = graph.settings.current.stations
+        let annotations = graph.settings.current.annotations
         counting = Task { [weak self] in
             guard let self else { return }
             let result = await self.graph.library.read(([Station](), [String: Int]())) { db in
@@ -46,7 +48,9 @@ final class StationLibrary {
                 let decades = decadeStations(songs.compactMap(\.year))
                 var counts: [String: Int] = [:]
                 for station in mine + decades {
-                    counts[station.id] = songs.reduce(0) { $0 + (station.matches($1, analyses[$1.id]) ? 1 : 0) }
+                    let tagged = taggedIds(annotations, tags: station.tags ?? [])
+                    let since = addedSinceDay(station.addedDays)
+                    counts[station.id] = songs.reduce(0) { $0 + (station.matches($1, analyses[$1.id], tagged: tagged, addedSince: since) ? 1 : 0) }
                 }
                 return (decades, counts)
             }
@@ -68,12 +72,14 @@ final class StationLibrary {
     func pool(_ station: Station, playableOnly: Bool = true) async -> [(Song, TrackAnalysis?)] {
         let reachable = graph.isLocal || graph.network.isOnline
         let downloaded = graph.offline.downloadedIds
+        let tagged = taggedIds(graph.settings.current.annotations, tags: station.tags ?? [])
+        let since = addedSinceDay(station.addedDays)
         let pool = await graph.library.read([(Song, TrackAnalysis?)]()) { db in
             var analyses: [String: TrackAnalysis] = [:]
             for analysis in db.allAnalyses(version: ANALYSIS_VERSION) { analyses[analysis.songId] = analysis }
             return db.allSongs().compactMap { song in
                 let analysis = analyses[song.id]
-                return station.matches(song, analysis) ? (song, analysis) : nil
+                return station.matches(song, analysis, tagged: tagged, addedSince: since) ? (song, analysis) : nil
             }
         }
         guard playableOnly, !reachable else { return pool }

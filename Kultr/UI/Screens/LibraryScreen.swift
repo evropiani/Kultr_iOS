@@ -76,6 +76,8 @@ struct LibraryScreen: View {
             case .artists: ArtistsTab(query: query)
             case .songs: SongsTab(query: query)
             case .playlists: PlaylistsTab(query: query)
+            case .crates: CratesTab(query: query)
+            case .tags: TagsTab(query: query)
             case .genres: GenresTab(query: query)
             case .favourites: FavouritesTab()
             case .downloads: OfflineContent()

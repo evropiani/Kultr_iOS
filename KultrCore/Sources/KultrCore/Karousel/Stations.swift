@@ -43,6 +43,10 @@ struct Station: Codable, Hashable, Identifiable {
     var favourites = false
     /** At least this many stars. */
     var minRating: Int?
+    /** Albums or artists you gave any of these tags. */
+    var tags: [String]?
+    /** Added to the library in the last this many days. */
+    var addedDays: Int?
 
     init(
         id: String = UUID().uuidString,
@@ -55,7 +59,9 @@ struct Station: Codable, Hashable, Identifiable {
         years: Bounds? = nil,
         unplayed: Bool = false,
         favourites: Bool = false,
-        minRating: Int? = nil
+        minRating: Int? = nil,
+        tags: [String]? = nil,
+        addedDays: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -68,6 +74,8 @@ struct Station: Codable, Hashable, Identifiable {
         self.unplayed = unplayed
         self.favourites = favourites
         self.minRating = minRating
+        self.tags = tags
+        self.addedDays = addedDays
     }
 
     /** Missing fields fall back to "any", so stations saved by other versions still load. */
@@ -84,6 +92,8 @@ struct Station: Codable, Hashable, Identifiable {
         unplayed = (try? c.decodeIfPresent(Bool.self, forKey: .unplayed)) ?? false
         favourites = (try? c.decodeIfPresent(Bool.self, forKey: .favourites)) ?? false
         minRating = try? c.decodeIfPresent(Int.self, forKey: .minRating)
+        tags = try? c.decodeIfPresent([String].self, forKey: .tags)
+        addedDays = try? c.decodeIfPresent(Int.self, forKey: .addedDays)
     }
 
     /** Rules that only InjeKt's analysis can answer. */
@@ -91,9 +101,20 @@ struct Station: Codable, Hashable, Identifiable {
         !(energy?.isOpen ?? true) || !(keys ?? []).isEmpty
     }
 
-    /** Whether [song] fits, given what InjeKt knows about it. */
-    func matches(_ song: Song, _ analysis: TrackAnalysis?) -> Bool {
+    /**
+     * Whether [song] fits, given what InjeKt knows about it. [tagged] holds
+     * the album and artist ids with any of the station's tags; [addedSince]
+     * is the day ("2026-01-31") a track must have been added on or after.
+     */
+    func matches(_ song: Song, _ analysis: TrackAnalysis?, tagged: Set<String> = [], addedSince: String? = nil) -> Bool {
         if song.isRadio { return false }
+        if let tags, !tags.isEmpty {
+            guard song.albumId.map({ tagged.contains($0) }) == true || song.artistId.map({ tagged.contains($0) }) == true else { return false }
+        }
+        if let addedSince, addedDays != nil {
+            // ISO dates sort as text; the day is enough.
+            guard let created = song.created, String(created.prefix(10)) >= addedSince else { return false }
+        }
         if let bpm, !bpm.isOpen {
             let tempo = (analysis?.bpm).flatMap { $0 > 0 ? $0 : nil } ?? song.bpm.flatMap { $0 > 0 ? Double($0) : nil }
             guard let tempo, bpm.contains(tempo) else { return false }
@@ -129,6 +150,8 @@ struct Station: Codable, Hashable, Identifiable {
         if unplayed { parts.append("never played") }
         if favourites { parts.append("favourites") }
         if let minRating, minRating > 0 { parts.append("\(minRating)★ and up") }
+        if let tags, !tags.isEmpty { parts.append("tagged " + tags.joined(separator: ", ")) }
+        if let addedDays { parts.append(addedDays == 365 ? "added this year" : "added in the last \(addedDays) days") }
         return parts.isEmpty ? "Your whole library" : parts.joined(separator: " · ")
     }
 
@@ -145,6 +168,16 @@ struct Station: Codable, Hashable, Identifiable {
     static func decade(_ start: Int) -> Station {
         Station(id: "decade-\(start)", name: "\(start)s", icon: "calendar", years: Bounds(Double(start), Double(start + 9)))
     }
+}
+
+/** The first day a track must have been added on to fit [addedDays], as "2026-01-31". */
+func addedSinceDay(_ addedDays: Int?, now: Date = Date()) -> String? {
+    guard let addedDays else { return nil }
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(identifier: "UTC")
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter.string(from: now.addingTimeInterval(-Double(addedDays) * 86_400))
 }
 
 /** The stations Kultr starts with; each can be changed or removed. */

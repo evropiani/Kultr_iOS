@@ -1,28 +1,29 @@
 **KultrPre is a test build.** It installs next to Kultr as a separate app called **Kultr Pre**, with its own bundle ID (`app.kultr.ios.pre`), App Group and data. Your Kultr install stays as it is. You'll need to sign in to your server again in Kultr Pre. The in-app update check and the Kultr source never offer test builds.
 
-## What's being tested: step 2, Stations, Live Activity and Beat pulse
+## What's being tested: step 3, Crates, notes and tags, and the glass lens
 
-Everything from 1.4.1 (Rediscover, monthly recap, cover gestures, wind-down, save the session, loading pages) is still here. The What's new page opens once after updating.
+Everything from 1.4.1 and 1.4.2 is still here. The What's new page opens once after updating.
 
-- **Stations:** endless mixes from your own library. A new Stations shelf is added at the top of Home once.
-  - Tap a card to start the station, or tap the shelf's title for the Stations page.
-  - There, turn the glass dial to choose; it clicks at each station. While a station plays, turning the dial and letting go mixes into the new one after a moment.
-  - The starting stations are Warm Up, Night Drive, Peak Hour, Deep Focus, Wind Down, Unplayed gems and Favourites, plus one per decade with at least 20 tracks.
-  - Karousel follows the station's rules instead of looking for similar music, and InjeKt picks what mixes best from each track. It keeps going even if Karousel is switched off.
-  - Up next shows the station, with an End button. Playing anything else also ends it.
-- **Your own stations:** every station is a set of rules you can edit: tempo, energy (1 to 10), key (Camelot), genres, years, never played, favourites and minimum rating. While you edit, the page counts how many tracks fit.
-  - Use ••• to edit, duplicate or delete a station, and "New station" to add one. ••• in the corner brings back the starting set.
-  - Tempo, energy and key come from InjeKt's analysis, so those stations only have tracks InjeKt has analysed (or whose tags carry a tempo). The Stations page says how many are left, with an "Analyse the rest" button.
-- **Live Activity:** the Lock Screen and the Dynamic Island show the track, its progress, a play/pause button and a countdown to the next mix, like "Beat-matched blend into Paper Moons in 0:12". Before InjeKt has planned the mix (about half a minute before the end), the countdown is an estimate. It starts the next time music starts with Kultr open. Switch it off in Settings → Playback.
-- **Beat pulse:** the play button swells, with a soft orange ring, on the first beat of every bar, once InjeKt has analysed the track. "Tap on the beat" in Settings → Playback makes the phone tap along while the player is open (off at first). With Reduce motion on, it doesn't pulse.
+- **Crates:** folders for albums, artists and tracks, in Library → Crates.
+  - **By hand:** hold an album, an artist or a track anywhere (or use ••• on its page, or select several tracks) and tap **Add to crate**. The list ticks the crates it's already in; tap a crate again to take it out.
+  - **By rules:** "New crate → Fill it by rules" uses the same rules as stations, plus two new ones: your tags, and when the music was added. It starts as "4 stars and up, added this year".
+  - A crate's page plays or shuffles everything in it. ••• renames it, changes its rules, makes a station of the same rules, or deletes it.
+  - **Keep as a playlist** keeps a playlist of the same name on your server with the same tracks, updated a moment after the crate changes. Other apps see it too. Deleting the crate leaves the playlist.
+- **Notes and tags:** album and artist pages have a "Your notes" section above the info text.
+  - **+ Tag** adds a tag of your own, and tapping a tag shows everything with it. Hold a tag to remove it.
+  - **Add a note** keeps a note of any length.
+  - Library → Tags lists every tag once you've used one. A tag's page can play everything with it, or make it a crate with one tap.
+  - Notes and tags are private: they stay on the phone, with your settings, and go into a settings backup (Settings → Backup and reset).
+- **Glass lens:** drag along the player's progress bar and a glass lens floats above your finger. It shows the time large, and eight seconds of the track around it with InjeKt's beats marked: the first beat of each bar is taller and orange, and a planned mix is shaded. Before InjeKt has analysed the track, it shows second marks instead.
+- **Stations, smaller fixes:** the dial has a faint edge in dark mode, and the Home shelf puts stations that have music first. A station with nothing to play yet says why ("Needs InjeKt analysis").
 
 ## Please check
 
-- **Stations:** start one from Home and from the dial. Does the music fit the name? Turn the dial while it plays, then let go: it should mix into the new station within a few seconds.
-- **The dial:** does it turn smoothly and click once per station?
-- **Editing:** make a station of your own and check that the count changes as you change the rules.
-- **Live Activity:** lock the phone while music plays. Is the countdown right, and does play/pause work from the Lock Screen and the Dynamic Island? Does it go away when you stop the music?
-- **Beat pulse:** with a track InjeKt has analysed, does the pulse land on the beat? Try "Tap on the beat" too.
+- **Crates:** add an album, an artist and a few tracks to a crate from their menus, then open it from Library → Crates. Do the covers on the crate's card look right?
+- **Rules:** make a crate by rules and check that its tracks fit.
+- **Keep as a playlist:** switch it on for a crate and look for the playlist in Library → Playlists (pull to refresh), and in another Subsonic app if you use one.
+- **Notes and tags:** tag two albums the same, open the tag from the album page and from Library → Tags, and write a note.
+- **Lens:** does it sit above your finger without covering what you need, and do the beat marks line up with the music?
 
 ## Install
 

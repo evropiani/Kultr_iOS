@@ -13,7 +13,7 @@ extension GridSize {
 }
 
 /** A grid card: artwork over a one-line title and subtitle. */
-private struct CardLayout<Art: View>: View {
+struct CardLayout<Art: View>: View {
     @Environment(\.kultr) private var theme
     let title: String
     var subtitle: String?
@@ -49,6 +49,7 @@ struct AlbumCard: View {
         .onTapGesture { AppGraph.shared.actions.openAlbum(album.id) }
         .contextMenu {
             CollectionMenuItems(name: album.name) { await AppGraph.shared.library.songsOfAlbumNow(album.id) }
+            Button { AppGraph.shared.actions.addToCrate(.album(id: album.id, name: album.name)) } label: { Label("Add to crate…", systemImage: "shippingbox") }
             Divider()
             FavouriteMenuItem(starred: AppGraph.shared.ui.isStarred(album)) { AppGraph.shared.actions.setAlbumFavourite(album, $0) }
             if album.artistId != nil {
@@ -70,6 +71,7 @@ struct ArtistCard: View {
         .onTapGesture { AppGraph.shared.actions.openArtist(artist.id) }
         .contextMenu {
             CollectionMenuItems(name: artist.name) { await AppGraph.shared.actions.artistSongs(artist) }
+            Button { AppGraph.shared.actions.addToCrate(.artist(id: artist.id, name: artist.name)) } label: { Label("Add to crate…", systemImage: "shippingbox") }
             Divider()
             FavouriteMenuItem(starred: AppGraph.shared.ui.isStarred(artist)) { AppGraph.shared.actions.setArtistFavourite(artist, $0) }
         }

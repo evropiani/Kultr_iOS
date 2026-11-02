@@ -76,6 +76,49 @@ final class UtilTests: XCTestCase {
         XCTAssertEqual(replayGainFor(song, Settings().with { $0.replayGainMode = .off }), 1)
     }
 
+    func testTagsCratesAndTheirRules() {
+        var a = Annotation()
+        a.addTag("Gym")
+        a.addTag(" gym ")
+        a.addTag("Road trip")
+        XCTAssertEqual(a.tags, ["Gym", "Road trip"])
+        a.removeTag("GYM")
+        XCTAssertEqual(a.tags, ["Road trip"])
+        XCTAssertTrue(Annotation(note: "  ").isEmpty)
+
+        let annotations = [
+            Annotation.albumKey("al1"): Annotation(tags: ["Gym"]),
+            Annotation.artistKey("ar2"): Annotation(note: "Loud", tags: ["gym", "Night"]),
+        ]
+        XCTAssertEqual(tagCounts(annotations).first?.tag.lowercased(), "gym")
+        XCTAssertEqual(tagCounts(annotations).first?.count, 2)
+        XCTAssertEqual(taggedIds(annotations, tags: ["GYM"]), ["al1", "ar2"])
+
+        let gym = Station(name: "Gym", tags: ["gym"])
+        let tagged = taggedIds(annotations, tags: gym.tags!)
+        XCTAssertTrue(gym.matches(Song(id: "s", albumId: "al1"), nil, tagged: tagged))
+        XCTAssertTrue(gym.matches(Song(id: "t", albumId: "al9", artistId: "ar2"), nil, tagged: tagged))
+        XCTAssertFalse(gym.matches(Song(id: "u", albumId: "al9"), nil, tagged: tagged))
+
+        let recent = Station(name: "New", addedDays: 30)
+        let since = addedSinceDay(30, now: Date(timeIntervalSince1970: Double(Format.isoMs("2026-11-02T00:00:00Z")!) / 1000))
+        XCTAssertEqual(since, "2026-10-03")
+        XCTAssertTrue(recent.matches(Song(id: "n", created: "2026-10-20T10:00:00Z"), nil, addedSince: since))
+        XCTAssertFalse(recent.matches(Song(id: "o", created: "2025-01-01T10:00:00Z"), nil, addedSince: since))
+        XCTAssertEqual(Station(name: "Year", minRating: 4, addedDays: 365).summary, "4★ and up · added this year")
+
+        var crate = Crate(name: "Gym")
+        crate.toggle(album: "al1")
+        crate.toggle(song: "s1")
+        crate.toggle(song: "s2")
+        crate.toggle(song: "s1")
+        XCTAssertEqual(crate.contents, "1 album · 1 track")
+        XCTAssertTrue(crate.contains(song: "s2"))
+        let decoded = try? JSONDecoder().decode(Crate.self, from: Data(#"{"id":"c","name":"Old"}"#.utf8))
+        XCTAssertEqual(decoded?.albums, [])
+        XCTAssertFalse(decoded?.byRules ?? true)
+    }
+
     func testMonthRecapCountsOneMonth() {
         var utc = Calendar(identifier: .gregorian)
         utc.timeZone = TimeZone(identifier: "UTC")!

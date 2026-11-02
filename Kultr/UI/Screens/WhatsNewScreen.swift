@@ -13,6 +13,28 @@ struct WhatsNewItem: Identifiable {
  */
 enum WhatsNew {
     static let notes: [String: [WhatsNewItem]] = [
+        "1.4.3": [
+            WhatsNewItem(
+                icon: "shippingbox.fill",
+                title: "Crates",
+                text: "Folders for albums, artists and tracks: hold any of them and tap Add to crate. Or let rules fill one, like “4 stars and up, added this year”. Library → Crates; each can be kept as a playlist on your server."
+            ),
+            WhatsNewItem(
+                icon: "tag.fill",
+                title: "Notes and tags",
+                text: "Album and artist pages have Your notes: tags of your own and a note. Tap a tag to see everything with it. They're private, and kept in a settings backup."
+            ),
+            WhatsNewItem(
+                icon: "magnifyingglass.circle.fill",
+                title: "A glass lens on the scrubber",
+                text: "Drag along the player's progress bar and a glass lens shows the time large, with the beats around it: the first beat of each bar in orange."
+            ),
+            WhatsNewItem(
+                icon: "dial.medium.fill",
+                title: "Stations by tag",
+                text: "Stations and crates can follow your tags and when music was added, so “everything tagged gym” can play as an endless mix."
+            ),
+        ],
         "1.4.2": [
             WhatsNewItem(
                 icon: "dial.medium.fill",

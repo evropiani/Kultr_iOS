@@ -255,6 +255,7 @@ struct AlbumScreen: View {
                             graph.actions.play(songs, target)
                         }
                     }
+                    AnnotationSection(key: Annotation.albumKey(shown.id), name: shown.name)
                     if let notes {
                         let text = cleanHtml(notes)
                         if !text.isEmpty { AboutText(title: "About this album", text: text) }
@@ -266,6 +267,7 @@ struct AlbumScreen: View {
                         Button { graph.actions.playNext(songs) } label: { Label("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") }
                         Button { graph.actions.enqueue(songs) } label: { Label("Add to queue", systemImage: "text.line.last.and.arrowtriangle.forward") }
                         Button { graph.actions.addToPlaylist(songs) } label: { Label("Add to playlist…", systemImage: "text.badge.plus") }
+                        Button { graph.actions.addToCrate(.album(id: shown.id, name: shown.name)) } label: { Label("Add to crate…", systemImage: "shippingbox") }
                         Button { graph.actions.startInjektSet(songs.randomElement()) } label: { Label("Start an InjeKt set", systemImage: "sparkles") }
                         if shown.artistId != nil {
                             Divider()
@@ -346,6 +348,7 @@ struct ArtistScreen: View {
                         SectionHeader("Albums")
                         Shelf(items: allAlbums) { AlbumCard(album: $0) }
                     }
+                    AnnotationSection(key: Annotation.artistKey(shown.id), name: shown.name)
                     if let similar = info?.similarArtist, !similar.isEmpty {
                         SectionHeader("Similar artists")
                         Shelf(items: similar, cardWidth: 130) { ArtistCard(artist: $0) }
@@ -371,6 +374,9 @@ struct ArtistScreen: View {
                         }
                         Button { Task { graph.actions.enqueue(await graph.actions.artistSongs(shown)) } } label: {
                             Label("Add to queue", systemImage: "text.line.last.and.arrowtriangle.forward")
+                        }
+                        Button { graph.actions.addToCrate(.artist(id: shown.id, name: shown.name)) } label: {
+                            Label("Add to crate…", systemImage: "shippingbox")
                         }
                     } label: {
                         Image(systemName: "ellipsis")

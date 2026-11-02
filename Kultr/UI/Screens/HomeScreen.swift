@@ -137,7 +137,7 @@ private struct HomeShelf: View {
         // Bumped when plays went up to the server or came down from other devices.
         if tile.id == "recentlyPlayed" { key += ":\(graph.player.state.current?.id ?? ""):\(graph.library.historyVersion):\(graph.sync.listeningVersion)" }
         if tile.id == "favouriteRadios" { key += ":\(theme.settings.favouriteRadios.joined(separator: ","))" }
-        if tile.id == "stations" { key += ":\(theme.settings.stations.hashValue):\(graph.stations.decades.count)" }
+        if tile.id == "stations" { key += ":\(theme.settings.stations.hashValue):\(graph.stations.decades.count):\(graph.stations.counts.count)" }
         return key
     }
 
@@ -240,7 +240,14 @@ private struct HomeShelf: View {
                 .sorted { ($0.changed ?? $0.created ?? "") > ($1.changed ?? $1.created ?? "") }
         case "stations":
             graph.stations.refresh()
-            mixes = graph.stations.all
+            // Stations with music first; one with nothing to play yet goes to the end.
+            let counts = graph.stations.counts
+            mixes = graph.stations.all.enumerated()
+                .sorted { a, b in
+                    let x = (counts[a.element.id] ?? 1) > 0, y = (counts[b.element.id] ?? 1) > 0
+                    return x != y ? x : a.offset < b.offset
+                }
+                .map(\.element)
         case "radios", "favouriteRadios":
             let all = (try? await library.radioStations()) ?? []
             let favourites = theme.settings.favouriteRadios
