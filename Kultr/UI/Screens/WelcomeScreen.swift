@@ -215,7 +215,7 @@ private struct ChoiceCard: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(c.ink3)
-                    .padding(.top, 14)
+                    .padding(.top, 16)
             }
             .padding(16)
             .contentShape(shape)

@@ -79,7 +79,7 @@ private struct ToastLayer: View {
     var body: some View {
         if let message = AppGraph.shared.messages.current {
             ToastView(message: message)
-                .padding(.top, 6)
+                .padding(.top, 8)
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .id(message.id)
         }
@@ -205,7 +205,7 @@ private struct FloatingDownloads: ViewModifier {
             if !AppGraph.shared.ui.onDownloadsPage {
                 DownloadIndicator(floating: true)
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 8)
             }
         }
     }

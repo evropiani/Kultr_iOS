@@ -246,7 +246,7 @@ private struct AppIconPicker: View {
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
     }
 
     private func choose(_ icon: AppIcon) {

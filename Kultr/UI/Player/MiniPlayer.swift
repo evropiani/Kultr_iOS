@@ -117,7 +117,7 @@ struct MiniPlayerContent: View {
                 }
             }
             .padding(.leading, compact ? 8 : 10)
-            .padding(.trailing, 6)
+            .padding(.trailing, 8)
             .frame(maxHeight: .infinity)
             .overlay(alignment: .bottom) {
                 if !compact && !song.isRadio {
@@ -165,7 +165,7 @@ struct MiniPlayerContent: View {
                 .buttonStyle(PressScaleStyle())
                 .accessibilityLabel("Resume")
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 12)
             .frame(maxHeight: .infinity)
         }
     }

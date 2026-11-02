@@ -8,7 +8,7 @@ extension GridSize {
         case .medium: 144
         case .large: 190
         }
-        return [GridItem(.adaptive(minimum: minimum), spacing: 0, alignment: .top)]
+        return [GridItem(.adaptive(minimum: minimum), spacing: 12, alignment: .top)]
     }
 }
 
@@ -34,7 +34,6 @@ private struct CardLayout<Art: View>: View {
             }
         }
         .lineLimit(1)
-        .padding(6)
     }
 }
 

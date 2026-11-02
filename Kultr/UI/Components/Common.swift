@@ -68,7 +68,7 @@ struct Pill: View {
             if let badge {
                 Text(badge)
                     .font(.system(size: 11, weight: .bold).monospacedDigit())
-                    .padding(.horizontal, 7)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 1)
                     .background(Capsule().fill(accent ? Color.white.opacity(0.22) : c.accentSoft))
             }
@@ -76,7 +76,7 @@ struct Pill: View {
         Button(action: tapped) {
             label
                 .foregroundStyle(accent ? c.onAccent : c.accent)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 16)
                 .frame(height: 36)
                 .background(Capsule().fill(accent ? c.accent : c.sand))
                 .opacity(enabled ? 1 : 0.45)
@@ -345,12 +345,12 @@ struct Shelf<Item: Identifiable, Card: View>: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(alignment: .top, spacing: 2) {
+            LazyHStack(alignment: .top, spacing: 12) {
                 ForEach(items) { item in
                     card(item).frame(width: cardWidth)
                 }
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 16)
         }
     }
 }

@@ -7,6 +7,7 @@ Kultr's new look, laid out like Apple Music, in orange on cream. Nothing is remo
 - **Colours:** cream pages, warm black text and one orange for what you can tap. In dark mode it's warm charcoal with a brighter orange; Night mode is still pure black. There are no gradients anywhere, and the cover is the only colourful thing on screen.
 - **Glass only where things float:** the tab bar, the mini player, the toolbar and player buttons, and sheets. Buttons in pages are solid.
 - **Text follows Larger Text** in the iPhone's settings.
+- **One spacing scale:** every gap is 4, 8, 12, 16, 24 or 32 points. Grids and shelves keep a 16-point margin with 12 points between covers.
 - **Home:** shelf titles open the full list (tap "Played the most ›"). Shuffle all is a sand button; Start an InjeKt set is the one orange one.
 - **Library:** a list of sections (Playlists, Artists, Albums, Songs, Genres, Favourites, Downloads, Radio), then recently added albums. Each section opens as its own page, with a filter field under its title. This replaces swiping between tabs.
 - **Album, artist and playlist pages:** no all-caps label over the title. Play and Shuffle are two sand buttons, and a track's ••• is orange.

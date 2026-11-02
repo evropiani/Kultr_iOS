@@ -90,7 +90,7 @@ struct AddToPlaylistSheet: View {
                                     }
                                     Spacer()
                                 }
-                                .padding(.vertical, 10)
+                                .padding(.vertical, 12)
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(PressableStyle())
@@ -243,7 +243,7 @@ struct ToastView: View {
             .foregroundStyle(color)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.vertical, 16)
             .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(c.elevated))
             .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
             .padding(.horizontal, 12)

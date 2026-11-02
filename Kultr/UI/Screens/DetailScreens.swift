@@ -33,7 +33,7 @@ struct DetailHeader<Subtitle: View>: View {
                 .foregroundStyle(c.ink)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
-                .padding(.top, 18)
+                .padding(.top, 16)
                 .background(
                     GeometryReader { proxy in
                         Color.clear.preference(key: HeaderGoneKey.self, value: proxy.frame(in: .global).maxY < 110)
@@ -48,7 +48,7 @@ struct DetailHeader<Subtitle: View>: View {
                     if let play { WideButton(title: "Play", icon: "play.fill", prominent: false, action: play) }
                     if let shuffle { WideButton(title: "Shuffle", icon: "shuffle", prominent: false, action: shuffle) }
                 }
-                .padding(.top, 18)
+                .padding(.top, 16)
             }
         }
         .frame(maxWidth: .infinity)

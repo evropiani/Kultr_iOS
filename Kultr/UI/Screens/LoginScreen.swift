@@ -162,7 +162,7 @@ struct LoginScreen: View {
                 .foregroundStyle(c.ink)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(RoundedRectangle(cornerRadius: theme.radii.xs, style: .continuous).strokeBorder(c.edge, lineWidth: 1))
         }

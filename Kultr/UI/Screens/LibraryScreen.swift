@@ -48,10 +48,10 @@ struct LibraryHome: View {
                 .padding(.horizontal, 16)
                 if !recent.isEmpty {
                     SectionHeader("Recently added")
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 0, alignment: .top), GridItem(.flexible(), spacing: 0, alignment: .top)], spacing: 0) {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12, alignment: .top), GridItem(.flexible(), spacing: 12, alignment: .top)], spacing: 16) {
                         ForEach(recent) { AlbumCard(album: $0) }
                     }
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 16)
                 }
             }
             .padding(.bottom, 24)
@@ -139,7 +139,7 @@ struct PillLabel: View {
             Text(text).font(KFont.labelLarge).lineLimit(1)
         }
         .foregroundStyle(theme.colors.accent)
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .frame(height: 36)
         .background(Capsule().fill(theme.colors.sand))
     }
@@ -170,7 +170,7 @@ private struct AlbumsTab: View {
                     EmptyLibrary()
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 0) {
+                        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
                             Section {
                                 ForEach(shown) { AlbumCard(album: $0) }
                             } header: {
@@ -179,11 +179,10 @@ private struct AlbumsTab: View {
                                     Spacer()
                                     SortMenu(current: sort, options: AlbumSort.allCases, label: { $0.rawValue }) { sort = $0 }
                                 }
-                                .padding(.horizontal, 6)
                                 .padding(.vertical, 4)
                             }
                         }
-                        .padding(10)
+                        .padding(16)
                     }
                 }
             } else {
@@ -226,17 +225,17 @@ private struct ArtistsTab: View {
                 } else {
                     let shown = artists.filter { matches(query, $0.name) }
                     ScrollView {
-                        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 0) {
+                        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
                             Section {
                                 ForEach(shown) { ArtistCard(artist: $0) }
                             } header: {
                                 Text(Format.count(shown.count, "artist"))
                                     .foregroundStyle(theme.colors.ink3)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(6)
+                                    .padding(.vertical, 4)
                             }
                         }
-                        .padding(10)
+                        .padding(16)
                     }
                 }
             } else {
@@ -276,7 +275,7 @@ private struct SongsTab: View {
                                     Text(Format.count(shown.count, "track")).font(KFont.bodySmall).foregroundStyle(theme.colors.ink3)
                                 }
                                 .padding(.horizontal, 16)
-                                .padding(.vertical, 6)
+                                .padding(.vertical, 8)
                             }
                             .listRowInsets(EdgeInsets())
                             .listRowBackground(Color.clear)
@@ -362,18 +361,18 @@ private struct PlaylistsTab: View {
                             }
                             Spacer()
                         }
-                        .padding(6)
+                        .padding(.bottom, 12)
                         if shown.isEmpty {
                             // Across the whole page, not in the grid's first column.
                             EmptyState(icon: "square.stack.fill", title: "No playlists", message: "Create one, or add tracks to a new playlist from any track's menu.")
                                 .padding(.top, 24)
                         } else {
-                            LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 0) {
+                            LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
                                 ForEach(shown) { PlaylistCard(playlist: $0) }
                             }
                         }
                     }
-                    .padding(10)
+                    .padding(16)
                 }
             } else {
                 LoadingView()
@@ -548,7 +547,7 @@ private struct RadioTab: View {
                                 }
                                 .padding(.leading, 16)
                                 .padding(.trailing, 4)
-                                .padding(.vertical, 6)
+                                .padding(.vertical, 8)
                                 .contentShape(Rectangle())
                                 .onTapGesture { graph.actions.play([station.asSong()]) }
                             }
