@@ -50,6 +50,35 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   on your iPhone. With InjeKt on, the songs that mix best come first. Its songs
   show under their own heading in Up next and leave the queue when you turn it
   off.
+- **Stations.** Endless mixes from your own library: Warm Up, Night Drive,
+  Peak Hour, Deep Focus, Wind Down, Unplayed gems, Favourites and one per
+  decade, or your own, by tempo, energy, key, genre, years, tags, rating and
+  when the music was added. Turn a glass dial to choose; while one plays,
+  turning it mixes into the next.
+- **Energy planner.** Draw how the next hour should feel, calm to peak, and
+  Kultr builds a set that follows the line, with tempos and keys that mix.
+- **Command bar.** Search also does things: "play Night Drive", "shuffle" and
+  an artist, "sleep in 30 minutes", "next", "plan an hour". With Apple
+  Intelligence on, it reads requests in your own words, on the iPhone itself.
+- **Crates, notes and tags.** Folders of albums, artists and tracks, filled by
+  hand or by rules ("4 stars and up, added this year"), each kept as a
+  playlist on your server if you like; private notes and tags on any album or
+  artist.
+- **Kultr Studio.** The whole look in one place: start from Cream, Night,
+  Ember, Paper or Console, change colours, corners and glass, put the player
+  together from blocks with an info line you write yourself, and share the
+  result as a link or a file.
+- **Home your way.** Widgets for now playing, your listening this week, the
+  next mix, a station, a crate or a shortcut, in three sizes, plus the shelves
+  you choose: Rediscover (loved albums you haven't played for a year), most
+  played, recently added and more.
+- **In the player.** Double-tap the cover to heart, hold it to mix into the
+  next track, swipe up for the queue (each one can be changed); the play
+  button pulses on the beat; a glass lens magnifies the time and beats as you
+  scrub; a Live Activity counts down to the next mix on the Lock Screen and in
+  the Dynamic Island; a sleep timer that winds down with calmer music.
+- **Listening.** A monthly recap of what you played on this phone, and the
+  session saved as a playlist in one tap.
 - **Offline.** Download albums, playlists, favourites or the whole library, at
   a bitrate of your choosing, on Wi-Fi only if you like. A Downloads page shows
   what is coming down, what is queued or failed, and what is already on the
@@ -69,9 +98,6 @@ and Control Center controls, AirPlay, and downloads for offline listening.
 - **Several servers.** Sign in to more than one server, name them as you
   like, and switch between them. Each has its own library, downloads and
   history. Passwords are kept in the iOS Keychain.
-- **Home shelves** you choose and reorder: jump back in, recently added, most
-  played, albums at random, favourites, playlists on repeat, internet radio
-  and more.
 - **Audio:** ten-band equaliser with presets, ReplayGain (track or album),
   per-network streaming bitrate, sleep timer (after minutes or at the end of
   the track).
