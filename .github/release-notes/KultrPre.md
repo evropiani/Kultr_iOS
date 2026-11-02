@@ -1,24 +1,24 @@
 **KultrPre is a test build.** It installs next to Kultr as a separate app called **Kultr Pre**, with its own bundle ID (`app.kultr.ios.pre`), App Group and data. Your Kultr install stays as it is. You'll need to sign in to your server again in Kultr Pre. The in-app update check and the SideStore source never offer test builds.
 
-## What's being tested: a whole-app simplification
+## What's being tested: the player as a sheet
 
-This is Kultr 1.3.8 with about 150 more lines folded together. Nothing is meant to look or work differently. If something does, that's a bug.
+Pulling the full player down jumped, stalled and stuttered, most of all the first time. The player was Kultr's own card drawn over the app. Every frame of the pull, Kultr redrew the whole card, cut it to shape, shrank it, and redrew the glass tab bar under it. The phone couldn't keep up, so the card moved at 30 frames a second instead of 60 or 120.
 
-- **Cards draw through one layout.** Album, artist, playlist and radio cards had four copies of the same artwork-title-subtitle stack. Radio station names are now semibold like every other card title.
-- **Shared buttons and pickers.** The heart on album and artist pages, the favourite entry in long-press menus, and the three bitrate pickers in Settings each exist once now.
-- **Settings pages read and write their switches more directly.** Each page sets its title in one place.
-- **The Library pager follows your finger one way instead of two.** It used to track the swipe twice, once for iOS 17.
-- **Smaller merges.** Play next and Add to queue share one path. The login fields share one frame. Home and Stats list their tracks the same way album pages do. The two EQ shelf filters use one formula, checked to give the same numbers. Leftovers from the old floating tab bar are gone.
+The player now opens as an iOS sheet, like a sheet in any Apple app. iOS moves it by itself while you pull, and Kultr draws nothing during the gesture.
+
+- **Pull down from the top of the player to close it.** If you've scrolled down to the queue, scroll back up first, or pull from the top bar.
+- **It looks slightly different.** The player has the system's grabber at the top, and rounded top corners.
+- **Add to playlist, Rate, the sleep timer and the little messages now open over the player** instead of behind it.
+
+Also in this build, from the last test: the whole-app simplification (cards, settings pickers, Library pager, queue adding, sign-in fields).
 
 ## Please check
 
-- **Settings → Audio and Settings → Offline and cache:** the three quality pickers (On Wi-Fi, On mobile data, Download quality) still list Original, 320, 256, 192, 128 and 96 kbps, and a choice sticks.
-- **Equaliser:** a preset with bass or treble boost sounds the same as in Kultr.
-- **Library:** swipe between Albums, Artists, Songs and the rest. The underline should follow your finger. Filter each page.
-- **Favourites:** heart and unheart an album and an artist from their pages and from a long press.
-- **Tabs:** open an album, switch tabs, come back. The album is still open. Tap the tab again to go back to its start.
-- **Queue:** Play next and Add to queue from a track's menu, with music playing and with nothing playing.
-- **Sign-in:** add a server. The fields should not autocorrect or capitalise.
+- **The pull:** open the player and pull it down slowly, quickly, and a little then let go. It should follow your finger smoothly from the first touch, close on a long or fast pull, and spring back on a short one.
+- **The first time:** quit Kultr Pre, open it, start music, open the player and pull it down. This was the worst case.
+- **Scrolling:** scroll down to Up next, then pull down. The list should scroll up first; once it's at the top, pulling down closes the player.
+- **From inside the player:** the ••• menu's Sleep timer, Add to playlist and Rate should open on top of the player. Go to album and Go to artist should close the player and open the page.
+- **Messages:** tap the shuffle button in the player. The note at the top should appear over the player.
 
 ## Install
 

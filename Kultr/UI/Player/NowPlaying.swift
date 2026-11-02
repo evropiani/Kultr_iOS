@@ -12,89 +12,15 @@ private enum PlayerTab: CaseIterable {
     }
 }
 
-private struct TopOffsetKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
 /**
- * The full-screen player. Pull it down (from the top of its list) to close it.
- *
- * Only the card moves while you pull: the page itself is a separate view
- * that ignores the pull, so it isn't rebuilt sixty times a second.
+ * The full player. It opens as a sheet, so pulling it down (from the top of
+ * its list) is iOS's own gesture: the system moves it, at the screen's full
+ * frame rate, and nothing in here is redrawn while it moves.
  */
 struct NowPlayingScreen: View {
-    @State private var pull: CGFloat = NowPlayingScreen.initialPull
-    @State private var pulling = false
-    /** Where the finger was when the pull was recognised, so the card starts from there instead of jumping. */
-    @State private var pullStart: CGFloat = 0
-    @State private var topOffset: CGFloat = 0
-
-    var body: some View {
-        PlayerPage(pulling: pulling)
-            .equatable()
-            .onPreferenceChange(TopOffsetKey.self) { topOffset = $0 }
-            .simultaneousGesture(
-                // Measured against the screen: measured inside the player, the
-                // player's own movement fed back into the pull and it shook.
-                DragGesture(minimumDistance: 15, coordinateSpace: .global)
-                    .onChanged { value in
-                        if !pulling {
-                            // Only a downward pull that starts with the list at its top.
-                            guard value.translation.height > 0, abs(value.translation.height) > abs(value.translation.width), topOffset >= -2 else { return }
-                            pulling = true
-                            pullStart = value.translation.height
-                        }
-                        pull = max(0, value.translation.height - pullStart)
-                    }
-                    .onEnded { value in
-                        guard pulling else { return }
-                        pulling = false
-                        if pull > 140 || value.predictedEndTranslation.height - pullStart > 420 {
-                            // The pull is kept, so the card carries on down from where you let go.
-                            AppGraph.shared.actions.closePlayer()
-                        } else {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { pull = 0 }
-                        }
-                    }
-            )
-            .background { ArtworkBackdrop(coverId: AppGraph.shared.player.state.current?.artworkId) }
-            // A card rounded like the screen, so nothing changes the moment a pull starts.
-            .mask {
-                RoundedRectangle(cornerRadius: Self.cardRadius, style: .continuous)
-                    .ignoresSafeArea()
-            }
-            .scaleEffect(1 - min(1, pull / 900) * 0.08, anchor: .top)
-            .offset(y: pull)
-            .background {
-                Color.black
-                    .opacity(0.35 * Double(1 - min(1, pull / 500)))
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-            }
-    }
-
-    #if DEBUG
-    private static var initialPull: CGFloat { ProcessInfo.processInfo.environment["KULTR_SCREEN"] == "pull" ? 220 : 0 }
-    #else
-    private static let initialPull: CGFloat = 0
-    #endif
-
-    /** About the corner radius of a modern iPhone's screen. */
-    private static let cardRadius: CGFloat = 44
-}
-
-/** What the player shows: compared only by [pulling], so the pull's every step leaves it alone. */
-private struct PlayerPage: View, Equatable {
-    let pulling: Bool
-
     @Environment(\.kultr) private var theme
     @State private var tab: PlayerTab = .queue
     @State private var live: Song?
-
-    static func == (a: PlayerPage, b: PlayerPage) -> Bool { a.pulling == b.pulling }
 
     var body: some View {
         let graph = AppGraph.shared
@@ -106,11 +32,6 @@ private struct PlayerPage: View, Equatable {
                 ScrollView {
                     VStack(spacing: 0) {
                         PlayerTopBar(song: current, onClose: close)
-                            .background(
-                                GeometryReader { proxy in
-                                    Color.clear.preference(key: TopOffsetKey.self, value: proxy.frame(in: .named("player")).minY)
-                                }
-                            )
                         header(current, state: state, settings: settings)
                         Picker("Show", selection: Binding(get: { tab }, set: { value in withAnimation(theme.ease) { tab = value } })) {
                             ForEach(PlayerTab.allCases.filter { $0 != .lyrics || settings.showLyrics }, id: \.self) { entry in
@@ -129,10 +50,6 @@ private struct PlayerPage: View, Equatable {
                     }
                     .padding(.bottom, 32)
                 }
-                .coordinateSpace(name: "player")
-                // Once the pull has started the list stops scrolling, so the whole
-                // card moves with your finger instead of the list sliding inside it.
-                .scrollDisabled(pulling)
                 .task(id: "\(song.id):\(graph.library.version)") {
                     live = await graph.library.song(song.id)
                 }
@@ -233,13 +150,6 @@ private struct PlayerTopBar: View {
         let graph = AppGraph.shared
         let injektOn = theme.settings.injektEnabled
         let downloaded = graph.offline.downloadedIds.contains(song.id)
-        VStack(spacing: 6) {
-            // The grabber says "pull me down", as on any sheet.
-            Capsule()
-                .fill(theme.colors.ink3.opacity(0.6))
-                .frame(width: 38, height: 5)
-                .padding(.top, 6)
-                .accessibilityHidden(true)
         HStack(spacing: 8) {
             GlassIconButton(icon: "chevron.down", size: 40, label: "Close player", action: onClose)
             Eyebrow(song.isRadio ? "Internet radio" : (song.album ?? "Now playing"))
@@ -279,7 +189,8 @@ private struct PlayerTopBar: View {
             .accessibilityLabel("More")
         }
         .padding(.horizontal, 12)
-        }
+        // Below the sheet's own grabber.
+        .padding(.top, 14)
     }
 }
 

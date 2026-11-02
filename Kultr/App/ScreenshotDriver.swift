@@ -86,7 +86,7 @@ enum ScreenshotDriver {
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
             }
             ScreenshotState.shared.showLargeWidgets = true
-        case "player", "mini", "pull":
+        case "player", "mini":
             if let album = await library.recentlyAdded(3).last {
                 let songs = await library.songsOfAlbumNow(album.id)
                 actions.play(songs)
