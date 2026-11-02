@@ -364,6 +364,19 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         XCTAssertEqual([a!, b!].filter { $0.item != nil }.count, 1)
     }
 
+    func testMixNowFadesOverTheWholeCrossfade() async {
+        await start(["1", "2", "3"])
+        await advance(10_000)
+        engine.mixNow()
+        XCTAssertEqual(engine.index, 1)
+        await advance(3_000)
+        // A skip would be done by now; mix now is still fading.
+        XCTAssertTrue(engine.isTransitioning)
+        await advance(3_500)
+        XCTAssertFalse(engine.isTransitioning)
+        XCTAssertEqual(activeDeck.item?.song.id, "2")
+    }
+
     func testSeekingWithinATrackClearsThePlan() async {
         await start(["1", "2"])
         await advance(30_000)

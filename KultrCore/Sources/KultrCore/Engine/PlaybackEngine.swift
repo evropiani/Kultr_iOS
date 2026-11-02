@@ -851,15 +851,29 @@ final class PlaybackEngine: DeckListener {
     }
 
     /** Jump to another item, with a short crossfade if that is switched on. */
-    private func skipTo(_ target: Int, _ positionMs: Int64, manual: Bool) {
+    /**
+     * "Mix now": on to the next track with a crossfade as long as the one set
+     * for transitions, from wherever this track is. Not beat-matched: the
+     * InjeKt plan belongs to the end of the track, not to this moment.
+     */
+    func mixNow() {
+        guard !queue.isEmpty else { return }
+        let next = index + 1 < queue.count ? index + 1 : (repeatMode == .all ? 0 : nil)
+        guard let next else { return }
+        skipTo(next, 0, manual: true, fadeSeconds: max(2, host.settings().crossfadeSeconds))
+    }
+
+    private func skipTo(_ target: Int, _ positionMs: Int64, manual: Bool, fadeSeconds: Double? = nil) {
         cancelTransition()
         clearPending()
         lastError = nil
         let item = queue[target]
         let s = host.settings()
+        let canFade = playWhenReady && !stopped && active.isPlaying && !item.song.isRadio && active.item?.song.isRadio != true
         let fadeMs: Int64
-        if manual && s.crossfadeOnSkip && s.crossfadeEnabled && playWhenReady && !stopped &&
-            active.isPlaying && !item.song.isRadio && active.item?.song.isRadio != true {
+        if let fadeSeconds, canFade {
+            fadeMs = ms(fadeSeconds)
+        } else if manual && s.crossfadeOnSkip && s.crossfadeEnabled && canFade {
             fadeMs = ms(min(s.crossfadeSeconds, 2.0))
         } else {
             fadeMs = 0
