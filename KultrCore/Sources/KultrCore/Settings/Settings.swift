@@ -98,11 +98,11 @@ struct Settings: Codable, Hashable {
     var theme: ThemeMode = .system
     /** Pure black instead of dark grey whenever the interface is dark, for OLED screens. */
     var nightMode: Bool = false
-    var accentMode: AccentMode = .artwork
-    var accent: String = "#7c8cff"
+    var accentMode: AccentMode = .fixed
+    var accent: String = "#ff7a3d"
     /** How strongly `accent` is mixed into the colour taken from the artwork, 0–100. */
     var accentBlend: Int = 0
-    var surfaceBorder: SurfaceBorder = .accent
+    var surfaceBorder: SurfaceBorder = .neutral
     var borderOpacity: Int = 45
     var surfaceOpacity: Int = 100
     var corners: CornerStyle = .soft
@@ -110,7 +110,7 @@ struct Settings: Codable, Hashable {
     /** Whether the player's left-hand time counts up or down. */
     var timeRemaining: Bool = false
     var reduceMotion: Bool = false
-    var backdropArtwork: Bool = true
+    var backdropArtwork: Bool = false
     var gridSize: GridSize = .medium
     var compactRows: Bool = false
 

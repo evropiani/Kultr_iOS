@@ -61,7 +61,13 @@ struct MainUI: View {
                 // While the player is up, dialogs open over it rather than behind it.
                 .modifier(Dialogs(active: true))
                 .presentationDragIndicator(.visible)
-                .presentationBackground { ArtworkBackdrop(coverId: graph.player.state.current?.artworkId) }
+                .presentationBackground {
+                    if theme.settings.backdropArtwork {
+                        ArtworkBackdrop(coverId: graph.player.state.current?.artworkId)
+                    } else {
+                        theme.colors.background
+                    }
+                }
                 // Last, so the backdrop and the dialogs get the theme too.
                 .environment(\.kultr, theme)
         }

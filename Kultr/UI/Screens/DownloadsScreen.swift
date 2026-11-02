@@ -33,7 +33,6 @@ struct DownloadsScreen: View {
             .frame(maxHeight: .infinity, alignment: .top)
             .transition(.opacity)
         }
-        .background(alignment: .top) { AccentWash() }
         .navigationTitle("Downloads")
         .navigationBarTitleDisplayMode(.inline)
         .kultrScreen()

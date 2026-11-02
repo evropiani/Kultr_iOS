@@ -89,7 +89,6 @@ private struct DetailScaffold<Content: View, Actions: View>: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             SelectionBar(selection: selection, songs: songs)
         }
-        .background(alignment: .top) { AccentWash(height: 420) }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

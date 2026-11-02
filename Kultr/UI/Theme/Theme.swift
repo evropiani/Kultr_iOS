@@ -15,10 +15,10 @@ extension Color {
 }
 
 /**
- * Kultr's palette is deliberately almost colourless. Colour arrives at
- * runtime: the accent is taken from the artwork of whatever is playing, and
- * every glass surface and border picks it up, so the interface takes on the
- * mood of the music.
+ * Kultr's palette: cream pages and warm black text in light mode, warm
+ * charcoal in dark, and one orange for whatever you can tap. Colour is flat
+ * everywhere; the album cover is the only colourful thing on screen. With
+ * "Colour from artwork" on, the accent comes from what is playing instead.
  */
 struct KultrColors: Equatable {
     var dark: Bool
@@ -41,17 +41,20 @@ struct KultrColors: Equatable {
     var success = Color(argb: 0x45D67A)
 
     var accentSoft: Color { accent.opacity(0.18) }
+    /** The fill of a tinted button, like Apple Music's Play and Shuffle. */
+    var sand: Color { dark ? ink.opacity(0.1) : Color(argb: 0xEADFCC) }
 
     static func make(dark: Bool, accent picked: UInt32, settings: Settings) -> KultrColors {
-        // A pale colour from the artwork washes out on the light background, so
-        // in light mode it is darkened just enough to stay readable.
+        // A pale colour washes out on cream, so in light mode it is darkened
+        // until it reads as text there.
         let argb = dark ? picked : readableOnLight(picked)
         let accent = Color(argb: argb)
         let scale = Double(min(200, max(0, settings.surfaceOpacity))) / 100
-        let edgeBase: Color = settings.surfaceBorder == .accent ? accent : (dark ? .white : Color(argb: 0x0A0A10))
-        let edgeAlpha = Double(min(100, max(0, settings.borderOpacity))) / 100 * (dark ? 0.8 : 0.6)
-        let onAccent: Color = ArtworkColor.luminance(argb) > 0.45 ? Color(argb: 0x0A0A10) : .white
-        let inkBase = Color(argb: 0x0A0A10)
+        let inkBase = Color(argb: dark ? 0xF3EDE2 : 0x1F1A14)
+        let edgeBase: Color = settings.surfaceBorder == .accent ? accent : inkBase
+        let edgeAlpha = Double(min(100, max(0, settings.borderOpacity))) / 100 * (dark ? 0.5 : 0.35)
+        // Whichever of white and ink reads better on the accent.
+        let onAccent: Color = ArtworkColor.luminance(argb) > 0.2 ? Color(argb: 0x1F1A14) : .white
         if dark {
             // Night mode is for OLED screens: black pixels are switched off, so
             // the background is true black and raised surfaces only just lift.
@@ -61,44 +64,45 @@ struct KultrColors: Equatable {
                 night: night,
                 accent: accent,
                 onAccent: onAccent,
-                background: Color(argb: night ? 0x000000 : 0x08080C),
-                elevated: Color(argb: night ? 0x0C0C10 : 0x101018),
-                ink: .white.opacity(0.96),
-                ink2: .white.opacity(0.66),
-                ink3: .white.opacity(0.42),
-                ink4: .white.opacity(0.22),
-                glass: .white.opacity(min(1, 0.07 * scale)),
-                glassStrong: .white.opacity(min(1, 0.12 * scale)),
+                background: Color(argb: night ? 0x000000 : 0x1C1A17),
+                elevated: Color(argb: night ? 0x0E0D0B : 0x26231F),
+                ink: inkBase,
+                ink2: inkBase.opacity(0.7),
+                ink3: inkBase.opacity(0.5),
+                ink4: inkBase.opacity(0.26),
+                glass: inkBase.opacity(min(1, 0.07 * scale)),
+                glassStrong: inkBase.opacity(min(1, 0.12 * scale)),
                 edge: edgeBase.opacity(edgeAlpha),
-                line: .white.opacity(0.09)
+                line: inkBase.opacity(0.1)
             )
         }
+        let paper = Color(argb: 0xFFFCF6)
         return KultrColors(
             dark: false,
             accent: accent,
             onAccent: onAccent,
-            background: Color(argb: 0xECEEF4),
-            elevated: Color(argb: 0xF7F8FC),
-            ink: inkBase.opacity(0.94),
-            ink2: inkBase.opacity(0.62),
-            ink3: inkBase.opacity(0.42),
-            ink4: inkBase.opacity(0.2),
-            glass: .white.opacity(min(1, 0.55 * scale)),
-            glassStrong: .white.opacity(min(1, 0.72 * scale)),
+            background: Color(argb: 0xF6F0E5),
+            elevated: paper,
+            ink: inkBase,
+            ink2: Color(argb: 0x5A5046),
+            ink3: Color(argb: 0x6E6255),
+            ink4: Color(argb: 0xA89C8D),
+            glass: paper.opacity(min(1, 0.8 * scale)),
+            glassStrong: paper,
             edge: edgeBase.opacity(edgeAlpha),
-            line: inkBase.opacity(0.08)
+            line: inkBase.opacity(0.12)
         )
     }
 }
 
 extension KultrColors {
     /**
-     * The colour darkened until its luminance is at most 0.22, so it reads as
-     * text on the light background. Hue stays, and pale colours gain a little
+     * The colour darkened until its luminance is at most 0.15, so it reads as
+     * text on cream (4.5:1). Hue stays, and pale colours gain a little
      * saturation so they turn deeper rather than grey.
      */
     static func readableOnLight(_ argb: UInt32) -> UInt32 {
-        let target = 0.22
+        let target = 0.15
         guard ArtworkColor.luminance(argb) > target else { return argb }
         var h: CGFloat = 0, s: CGFloat = 0, v: CGFloat = 0, a: CGFloat = 0
         UIColor(
@@ -142,7 +146,7 @@ struct KultrTheme: Equatable {
     var settings: Settings
 
     static let fallback = KultrTheme(
-        colors: .make(dark: true, accent: 0x7C8CFF, settings: Settings()),
+        colors: .make(dark: true, accent: 0xFF7A3D, settings: Settings()),
         radii: .of(.soft),
         settings: Settings()
     )
@@ -159,21 +163,24 @@ extension EnvironmentValues {
     }
 }
 
-/** Material 3's type scale, in SF Pro. */
+/**
+ * The type scale, on iOS's own text styles, so every size follows Larger
+ * Text in the iPhone's settings.
+ */
 enum KFont {
-    static let headlineLarge = Font.system(size: 32, weight: .bold)
-    static let headlineSmall = Font.system(size: 24, weight: .bold)
-    static let titleLarge = Font.system(size: 22, weight: .bold)
-    static let titleMedium = Font.system(size: 16, weight: .semibold)
-    static let titleSmall = Font.system(size: 14, weight: .medium)
-    static let bodyLarge = Font.system(size: 16)
-    static let bodyMedium = Font.system(size: 14)
-    static let bodySmall = Font.system(size: 12)
-    static let labelLarge = Font.system(size: 14, weight: .semibold)
-    static let labelMedium = Font.system(size: 12, weight: .medium)
-    static let labelSmall = Font.system(size: 11, weight: .medium)
-    /** Small caps-ish label used above headings ("ALBUM", "PLAYLIST"). */
-    static let eyebrow = Font.system(size: 11, weight: .bold)
+    static let headlineLarge = Font.largeTitle.bold()
+    static let headlineSmall = Font.title2.bold()
+    static let titleLarge = Font.title2.bold()
+    static let titleMedium = Font.headline
+    static let titleSmall = Font.subheadline.weight(.medium)
+    static let bodyLarge = Font.body
+    static let bodyMedium = Font.subheadline
+    static let bodySmall = Font.footnote
+    static let labelLarge = Font.subheadline.weight(.semibold)
+    static let labelMedium = Font.footnote.weight(.medium)
+    static let labelSmall = Font.caption.weight(.medium)
+    /** A small label above a heading. */
+    static let eyebrow = Font.caption.weight(.semibold)
 }
 
 extension View {

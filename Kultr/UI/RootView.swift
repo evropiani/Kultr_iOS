@@ -8,7 +8,7 @@ import UIKit
  */
 struct RootView: View {
     @Environment(\.colorScheme) private var systemScheme
-    @State private var accent: UInt32 = 0x7C8CFF
+    @State private var accent: UInt32 = 0xFF7A3D
 
     var body: some View {
         let settings = AppGraph.shared.settings.settings
@@ -48,7 +48,7 @@ struct RootView: View {
      */
     @MainActor
     private static func resolveAccent(coverId: String?, settings: Settings) async -> UInt32 {
-        let chosen = ArtworkColor.parseHex(settings.accent) ?? 0xFF7C_8CFF
+        let chosen = ArtworkColor.parseHex(settings.accent) ?? 0xFFFF_7A3D
         guard settings.accentMode == .artwork, let url = artworkUrl(coverId, 96),
               let sampled = await ImageLoader.shared.dominantColor(url)
         else { return chosen }

@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-private let ACCENTS = ["#7c8cff", "#ff6b9a", "#ff9f43", "#ffd166", "#45d67a", "#2ec4b6", "#4cc9f0", "#b388ff", "#f5f5f7"]
+private let ACCENTS = ["#ff7a3d", "#ffa733", "#f2613f", "#ff6b9a", "#ffd166", "#45d67a", "#2ec4b6", "#4cc9f0", "#7c8cff"]
 private let WEBSITE = "https://kultr.cc/"
 private let DISCORD = "https://discord.com/users/319246364246540288"
 private let SOURCE = "https://github.com/evropiani/Kultr_iOS"
@@ -116,7 +116,7 @@ private struct SettingsIcon: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 29, height: 29)
-                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(color.gradient))
+                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(color))
         }
     }
 }

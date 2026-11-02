@@ -15,7 +15,6 @@ struct SyncScreen: View {
         let settings = theme.settings
         let local = graph.isLocal
         ZStack(alignment: .top) {
-            AccentWash()
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 16) {

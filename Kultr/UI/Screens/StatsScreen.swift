@@ -105,7 +105,7 @@ struct StatsScreen: View {
                                             }
                                             GeometryReader { proxy in
                                                 Capsule()
-                                                    .fill(LinearGradient(colors: [c.accent, c.accent.opacity(0.35)], startPoint: .leading, endPoint: .trailing))
+                                                    .fill(c.accent)
                                                     .frame(width: max(6, proxy.size.width * CGFloat(Double(artist.plays) / Double(peak))))
                                             }
                                             .frame(height: 5)
@@ -140,7 +140,6 @@ struct StatsScreen: View {
                 .refreshable { await sync.refreshListeningNow() }
             }
         }
-        .background(alignment: .top) { AccentWash() }
         .navigationTitle("Listening")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
@@ -204,7 +203,7 @@ private struct DayChart: View {
                 ForEach(Array(days.enumerated()), id: \.offset) { _, day in
                     let fraction = CGFloat(Double(day.1) / Double(peak))
                     UnevenRoundedRectangle(topLeadingRadius: 4, bottomLeadingRadius: 2, bottomTrailingRadius: 2, topTrailingRadius: 4, style: .continuous)
-                        .fill(LinearGradient(colors: [c.accent, c.accent.opacity(0.35)], startPoint: .top, endPoint: .bottom))
+                        .fill(c.accent)
                         .frame(height: max(3, 120 * fraction))
                         .frame(maxWidth: .infinity)
                         .accessibilityLabel("\(Self.weekday.string(from: day.0)): \(Format.duration(day.1))")

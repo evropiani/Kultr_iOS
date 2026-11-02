@@ -294,35 +294,12 @@ struct Rule: View {
     }
 }
 
-/** A soft wash of the accent behind a header, fading into the background. */
-struct AccentWash: View {
-    @Environment(\.kultr) private var theme
-    var height: CGFloat = 320
-
-    var body: some View {
-        LinearGradient(colors: [theme.colors.accent.opacity(theme.colors.night ? 0.18 : 0.28), .clear], startPoint: .top, endPoint: .bottom)
-            .frame(height: height)
-            .frame(maxHeight: .infinity, alignment: .top)
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-    }
-}
-
-/** The colour field behind screens that have no artwork of their own. */
+/** The plain page colour behind screens. */
 struct PlainBackdrop: View {
     @Environment(\.kultr) private var theme
 
     var body: some View {
-        ZStack {
-            theme.colors.background
-            RadialGradient(
-                colors: [theme.colors.accent.opacity(theme.colors.night ? 0.12 : theme.colors.dark ? 0.22 : 0.16), .clear],
-                center: .topLeading,
-                startRadius: 0,
-                endRadius: 560
-            )
-        }
-        .ignoresSafeArea()
+        theme.colors.background.ignoresSafeArea()
     }
 }
 
@@ -352,11 +329,8 @@ struct ArtworkBackdrop: View {
                 .transition(.opacity)
                 .id(url)
             }
-            LinearGradient(
-                colors: [theme.colors.background.opacity(0.3), theme.colors.accent.opacity(0.1), theme.colors.background.opacity(0.9)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            // Flat, so text reads the same at the top and the bottom.
+            theme.colors.background.opacity(0.55)
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)

@@ -118,7 +118,7 @@ struct LargeWidgetPreviewScreen: View {
     var body: some View {
         let bridge = WidgetBridge.shared
         ZStack {
-            LinearGradient(colors: [Color(red: 0.24, green: 0.18, blue: 0.42), Color(red: 0.06, green: 0.08, blue: 0.16)], startPoint: .top, endPoint: .bottom)
+            Color(red: 0.16, green: 0.14, blue: 0.12)
                 .ignoresSafeArea()
             VStack(spacing: 26) {
                 face(.systemLarge, CGSize(width: 364, height: 382), bridge)
@@ -145,7 +145,7 @@ struct WidgetPreviewScreen: View {
     var body: some View {
         let bridge = WidgetBridge.shared
         ZStack {
-            LinearGradient(colors: [Color(red: 0.24, green: 0.18, blue: 0.42), Color(red: 0.06, green: 0.08, blue: 0.16)], startPoint: .top, endPoint: .bottom)
+            Color(red: 0.16, green: 0.14, blue: 0.12)
                 .ignoresSafeArea()
             VStack(spacing: 22) {
                 home(.systemMedium, width: 364, bridge)
