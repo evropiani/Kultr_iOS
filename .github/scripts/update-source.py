@@ -31,7 +31,7 @@ import sys
 import urllib.request
 
 BUNDLE_ID = "app.kultr.ios"
-MIN_OS = "17.0"
+MIN_OS = "26.0"
 
 
 def api(method, url, token, body=None):

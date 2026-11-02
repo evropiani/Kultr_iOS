@@ -20,10 +20,9 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   picks up new files on its own; favourites, ratings, play counts, playlists
   and InjeKt all work. Switch between them in Settings.
 
-- **Liquid glass.** On iOS 26 the tab bar is the system's own liquid glass
-  bar, with the lens that follows your finger, a round search button that
-  grows into the search field, and the mini player riding on it; on iOS 17
-  and 18 Kultr draws a floating glass bar that behaves the same way. Light
+- **Liquid glass.** The tab bar is the system's own liquid glass bar, with
+  the lens that follows your finger, a round search button that grows into
+  the search field, and the mini player riding on it. Light
   and dark follow the iPhone's own setting, and **Night mode** turns dark into
   pure black for OLED screens. Every tab keeps its own pages with iOS's
   navigation bar, and Settings is a list of native pages.
@@ -79,7 +78,7 @@ and Control Center controls, AirPlay, and downloads for offline listening.
 ## Getting it
 
 Kultr isn't on the App Store. You install it yourself, a process called
-*sideloading*, which works on any iPhone or iPad running iOS 17 or later
+*sideloading*, which works on any iPhone or iPad running iOS 26 or later
 without jailbreaking. All you need is a free Apple ID, and either a computer
 (Windows, macOS or Linux) or, on iOS 27, just the iPhone.
 
@@ -114,7 +113,7 @@ replaces the one on the current release.
 
 ## Building
 
-Requirements: macOS with Xcode 26 or newer (the iOS 26 SDK; the app itself runs on iOS 17 and later). Then:
+Requirements: macOS with Xcode 26 or newer (the iOS 26 SDK; the app itself runs on iOS 26 and later). Then:
 
 ```sh
 swift test --package-path KultrCore     # core unit tests, no simulator needed

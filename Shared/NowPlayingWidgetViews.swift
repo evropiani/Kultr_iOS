@@ -606,12 +606,7 @@ private extension Color {
 
 private extension Image {
     /** Keeps the artwork in colour when iOS tints the home screen. */
-    @ViewBuilder
     func fullColorInAccentedMode() -> some View {
-        if #available(iOS 18.0, *) {
-            self.widgetAccentedRenderingMode(.fullColor)
-        } else {
-            self
-        }
+        widgetAccentedRenderingMode(.fullColor)
     }
 }

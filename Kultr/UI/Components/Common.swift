@@ -66,28 +66,15 @@ struct Pill: View {
                     .background(Capsule().fill(accent ? Color.white.opacity(0.22) : c.accentSoft))
             }
         }
-        if #available(iOS 26.0, *) {
-            if accent {
-                Button(action: tapped) { label.foregroundStyle(.white) }
-                    .buttonStyle(.glassProminent)
-                    .tint(c.accent)
-                    .disabled(!enabled)
-            } else {
-                Button(action: tapped) { label.foregroundStyle(c.ink.opacity(enabled ? 1 : 0.45)) }
-                    .buttonStyle(.glass)
-                    .disabled(!enabled)
-            }
+        if accent {
+            Button(action: tapped) { label.foregroundStyle(.white) }
+                .buttonStyle(.glassProminent)
+                .tint(c.accent)
+                .disabled(!enabled)
         } else {
-            Button(action: tapped) {
-                label
-                    .foregroundStyle((accent ? c.onAccent : c.ink).opacity(enabled ? 1 : 0.5))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(accent ? c.accent.opacity(enabled ? 1 : 0.5) : c.glass))
-                    .overlay(Capsule().strokeBorder(accent ? Color.clear : c.edge, lineWidth: 1))
-            }
-            .buttonStyle(PressScaleStyle())
-            .disabled(!enabled)
+            Button(action: tapped) { label.foregroundStyle(c.ink.opacity(enabled ? 1 : 0.45)) }
+                .buttonStyle(.glass)
+                .disabled(!enabled)
         }
     }
 

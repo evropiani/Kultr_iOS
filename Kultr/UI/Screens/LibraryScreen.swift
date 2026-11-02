@@ -131,12 +131,8 @@ private struct PagerTracking: ViewModifier {
     let count: Int
 
     func body(content: Content) -> some View {
-        if #available(iOS 18.0, *) {
-            content.onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, x in
-                pager.progress = min(CGFloat(count - 1), max(0, x / max(1, width)))
-            }
-        } else {
-            content
+        content.onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, x in
+            pager.progress = min(CGFloat(count - 1), max(0, x / max(1, width)))
         }
     }
 }
@@ -254,7 +250,7 @@ struct PillLabel: View {
         .foregroundStyle(theme.colors.ink)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .kultrGlass(Capsule(), interactive: true, shadow: false)
+        .kultrGlass(Capsule(), interactive: true)
     }
 }
 
