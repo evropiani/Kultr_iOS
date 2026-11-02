@@ -15,11 +15,6 @@ private final class PagerModel {
     var progress: CGFloat = 0
 }
 
-private struct PagerOffsetKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-}
-
 /**
  * Albums, artists, songs, playlists, genres, favourites, downloads and radio
  * as pages you swipe through. The underline follows your finger, and each
@@ -58,21 +53,14 @@ struct LibraryScreen: View {
                         }
                     }
                     .scrollTargetLayout()
-                    .background(
-                        GeometryReader { inner in
-                            Color.clear.preference(key: PagerOffsetKey.self, value: inner.frame(in: .named("pager")).minX)
-                        }
-                    )
                 }
                 .scrollIndicators(.hidden)
                 .scrollTargetBehavior(.paging)
                 .scrollPosition(id: $page)
-                .coordinateSpace(name: "pager")
-                .onPreferenceChange(PagerOffsetKey.self) { minX in
-                    let width = max(1, outer.size.width)
-                    pager.progress = min(CGFloat(tabs.count - 1), max(0, -minX / width))
+                // The underline follows your finger frame by frame.
+                .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, x in
+                    pager.progress = min(CGFloat(tabs.count - 1), max(0, x / max(1, outer.size.width)))
                 }
-                .modifier(PagerTracking(pager: pager, width: outer.size.width, count: tabs.count))
             }
         }
         .animation(theme.ease, value: current == .favourites || current == .downloads)
@@ -106,7 +94,8 @@ struct LibraryScreen: View {
 
     @ViewBuilder
     private func pageView(_ tab: LibraryTab) -> some View {
-        let query = filters[tab] ?? ""
+        // Trimmed and lowercased once, for every page's matches().
+        let query = (filters[tab] ?? "").trimmingCharacters(in: .whitespaces).lowercased()
         switch tab {
         case .albums: AlbumsTab(query: query)
         case .artists: ArtistsTab(query: query)
@@ -116,23 +105,6 @@ struct LibraryScreen: View {
         case .favourites: FavouritesTab()
         case .downloads: OfflineContent()
         case .radio: RadioTab(query: query)
-        }
-    }
-}
-
-/**
- * On iOS 18 the pager reports its scroll position directly, so the underline
- * follows your finger frame by frame; the geometry preference is the fallback
- * for iOS 17.
- */
-private struct PagerTracking: ViewModifier {
-    let pager: PagerModel
-    let width: CGFloat
-    let count: Int
-
-    func body(content: Content) -> some View {
-        content.onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, x in
-            pager.progress = min(CGFloat(count - 1), max(0, x / max(1, width)))
         }
     }
 }
@@ -279,7 +251,7 @@ private struct AlbumsTab: View {
                     EmptyLibrary()
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: theme.settings.gridSize.minCell), spacing: 0, alignment: .top)], spacing: 0) {
+                        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 0) {
                             Section {
                                 ForEach(shown) { AlbumCard(album: $0) }
                             } header: {
@@ -304,8 +276,7 @@ private struct AlbumsTab: View {
     }
 
     private func refresh() {
-        let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
-        let filtered = (albums ?? []).filter { matches(needle, $0.name, $0.artist) }
+        let filtered = (albums ?? []).filter { matches(query, $0.name, $0.artist) }
         switch sort {
         case .name: shown = filtered.sorted { Format.sortKey($0.name) < Format.sortKey($1.name) }
         case .artist:
@@ -329,15 +300,14 @@ private struct ArtistsTab: View {
 
     var body: some View {
         let graph = AppGraph.shared
-        let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
         Group {
             if let artists {
                 if artists.isEmpty {
                     EmptyLibrary()
                 } else {
-                    let shown = needle.isEmpty ? artists : artists.filter { matches(needle, $0.name) }
+                    let shown = artists.filter { matches(query, $0.name) }
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: theme.settings.gridSize.minCell), spacing: 0, alignment: .top)], spacing: 0) {
+                        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 0) {
                             Section {
                                 ForEach(shown) { ArtistCard(artist: $0) }
                             } header: {
@@ -408,7 +378,7 @@ private struct SongsTab: View {
         .task(id: graph.library.version) { songs = await graph.library.songs() }
         .task(id: "\(songs?.count ?? -1):\(query):\(sort.rawValue):\(graph.library.version)") {
             let all = songs ?? []
-            let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
+            let needle = query
             let sort = self.sort
             // Sorting a big library takes a moment; never on the main thread.
             let result = await Task.detached(priority: .userInitiated) { Self.arrange(all, needle, sort) }.value
@@ -417,7 +387,7 @@ private struct SongsTab: View {
     }
 
     nonisolated private static func arrange(_ songs: [Song], _ needle: String, _ sort: SongSort) -> [Song] {
-        let filtered = needle.isEmpty ? songs : songs.filter { matches(needle, $0.title, $0.artist, $0.album) }
+        let filtered = songs.filter { matches(needle, $0.title, $0.artist, $0.album) }
         switch sort {
         case .title:
             return filtered
@@ -454,10 +424,9 @@ private struct PlaylistsTab: View {
 
     var body: some View {
         let graph = AppGraph.shared
-        let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
         Group {
             if let playlists {
-                let shown = needle.isEmpty ? playlists : playlists.filter { matches(needle, $0.name) }
+                let shown = playlists.filter { matches(query, $0.name) }
                 ScrollView {
                     VStack(spacing: 0) {
                         HStack(spacing: 8) {
@@ -480,7 +449,7 @@ private struct PlaylistsTab: View {
                             EmptyState(icon: "square.stack.fill", title: "No playlists", message: "Create one, or add tracks to a new playlist from any track's menu.")
                                 .padding(.top, 24)
                         } else {
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: theme.settings.gridSize.minCell), spacing: 0, alignment: .top)], spacing: 0) {
+                            LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 0) {
                                 ForEach(shown) { PlaylistCard(playlist: $0) }
                             }
                         }
@@ -514,13 +483,12 @@ private struct GenresTab: View {
     var body: some View {
         let graph = AppGraph.shared
         let c = theme.colors
-        let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
         Group {
             if let genres {
                 if genres.isEmpty {
                     EmptyLibrary()
                 } else {
-                    let shown = needle.isEmpty ? genres : genres.filter { matches(needle, $0.value) }
+                    let shown = genres.filter { matches(query, $0.value) }
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(shown) { genre in
@@ -626,13 +594,12 @@ private struct RadioTab: View {
         let graph = AppGraph.shared
         let c = theme.colors
         let favourites = theme.settings.favouriteRadios
-        let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
         Group {
             if let stations {
                 if stations.isEmpty {
                     EmptyState(icon: "radio", title: "No radio stations", message: error ?? "Add internet radio stations in Navidrome and they appear here.")
                 } else {
-                    let shown = (needle.isEmpty ? stations : stations.filter { matches(needle, $0.name) })
+                    let shown = stations.filter { matches(query, $0.name) }
                         .enumerated()
                         .sorted { lhs, rhs in
                             let a = favourites.contains(lhs.element.id), b = favourites.contains(rhs.element.id)

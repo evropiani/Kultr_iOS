@@ -32,6 +32,8 @@ struct NowPlayingSnapshot: Codable, Equatable {
     var startedAt: Date { at.addingTimeInterval(-Double(positionMs) / 1000) }
     var endsAt: Date { startedAt.addingTimeInterval(Double(max(durationMs, 1)) / 1000) }
     var progress: Double { durationMs > 0 ? min(1, max(0, Double(positionMs) / Double(durationMs))) : 0 }
+    /** Playing a track of known length: widgets can let the system run the clock. */
+    var ticking: Bool { isPlaying && durationMs > 0 }
 }
 
 /** A song waiting in the queue: what the large widgets list under "Up next". */

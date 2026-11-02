@@ -203,7 +203,7 @@ private struct CircularFace: View {
     var body: some View {
         ZStack {
             AccessoryWidgetBackground()
-            if let snapshot, snapshot.isPlaying, snapshot.durationMs > 0, snapshot.endsAt > snapshot.startedAt {
+            if let snapshot, snapshot.ticking {
                 ProgressView(timerInterval: snapshot.startedAt...snapshot.endsAt, countsDown: false) {
                     EmptyView()
                 } currentValueLabel: {
@@ -279,14 +279,9 @@ private struct TimeRow: View {
         .opacity(snapshot == nil ? 0 : 1)
     }
 
-    private var running: Bool {
-        guard let snapshot else { return false }
-        return snapshot.isPlaying && snapshot.durationMs > 0 && snapshot.endsAt > snapshot.startedAt
-    }
-
     @ViewBuilder
     private var elapsed: some View {
-        if let snapshot, running {
+        if let snapshot, snapshot.ticking {
             Text(snapshot.startedAt, style: .timer)
                 .multilineTextAlignment(.leading)
         } else {
@@ -296,7 +291,7 @@ private struct TimeRow: View {
 
     @ViewBuilder
     private var remaining: some View {
-        if let snapshot, running {
+        if let snapshot, snapshot.ticking {
             Text("-") + Text(timerInterval: snapshot.startedAt...snapshot.endsAt, countsDown: true)
         } else if let snapshot, snapshot.durationMs > 0 {
             Text("-" + clock(max(0, snapshot.durationMs - snapshot.positionMs)))
@@ -538,7 +533,7 @@ private struct ProgressLine: View {
 
     @ViewBuilder
     private var bar: some View {
-        if let snapshot, snapshot.isPlaying, snapshot.durationMs > 0, snapshot.endsAt > snapshot.startedAt {
+        if let snapshot, snapshot.ticking {
             ProgressView(timerInterval: snapshot.startedAt...snapshot.endsAt, countsDown: false) {
                 EmptyView()
             } currentValueLabel: {

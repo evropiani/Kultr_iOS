@@ -1,5 +1,12 @@
 import SwiftUI
 
+extension Binding where Value == Bool {
+    /** Shown while [item] holds something; dismissing clears it. For alerts and sheets about one thing. */
+    init<Item>(isPresent item: Binding<Item?>) {
+        self.init(get: { item.wrappedValue != nil }, set: { if !$0 { item.wrappedValue = nil } })
+    }
+}
+
 /** A button look that just dims while pressed, for custom-drawn controls. */
 struct PressableStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

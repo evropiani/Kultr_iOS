@@ -66,17 +66,17 @@ struct MainUI: View {
         }
         .task { graph.updates.checkInBackground() }
         .animation(theme.ease, value: graph.updates.available?.version)
-        .sheet(item: Binding(get: { ui.update }, set: { ui.update = $0 })) { release in
+        .sheet(item: $ui.update) { release in
             UpdateScreen(release: release)
                 .environment(\.kultr, theme)
         }
-        .sheet(isPresented: Binding(get: { ui.addToPlaylist != nil }, set: { if !$0 { ui.addToPlaylist = nil } })) {
+        .sheet(isPresented: Binding(isPresent: $ui.addToPlaylist)) {
             AddToPlaylistSheet(songs: ui.addToPlaylist ?? []) { ui.addToPlaylist = nil }
                 .environment(\.kultr, theme)
                 .presentationDetents([.medium, .large])
                 .presentationBackground(.regularMaterial)
         }
-        .sheet(isPresented: Binding(get: { ui.rate != nil }, set: { if !$0 { ui.rate = nil } })) {
+        .sheet(isPresented: Binding(isPresent: $ui.rate)) {
             if let song = ui.rate {
                 RatingSheet(song: song) { ui.rate = nil }
                     .environment(\.kultr, theme)
