@@ -46,6 +46,8 @@ actor AsyncSemaphore {
 @Observable
 final class AnalysisManager {
     private(set) var bulkProgress: AnalysisProgress?
+    /** The track analysed most recently, so a screen showing it can look again. */
+    private(set) var lastAnalysed: String?
 
     @ObservationIgnored private unowned let graph: AppGraph
     @ObservationIgnored private var inFlight: [String: Task<TrackAnalysis?, Never>] = [:]
@@ -92,6 +94,7 @@ final class AnalysisManager {
         inFlight[song.id] = task
         let result = await task.value
         inFlight[song.id] = nil
+        if result != nil { lastAnalysed = song.id }
         return result
     }
 

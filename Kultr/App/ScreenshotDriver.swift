@@ -70,6 +70,7 @@ enum ScreenshotDriver {
             await seedListening()
             actions.navigate(.recap)
         case "whatsnew": graph.ui.whatsNew = true
+        case "stations": actions.navigate(.stations)
         case "sync": actions.navigate(.sync)
         case "downloads": actions.openDownloads(.now)
         case "album":

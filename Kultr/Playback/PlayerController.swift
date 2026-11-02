@@ -133,6 +133,9 @@ final class PlayerController: EngineHost {
     private(set) var sleepTimer: SleepTimer?
     /** In a sleep timer's last 15 minutes: Karousel's picks go calmest first. */
     @ObservationIgnored private var windingDown = false
+    /** The station playing: Karousel keeps to its rules instead of looking for similar music. */
+    private(set) var station: Station?
+    @ObservationIgnored private var stationPool: [(Song, TrackAnalysis?)] = []
 
     @ObservationIgnored private unowned let graph: AppGraph
     @ObservationIgnored private let eq = EqState()
@@ -176,6 +179,8 @@ final class PlayerController: EngineHost {
             self.applyEq(new)
             self.engine.onSettingsChanged(plansAffected: Self.planSignature(old) != Self.planSignature(new))
             if old.karousel != new.karousel {
+                // Switching Karousel off ends a station too.
+                if !new.karousel { self.station = nil }
                 self.engine.onKarouselChanged(new.karousel)
                 // The widget's shuffle button shows Karousel too.
                 self.publish()
@@ -397,7 +402,10 @@ final class PlayerController: EngineHost {
     }
 
     func settings() -> Settings {
-        graph.settings.current
+        var s = graph.settings.current
+        // A station is an endless mix, whatever Karousel is set to.
+        if station != nil { s.karousel = true }
+        return s
     }
 
     func plan(current: Song, next: Song, context: PlanContext) async throws -> TransitionPlan {
@@ -421,7 +429,9 @@ final class PlayerController: EngineHost {
     }
 
     func extendQueue(seeds: [Song], queued: [Song]) async throws -> [Song] {
-        let picks = await karousel.next(seeds: seeds, queued: queued)
+        let picks = station != nil
+            ? await stationNext(after: seeds.first, queued: queued.map(\.id), count: 8)
+            : await karousel.next(seeds: seeds, queued: queued)
         guard windingDown, picks.count > 1 else { return picks }
         let known = await graph.analysis.cachedMany(picks.map(\.id))
         return calmestFirst(picks) { known[$0.id] }
@@ -533,9 +543,15 @@ final class PlayerController: EngineHost {
     }
 
     func play(_ songs: [Song], startIndex: Int = 0, shuffle: Bool = false) {
+        startQueue(songs, startIndex: startIndex, shuffle: shuffle, karousel: false)
+    }
+
+    /** Other music: whatever station was playing ends. */
+    private func startQueue(_ songs: [Song], startIndex: Int = 0, shuffle: Bool = false, karousel: Bool) {
         guard !songs.isEmpty else { return }
+        station = nil
         if engine.shuffle != shuffle { engine.setShuffle(shuffle) }
-        engine.setQueue(engine.newItems(songs), startIndex: min(max(0, startIndex), songs.count - 1), startPositionMs: 0)
+        engine.setQueue(engine.newItems(songs, karousel: karousel), startIndex: min(max(0, startIndex), songs.count - 1), startPositionMs: 0)
         engine.prepare()
         setPlaying(true)
     }
@@ -677,8 +693,85 @@ final class PlayerController: EngineHost {
     }
 
     func stop() {
+        station = nil
         pause()
         engine.removeRange(0, engine.queue.count)
+    }
+
+    // --------------------------------------------------------- stations --
+
+    /** Start [station]: a track that fits, then a mix that keeps to its rules. False when nothing fits yet. */
+    @discardableResult
+    func playStation(_ station: Station) async -> Bool {
+        let pool = await graph.stations.pool(station)
+        guard let first = pool.filter({ $0.1 != nil }).randomElement() ?? pool.randomElement() else {
+            graph.messages.show(Self.emptyStation(station))
+            return false
+        }
+        stationPool = pool
+        let picks = await stationNext(after: first.0, queued: [first.0.id], count: 4, known: first.1)
+        startQueue([first.0] + picks, karousel: true)
+        self.station = station
+        if engine.repeatMode != .off { engine.setRepeat(.off) }
+        graph.messages.show("Station: \(station.name)")
+        return true
+    }
+
+    /**
+     * Turn to [station] while one is playing: what the old one lined up goes,
+     * the new one's picks come next, and Kultr mixes into them right away.
+     */
+    func switchStation(_ station: Station) async {
+        guard self.station != nil, let current = engine.currentItem else {
+            await playStation(station)
+            return
+        }
+        let pool = await graph.stations.pool(station)
+        guard !pool.isEmpty else {
+            graph.messages.show(Self.emptyStation(station))
+            return
+        }
+        self.station = station
+        stationPool = pool
+        let picks = await stationNext(after: current.song, queued: [current.song.id], count: 6)
+        guard !picks.isEmpty, self.station == station else { return }
+        // Karousel's upcoming songs belong to the old station; what you queued yourself stays.
+        var at = engine.queue.count - 1
+        while at > engine.index {
+            if engine.queue[at].karousel { engine.removeRange(at, at + 1) }
+            at -= 1
+        }
+        engine.addItems(at: engine.index + 1, engine.newItems(picks, karousel: true))
+        mixNow()
+        graph.messages.show("Station: \(station.name)")
+    }
+
+    /** End the station; the music plays on to the end of the queue as usual. */
+    func endStation() {
+        guard station != nil else { return }
+        station = nil
+        if !graph.settings.current.karousel { engine.onKarouselChanged(false) }
+    }
+
+    /** The station's next [count] songs, mixing well out of [seed]; [known] is its analysis when that has been read already. */
+    private func stationNext(after seed: Song?, queued: [String], count: Int, known: TrackAnalysis?? = nil) async -> [Song] {
+        let seedAnalysis: TrackAnalysis?
+        if let known {
+            seedAnalysis = known
+        } else if let seed {
+            seedAnalysis = await graph.analysis.cached(seed.id)
+        } else {
+            seedAnalysis = nil
+        }
+        let recent = Set(await graph.library.songIdsPlayedSince(Format.nowMs() - 3 * 60 * 60 * 1000))
+        var random = SystemRandomNumberGenerator()
+        return stationPicks(pool: stationPool, seed: seedAnalysis, exclude: recent, queued: Set(queued), count: count, random: &random)
+    }
+
+    private static func emptyStation(_ station: Station) -> String {
+        station.needsAnalysis
+            ? "Nothing fits “\(station.name)” yet. It needs InjeKt's analysis: open Sync and tap Analyse missing."
+            : "Nothing in your library fits “\(station.name)”."
     }
 
     // ------------------------------------------------------ sleep timer --

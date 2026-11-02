@@ -247,6 +247,7 @@ private struct RouteView: View {
         case .sync: SyncScreen()
         case .stats: StatsScreen()
         case .recap: RecapScreen()
+        case .stations: StationsScreen()
         case .downloads(let page): DownloadsScreen(initialPage: page)
         }
     }

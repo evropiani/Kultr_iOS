@@ -113,6 +113,7 @@ private struct HomeShelf: View {
     @State private var artists: [Artist] = []
     @State private var playlists: [Playlist] = []
     @State private var stations: [RadioStation] = []
+    @State private var mixes: [Station] = []
 
     private var seeAllTab: LibraryTab? {
         switch tile.id {
@@ -136,6 +137,7 @@ private struct HomeShelf: View {
         // Bumped when plays went up to the server or came down from other devices.
         if tile.id == "recentlyPlayed" { key += ":\(graph.player.state.current?.id ?? ""):\(graph.library.historyVersion):\(graph.sync.listeningVersion)" }
         if tile.id == "favouriteRadios" { key += ":\(theme.settings.favouriteRadios.joined(separator: ","))" }
+        if tile.id == "stations" { key += ":\(theme.settings.stations.hashValue):\(graph.stations.decades.count)" }
         return key
     }
 
@@ -172,6 +174,11 @@ private struct HomeShelf: View {
                     header
                     Shelf(items: stations, cardWidth: 130) { StationCard(station: $0) }
                 }
+            case .stations:
+                if !mixes.isEmpty {
+                    header
+                    Shelf(items: mixes) { MixStationCard(station: $0) }
+                }
             }
         }
         .task(id: reloadKey) { await load() }
@@ -180,9 +187,13 @@ private struct HomeShelf: View {
     /** The shelf's title; where there is more to see, the title opens it, as in Apple Music. */
     @ViewBuilder
     private var header: some View {
-        if let tab = seeAllTab {
+        if tile.id == "stations" || seeAllTab != nil {
             Button {
-                AppGraph.shared.actions.openLibrary(tab)
+                if let tab = seeAllTab {
+                    AppGraph.shared.actions.openLibrary(tab)
+                } else {
+                    AppGraph.shared.actions.navigate(.stations)
+                }
             } label: {
                 HStack(spacing: 4) {
                     Text(tile.title)
@@ -227,6 +238,9 @@ private struct HomeShelf: View {
             playlists = await library.playlists()
                 .filter { $0.owner == nil || $0.owner == username }
                 .sorted { ($0.changed ?? $0.created ?? "") > ($1.changed ?? $1.created ?? "") }
+        case "stations":
+            graph.stations.refresh()
+            mixes = graph.stations.all
         case "radios", "favouriteRadios":
             let all = (try? await library.radioStations()) ?? []
             let favourites = theme.settings.favouriteRadios
