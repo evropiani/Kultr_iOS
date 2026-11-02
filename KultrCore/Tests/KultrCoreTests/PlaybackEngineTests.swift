@@ -473,6 +473,18 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         XCTAssertEqual(engine.queue.map { $0.song.id }, ["a", "b", "c"])
     }
 
+    func testReorderingKarouselKeepsTheNextTrackAndYourOwnSongs() async {
+        await start(["1"])
+        engine.addItems(at: 1, engine.newItems(songs(["next", "k1", "k2"]), karousel: true))
+        engine.addItems(at: 4, engine.newItems(songs(["mine"])))
+        engine.addItems(at: 5, engine.newItems(songs(["k3"]), karousel: true))
+        let score = ["k1": 0.9, "k2": 0.5, "k3": 0.1]
+        engine.reorderKarousel { score[$0.id] ?? 0.5 }
+        XCTAssertEqual(engine.queue.map { $0.song.id }, ["1", "next", "k3", "k2", "mine", "k1"])
+        XCTAssertEqual(engine.queue.map { $0.karousel }, [false, true, true, true, false, true])
+        XCTAssertEqual(engine.currentItem?.song.id, "1")
+    }
+
     func testSwitchingKarouselOffTakesItsSongsOut() async {
         settingsValue.karousel = true
         extensionSongs = songs(["x", "y"])

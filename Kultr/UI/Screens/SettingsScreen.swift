@@ -494,6 +494,26 @@ private struct PlaybackSettings: View {
                     isOn: setting(\.karousel),
                     hint: "When the queue runs out, music like what's been playing keeps coming: similar songs, artists like these and your own favourites. Its songs show under their own heading in Up next. Tapping the shuffle button twice turns it on too."
                 )
+                SettingToggle(
+                    "Wind down before the sleep timer",
+                    isOn: setting(\.sleepWindDown),
+                    hint: "In a sleep timer's last 15 minutes, Karousel plays its calmest picks first: lower energy, slower tempo. Tracks you queued yourself stay where they are."
+                )
+            }
+            Section {
+                Picker("Double-tap", selection: setting(\.coverDoubleTap)) {
+                    ForEach(CoverAction.allCases, id: \.self) { Text($0.label).tag($0) }
+                }
+                Picker("Hold", selection: setting(\.coverHold)) {
+                    ForEach(CoverAction.allCases, id: \.self) { Text($0.label).tag($0) }
+                }
+                Picker("Swipe up", selection: setting(\.coverSwipeUp)) {
+                    ForEach(CoverAction.allCases, id: \.self) { Text($0.label).tag($0) }
+                }
+            } header: {
+                Text("The cover in the player")
+            } footer: {
+                Text("Swiping the cover left or right always skips. Mixing fades into the next track over the whole crossfade length, at least 2 seconds.")
             }
             Section {
                 SettingToggle(

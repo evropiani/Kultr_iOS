@@ -96,7 +96,29 @@ final class AppUI {
 
     func finishWelcome() {
         UserDefaults.standard.set(true, forKey: "ui.welcomed")
+        // Someone new has nothing to compare this version with.
+        UserDefaults.standard.set(appVersion, forKey: Self.whatsNewKey)
         welcomed = true
+    }
+
+    private static let whatsNewKey = "ui.whatsNewSeen"
+
+    /** What's new: open on the first start after an update that has notes. */
+    var whatsNew = false
+
+    func checkWhatsNew() {
+        let seen = UserDefaults.standard.string(forKey: Self.whatsNewKey)
+        guard welcomed, seen != appVersion else { return }
+        if WhatsNew.items(for: appVersion).isEmpty {
+            UserDefaults.standard.set(appVersion, forKey: Self.whatsNewKey)
+        } else {
+            whatsNew = true
+        }
+    }
+
+    func finishWhatsNew() {
+        UserDefaults.standard.set(appVersion, forKey: Self.whatsNewKey)
+        whatsNew = false
     }
 
     /** What is typed in the search field, kept while you look at other tabs. */

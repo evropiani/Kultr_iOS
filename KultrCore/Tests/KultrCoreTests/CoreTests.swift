@@ -300,6 +300,16 @@ final class InjektTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(intro.inStartOffset, 17.3)
     }
 
+    func testCalmestFirstPutsQuietSlowTracksFirst() {
+        let loud = analysis("loud", 128, energy: 0.9)
+        let quiet = analysis("quiet", 80, energy: 0.2)
+        XCTAssertLessThan(calmness(quiet), calmness(loud))
+        XCTAssertEqual(calmness(nil), 0.5)
+        let table = ["loud": loud, "quiet": quiet]
+        let order = calmestFirst([Song(id: "loud"), Song(id: "unknown"), Song(id: "quiet")]) { table[$0.id] }
+        XCTAssertEqual(order.map { $0.id }, ["quiet", "unknown", "loud"])
+    }
+
     func testAffinityPrefersSimilarTracks() {
         let seed = analysis("s", 124, camelot: "8A", energy: 0.6)
         let close = analysis("c", 125, camelot: "9A", energy: 0.6)

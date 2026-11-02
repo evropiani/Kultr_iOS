@@ -196,6 +196,22 @@ struct SleepTimerSheet: View {
                     player.sleepAtEndOfTrack()
                     messages.show("Stopping after this track.")
                 }
+                Divider().padding(.vertical, 8)
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Wind down")
+                            .font(KFont.bodyLarge)
+                            .foregroundStyle(theme.colors.ink)
+                        Text("In the last 15 minutes, Karousel plays its calmest picks first.")
+                            .font(KFont.bodySmall)
+                            .foregroundStyle(theme.colors.ink3)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    KultrSwitch(isOn: theme.settings.sleepWindDown) { on in
+                        AppGraph.shared.settings.update { $0.sleepWindDown = on }
+                    }
+                    .accessibilityLabel("Wind down")
+                }
             }
         } buttons: {
             if player.sleepTimer != nil {
