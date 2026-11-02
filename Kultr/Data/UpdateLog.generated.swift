@@ -4,6 +4,114 @@
 let UPDATE_LOG_JSON = ####"""
 [
  {
+  "version": "2.0.0",
+  "date": "2026-11-02",
+  "sections": [
+   {
+    "title": "What's new",
+    "lines": [
+     {
+      "kind": "heading",
+      "text": "Stations"
+     },
+     {
+      "kind": "bullet",
+      "text": "**Endless mixes from your own library.** Warm Up, Night Drive, Peak Hour, Deep Focus, Wind Down, Unplayed gems, Favourites and a station per decade, as the first shelf on Home. Karousel keeps to the station's rules, and InjeKt mixes each track into the next."
+     },
+     {
+      "kind": "bullet",
+      "text": "**The dial.** The Stations page has a glass dial that clicks at each station. While a station plays, turning it mixes into the next one."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Your own.** Every station is a set of rules you can change: tempo, energy, key, genres, years, your tags, rating, never played, favourites and when the music was added. The page counts the tracks that fit as you go."
+     },
+     {
+      "kind": "heading",
+      "text": "Planning and asking"
+     },
+     {
+      "kind": "bullet",
+      "text": "**Energy planner.** Tap \"Plan a set\" on Home and draw how the next hour should feel, calm to peak. Kultr builds a set that follows your line, with tempos and keys that mix. Play it, or keep it as a playlist."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Search does things.** Type \"play Night Drive\", \"shuffle\" and an artist, \"sleep in 30 minutes\", \"next\", \"open settings\" or \"plan an hour\", and tap the orange row or press Return. With Apple Intelligence on, Kultr reads requests in your own words, on the iPhone itself."
+     },
+     {
+      "kind": "heading",
+      "text": "Your collection"
+     },
+     {
+      "kind": "bullet",
+      "text": "**Crates.** Library → Crates: folders of albums, artists and tracks. Fill one by hand (hold anything and tap Add to crate) or by rules (\"4 stars and up, added this year\"), and keep it as a playlist on your server if you like."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Notes and tags.** Album and artist pages have Your notes: tags of your own and a note. Tap a tag to see everything with it. They stay on your phone, and in a settings backup."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Rediscover.** A new Home shelf with albums you hearted or played a lot and haven't played for a year."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Monthly recap.** Listening has a page for each month: how long you listened, your top tracks, albums and artists, and your longest day."
+     },
+     {
+      "kind": "heading",
+      "text": "Make it yours"
+     },
+     {
+      "kind": "bullet",
+      "text": "**Kultr Studio.** Settings → Kultr Studio: the whole look in one place. Start from Cream, Night, Ember, Paper or Console, change colours, corners, glass and the playhead, and put the player together from blocks, with an info line you write yourself. Share it as a link or a file; opening someone's link shows the style first."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Widgets on Home.** Now playing, your listening this week, the next mix, a station, a crate or a shortcut, small, medium or large. Hold one to move or remove it, and add more."
+     },
+     {
+      "kind": "heading",
+      "text": "The player"
+     },
+     {
+      "kind": "bullet",
+      "text": "**Hold Next to mix.** Hold the Next button and Kultr mixes into the next track over the whole crossfade instead of skipping. A tap still skips."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Glass lens.** Drag along the progress bar and a lens shows the time large, with the beats around it."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Save the session.** The button at the top of Up next keeps what you've played, or the whole queue, as a playlist."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Wind down.** With a sleep timer, the last 15 minutes play Karousel's calmest picks first."
+     }
+    ]
+   },
+   {
+    "title": "What's different",
+    "lines": [
+     {
+      "kind": "bullet",
+      "text": "**What's new, every time.** The first start after an update shows what changed, including every update since the version you last opened, like this list."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Update log.** Settings → About → Update log has what changed in every version, from 1.0.0 to now."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Loading and empty pages.** Pages show their shape while they load instead of a spinner, and empty pages say why and what to do."
+     }
+    ]
+   }
+  ]
+ },
+ {
   "version": "1.4.0",
   "date": "2026-11-02",
   "sections": [

@@ -115,13 +115,33 @@ final class AppUI {
 
     private static let whatsNewKey = "ui.whatsNewSeen"
 
-    /** What's new: open on the first start after an update that has notes. */
+    /** The version that ran before this one, read before this launch writes over it. */
+    private static let previousVersion: String? = {
+        let previous = UserDefaults.standard.string(forKey: "ui.lastVersion")
+        UserDefaults.standard.set(appVersion, forKey: "ui.lastVersion")
+        return previous
+    }()
+
+    /**
+     * The version whose news this person has seen: as recorded, or the last
+     * one that ran, or, for an update from a version that recorded neither,
+     * 1.4.0 (or 1.3.9 when their settings date from before 1.4.0's look).
+     */
+    var whatsNewSeen: String? {
+        if let seen = UserDefaults.standard.string(forKey: Self.whatsNewKey) { return seen }
+        if let previous = Self.previousVersion, previous != appVersion { return previous }
+        guard welcomed else { return nil }
+        return UserDefaults.standard.bool(forKey: "ui.cameFromBeforeCream") ? "1.3.9" : "1.4.0"
+    }
+
+    /** What's new: open on the first start after an update, with everything since the version last seen. */
     var whatsNew = false
 
     func checkWhatsNew() {
-        let seen = UserDefaults.standard.string(forKey: Self.whatsNewKey)
+        _ = Self.previousVersion
+        let seen = whatsNewSeen
         guard welcomed, seen != appVersion else { return }
-        if WhatsNew.items(for: appVersion).isEmpty {
+        if WhatsNew.pages(since: seen).isEmpty {
             UserDefaults.standard.set(appVersion, forKey: Self.whatsNewKey)
         } else {
             whatsNew = true

@@ -13,33 +13,36 @@ struct WhatsNewItem: Identifiable {
  */
 enum WhatsNew {
     static let notes: [String: [WhatsNewItem]] = [
-        "1.4.6": [
+        "2.0.0": [
             WhatsNewItem(
-                icon: "chevron.down.circle.fill",
-                title: "Pull the player down again",
-                text: "Pulling down closes the player again, wherever you start, the cover included. The cover's double-tap, hold and swipe-up are gone; swiping it sideways still skips."
+                icon: "dial.medium.fill",
+                title: "Stations",
+                text: "Endless mixes from your own library: Warm Up, Night Drive, Peak Hour, Deep Focus, Wind Down, Unplayed gems, Favourites and one per decade, the first shelf on Home. Turn the dial on the Stations page to choose; while one plays, turning it mixes into the next. Make your own from tempo, energy, key, genres, years, your tags and more."
             ),
             WhatsNewItem(
-                icon: "forward.end.fill",
-                title: "Hold Next to mix",
-                text: "Hold the player's Next button and Kultr mixes into the next track over the whole crossfade instead of skipping. A tap still skips."
+                icon: "waveform.path.ecg",
+                title: "Energy planner",
+                text: "Draw how the next hour should feel, calm to peak, and Kultr builds a set that follows your line, with tempos and keys that mix. Play it or keep it as a playlist. “Plan a set” on Home."
             ),
             WhatsNewItem(
-                icon: "clock.arrow.circlepath",
-                title: "Update log",
-                text: "Settings → About → Update log has what changed in every version, from 1.0.0 to now."
+                icon: "text.magnifyingglass",
+                title: "Search does things",
+                text: "Type “play Night Drive”, “shuffle” and an artist, “sleep in 30 minutes”, “next”, “open settings” or “plan an hour” and tap the orange row, or press Return. With Apple Intelligence on, say it your own way; it's read on the iPhone itself."
             ),
             WhatsNewItem(
-                icon: "minus.circle.fill",
-                title: "Less in the way",
-                text: "The Live Activity and the beat pulse on the play button are gone."
+                icon: "shippingbox.fill",
+                title: "Crates",
+                text: "Folders for albums, artists and tracks in Library → Crates. Hold anything and tap Add to crate, or let rules fill one, like “4 stars and up, added this year”. Each can be kept as a playlist on your server."
             ),
-        ],
-        "1.4.5": [
+            WhatsNewItem(
+                icon: "tag.fill",
+                title: "Notes and tags",
+                text: "Album and artist pages have Your notes: tags of your own and a note. Tap a tag to see everything with it. They stay on your phone, and in a settings backup."
+            ),
             WhatsNewItem(
                 icon: "wand.and.stars",
                 title: "Kultr Studio",
-                text: "The whole look in one place: Settings → Kultr Studio. Start from Cream, Night, Ember, Paper or Console, change colours, corners, glass and the playhead, and see it in the preview as you go."
+                text: "Settings → Kultr Studio: the whole look in one place. Start from Cream, Night, Ember, Paper or Console, change colours, corners, glass and the playhead, and see it in the preview as you go."
             ),
             WhatsNewItem(
                 icon: "square.stack.3d.up.fill",
@@ -54,142 +57,144 @@ enum WhatsNew {
             WhatsNewItem(
                 icon: "square.grid.2x2.fill",
                 title: "Widgets on Home",
-                text: "Now playing, your listening this week, the next mix, a station, a crate or a shortcut, small, medium or large. Hold one to edit: drag to move, minus to remove, and Add a widget."
+                text: "Now playing, your listening this week, the next mix, a station, a crate or a shortcut, small, medium or large. Hold one to move or remove it, and add more."
             ),
-        ],
-        "1.4.4": [
-            WhatsNewItem(
-                icon: "waveform.path.ecg",
-                title: "Energy planner",
-                text: "Draw how the next hour should feel, calm to peak, and Kultr builds a set that follows your line, with tempos and keys that mix. Play it or keep it as a playlist. “Plan a set” on Home."
-            ),
-            WhatsNewItem(
-                icon: "text.magnifyingglass",
-                title: "The command bar",
-                text: "Search does things too: type “play Night Drive”, “shuffle” and an artist, “sleep in 30 minutes”, “next”, “open settings” or “plan an hour”, and tap the orange row or press Return."
-            ),
-            WhatsNewItem(
-                icon: "apple.intelligence",
-                title: "In your own words",
-                text: "With Apple Intelligence on, Kultr reads requests the usual phrasings don't cover, on the iPhone itself. Nothing is sent anywhere."
-            ),
-        ],
-        "1.4.3": [
-            WhatsNewItem(
-                icon: "shippingbox.fill",
-                title: "Crates",
-                text: "Folders for albums, artists and tracks: hold any of them and tap Add to crate. Or let rules fill one, like “4 stars and up, added this year”. Library → Crates; each can be kept as a playlist on your server."
-            ),
-            WhatsNewItem(
-                icon: "tag.fill",
-                title: "Notes and tags",
-                text: "Album and artist pages have Your notes: tags of your own and a note. Tap a tag to see everything with it. They're private, and kept in a settings backup."
-            ),
-            WhatsNewItem(
-                icon: "magnifyingglass.circle.fill",
-                title: "A glass lens on the scrubber",
-                text: "Drag along the player's progress bar and a glass lens shows the time large, with the beats around it: the first beat of each bar in orange."
-            ),
-            WhatsNewItem(
-                icon: "dial.medium.fill",
-                title: "Stations by tag",
-                text: "Stations and crates can follow your tags and when music was added, so “everything tagged gym” can play as an endless mix."
-            ),
-        ],
-        "1.4.2": [
-            WhatsNewItem(
-                icon: "dial.medium.fill",
-                title: "Stations",
-                text: "Endless mixes from your own library: Warm Up, Night Drive, Peak Hour, Deep Focus, Wind Down, Unplayed gems, Favourites and a station per decade. Turn the dial on the Stations page (the first shelf on Home) to choose; while one plays, turning it mixes into the next."
-            ),
-            WhatsNewItem(
-                icon: "slider.horizontal.3",
-                title: "Make your own",
-                text: "Every station is a set of rules you can change: tempo, energy, key, genres, years, never played, favourites and rating, with a count of the tracks that fit."
-            ),
-            WhatsNewItem(
-                icon: "platter.filled.top.iphone",
-                title: "Live Activity",
-                text: "The Lock Screen and the Dynamic Island show the track, its progress and a countdown to the next mix. Switch it off in Settings → Playback."
-            ),
-            WhatsNewItem(
-                icon: "waveform.path",
-                title: "Beat pulse",
-                text: "The play button swells on the first beat of every bar, once InjeKt knows the track. Settings → Playback can make the phone tap along too."
-            ),
-        ],
-        "1.4.1": [
             WhatsNewItem(
                 icon: "arrow.counterclockwise.circle.fill",
                 title: "Rediscover",
-                text: "A new shelf on Home: albums you hearted or played a lot, and haven't played for a year."
+                text: "A Home shelf of albums you hearted or played a lot and haven't played for a year."
             ),
             WhatsNewItem(
                 icon: "calendar",
                 title: "Your month in music",
-                text: "Listening → Monthly recap shows how long you listened, your top tracks, albums and artists, and your longest day. Pick any month from the calendar button."
+                text: "Listening → Monthly recap: how long you listened, your top tracks, albums and artists, and your longest day. Pick any month."
             ),
             WhatsNewItem(
-                icon: "hand.tap.fill",
-                title: "Gestures on the cover",
-                text: "In the player, double-tap the cover to heart the track, hold it to mix into the next one, and swipe up for the queue. Settings → Playback changes what each does."
+                icon: "forward.end.fill",
+                title: "Hold Next to mix",
+                text: "Hold the player's Next button and Kultr mixes into the next track over the whole crossfade instead of skipping."
+            ),
+            WhatsNewItem(
+                icon: "magnifyingglass.circle.fill",
+                title: "A glass lens on the scrubber",
+                text: "Drag along the progress bar and a lens shows the time large, with the beats around it."
             ),
             WhatsNewItem(
                 icon: "moon.zzz.fill",
                 title: "Wind down",
-                text: "With a sleep timer on, Karousel plays its calmest picks in the last 15 minutes. Switch it off in the sleep timer."
+                text: "With a sleep timer, the last 15 minutes play Karousel's calmest picks first."
             ),
             WhatsNewItem(
                 icon: "text.badge.plus",
                 title: "Save the session",
-                text: "The button at the top of Up next saves what you've played, or the whole queue, as a playlist."
+                text: "The button at the top of Up next keeps what you've played, or the whole queue, as a playlist."
             ),
             WhatsNewItem(
                 icon: "rectangle.grid.1x2.fill",
                 title: "Calmer loading",
-                text: "Pages show their shape while they load instead of a spinner, and empty pages say what to do next."
+                text: "Pages show their shape while they load instead of a spinner, and empty pages say why and what to do."
+            ),
+            WhatsNewItem(
+                icon: "clock.arrow.circlepath",
+                title: "Update log",
+                text: "Settings → About → Update log has what changed in every version, from 1.0.0 to now."
             ),
         ],
     ]
 
     static func items(for version: String) -> [WhatsNewItem] { notes[version] ?? [] }
+
+    /**
+     * Everything since [seen], newest first: this version's page, then each
+     * release in between from the update log. With [seen] unknown, this
+     * version only.
+     */
+    static func pages(since seen: String?) -> [WhatsNewPage] {
+        let log = UpdateLogEntry.all
+        var out: [WhatsNewPage] = []
+        let current = items(for: appVersion)
+        if !current.isEmpty {
+            out.append(WhatsNewPage(version: appVersion, items: current, log: nil))
+        } else if let entry = log.first(where: { $0.version == appVersion }) {
+            out.append(WhatsNewPage(version: appVersion, items: [], log: entry))
+        }
+        guard let seen else { return out }
+        for entry in log where entry.version != appVersion
+            && Versions.isNewer(entry.version, than: seen)
+            && !Versions.isNewer(entry.version, than: appVersion) {
+            out.append(WhatsNewPage(version: entry.version, items: [], log: entry))
+        }
+        return out
+    }
 }
 
-/** The page itself: a large title, a row per change and one button. */
+/** One version on the What's new page. */
+struct WhatsNewPage: Identifiable {
+    let version: String
+    /** The rows with icons, for a version that has them. */
+    let items: [WhatsNewItem]
+    /** Otherwise its release notes. */
+    let log: UpdateLogEntry?
+    var id: String { version }
+}
+
+/**
+ * The page itself: this version's changes, then those of every release since
+ * the one you last saw, and one button.
+ */
 struct WhatsNewScreen: View {
     @Environment(\.kultr) private var theme
     let onDone: () -> Void
 
     var body: some View {
         let c = theme.colors
+        let pages = WhatsNew.pages(since: AppGraph.shared.ui.whatsNewSeen)
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("What's new in Kultr")
                         .font(.largeTitle.bold())
                         .foregroundStyle(c.ink)
-                    Text("Version \(appVersion)")
+                    Text(pages.count > 1 ? "Version \(appVersion), and everything since \(pages.last?.version ?? appVersion)" : "Version \(appVersion)")
                         .font(KFont.bodyMedium)
                         .foregroundStyle(c.ink3)
                 }
                 .padding(.top, 32)
-                ForEach(WhatsNew.items(for: appVersion)) { item in
-                    HStack(alignment: .top, spacing: 16) {
-                        Image(systemName: item.icon)
-                            .font(.title2)
-                            .foregroundStyle(c.accent)
-                            .frame(width: 36)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.title)
-                                .font(.headline)
+                ForEach(Array(pages.enumerated()), id: \.element.id) { index, page in
+                    if index > 0 {
+                        VStack(alignment: .leading, spacing: 2) {
+                            if index == 1 {
+                                Text("Also new since you last updated")
+                                    .font(KFont.bodySmall.weight(.semibold))
+                                    .foregroundStyle(c.accent)
+                            }
+                            Text("Kultr \(page.version)")
+                                .font(.title2.bold())
                                 .foregroundStyle(c.ink)
-                            Text(item.text)
-                                .font(.subheadline)
-                                .foregroundStyle(c.ink2)
-                                .fixedSize(horizontal: false, vertical: true)
                         }
+                        .padding(.top, 8)
                     }
-                    .accessibilityElement(children: .combine)
+                    ForEach(page.items) { item in
+                        HStack(alignment: .top, spacing: 16) {
+                            Image(systemName: item.icon)
+                                .font(.title2)
+                                .foregroundStyle(c.accent)
+                                .frame(width: 36)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.title)
+                                    .font(.headline)
+                                    .foregroundStyle(c.ink)
+                                Text(item.text)
+                                    .font(.subheadline)
+                                    .foregroundStyle(c.ink2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                    if let log = page.log {
+                        UpdateLogLines(entry: log)
+                    }
                 }
             }
             .padding(.horizontal, 24)

@@ -36,9 +36,11 @@ struct UpdateLogEntry: Decodable, Identifiable {
     static let all: [UpdateLogEntry] = {
         let released = (try? JSONDecoder().decode([UpdateLogEntry].self, from: Data(UPDATE_LOG_JSON.utf8))) ?? []
         let known = Set(released.map(\.version))
+        let newest = released.first?.version ?? "0"
         let tests = WhatsNew.notes.compactMap { pair -> UpdateLogEntry? in
             let (version, items) = pair
-            guard !known.contains(version) else { return nil }
+            // A test build newer than every release; the released versions have their notes.
+            guard !known.contains(version), Versions.isNewer(version, than: newest) else { return nil }
             let lines = items.map { Line(kind: "bullet", text: "**\($0.title).** \($0.text)") }
             return UpdateLogEntry(version: version, date: "", sections: [Section(title: "", lines: lines)], testBuild: true)
         }
@@ -113,12 +115,27 @@ private struct VersionCard: View {
                     .font(KFont.bodySmall)
                     .foregroundStyle(c.ink3)
             }
+            UpdateLogLines(entry: entry)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: theme.radii.lg, style: .continuous).fill(c.sand.opacity(0.7)))
+    }
+}
+
+/** One version's notes: its sections, each with its entries. */
+struct UpdateLogLines: View {
+    @Environment(\.kultr) private var theme
+    let entry: UpdateLogEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
             ForEach(Array(entry.sections.enumerated()), id: \.offset) { _, section in
                 VStack(alignment: .leading, spacing: 6) {
                     if !section.title.isEmpty {
                         Text(section.title)
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(c.accent)
+                            .foregroundStyle(theme.colors.accent)
                             .padding(.top, 2)
                     }
                     ForEach(Array(section.lines.enumerated()), id: \.offset) { _, line in
@@ -127,9 +144,6 @@ private struct VersionCard: View {
                 }
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: theme.radii.lg, style: .continuous).fill(c.sand.opacity(0.7)))
     }
 }
 

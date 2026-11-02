@@ -248,7 +248,7 @@ private struct ListeningTile: View {
         Button { graph.actions.navigate(.stats) } label: {
             VStack(alignment: .leading, spacing: 6) {
                 TileLabel(icon: "chart.bar.fill", text: "This week")
-                Text(Format.duration(week))
+                Text(week > 0 ? Format.duration(week) : "Nothing yet")
                     .font(size == .small ? .title2.bold() : .title.bold())
                     .foregroundStyle(c.ink)
                     .minimumScaleFactor(0.7)
