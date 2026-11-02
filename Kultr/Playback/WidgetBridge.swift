@@ -105,7 +105,7 @@ final class WidgetBridge {
             positionMs: max(0, positionMs),
             durationMs: state.durationMs,
             at: Date(),
-            accent: snapshot?.songId == song.id ? (snapshot?.accent ?? 0x7C8CFF) : 0x7C8CFF,
+            accent: snapshot?.songId == song.id ? (snapshot?.accent ?? 0xFF7A3D) : 0xFF7A3D,
             hasArtwork: song.artworkId != nil,
             upNext: Array(waiting),
             upNextCount: state.upNext.count,

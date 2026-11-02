@@ -90,7 +90,7 @@ private struct NowPlayingEntryView: View {
             .padding(isHome ? (large ? 16 : 14) : 0)
             .containerBackground(for: .widget) {
                 if isHome {
-                    NowPlayingWidgetBackground(snapshot: entry.snapshot, artwork: entry.artwork)
+                    NowPlayingWidgetBackground()
                 } else {
                     Color.clear
                 }

@@ -221,7 +221,8 @@ private struct ChoiceCard: View {
             .contentShape(shape)
         }
         .buttonStyle(PressScaleStyle())
-        .kultrGlass(shape, interactive: true)
+        .background(shape.fill(c.elevated))
+        .overlay(shape.strokeBorder(c.line, lineWidth: 1))
     }
 }
 
@@ -249,7 +250,7 @@ private struct Folders: View {
                 .multilineTextAlignment(.center)
             MusicFolders()
                 .padding(16)
-                .kultrGlass(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(c.elevated))
                 .padding(.top, 8)
             HStack(spacing: 10) {
                 WideButton(title: "Back", icon: "chevron.left", prominent: false, action: onBack)
@@ -309,7 +310,7 @@ private struct Tour: View {
                             .font(.system(size: 44, weight: .semibold))
                             .foregroundStyle(c.accent)
                             .frame(width: 112, height: 112)
-                            .kultrGlass(Circle(), tint: c.accent.opacity(0.25))
+                            .background(Circle().fill(c.accentSoft))
                         Text(feature.title)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(c.ink)

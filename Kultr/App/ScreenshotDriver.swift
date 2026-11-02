@@ -137,7 +137,7 @@ struct LargeWidgetPreviewScreen: View {
         NowPlayingWidgetView(family: family, snapshot: bridge.snapshot, artwork: bridge.artwork, queueArtwork: bridge.queueArtwork)
             .padding(16)
             .frame(width: size.width, height: size.height)
-            .background { NowPlayingWidgetBackground(snapshot: bridge.snapshot, artwork: bridge.artwork) }
+            .background { NowPlayingWidgetBackground() }
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .shadow(color: .black.opacity(0.35), radius: 16, y: 8)
     }
@@ -173,7 +173,7 @@ struct WidgetPreviewScreen: View {
         NowPlayingWidgetView(family: family, snapshot: bridge?.snapshot, artwork: bridge?.artwork)
             .padding(14)
             .frame(width: width, height: 170)
-            .background { NowPlayingWidgetBackground(snapshot: bridge?.snapshot, artwork: bridge?.artwork) }
+            .background { NowPlayingWidgetBackground() }
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .shadow(color: .black.opacity(0.35), radius: 16, y: 8)
     }

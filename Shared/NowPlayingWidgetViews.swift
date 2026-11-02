@@ -26,24 +26,10 @@ struct NowPlayingWidgetView: View {
     }
 }
 
-/** Behind the home-screen faces: the artwork, blurred and darkened, tinted with its own colour. */
+/** Behind the home-screen faces: Kultr's page colour, cream in light mode and charcoal in dark. */
 struct NowPlayingWidgetBackground: View {
-    let snapshot: NowPlayingSnapshot?
-    let artwork: UIImage?
-
     var body: some View {
-        let accent = Color(rgb: snapshot?.accent ?? 0x7C8CFF)
-        ZStack {
-            LinearGradient(colors: [accent.opacity(0.9), Color(rgb: 0x0B0B12)], startPoint: .topLeading, endPoint: .bottomTrailing)
-            if let artwork {
-                Image(uiImage: artwork)
-                    .resizable()
-                    .scaledToFill()
-                    .blur(radius: 28)
-                    .opacity(0.75)
-            }
-            LinearGradient(colors: [.black.opacity(0.15), .black.opacity(0.55)], startPoint: .top, endPoint: .bottom)
-        }
+        Color.widgetPage
     }
 }
 
@@ -65,7 +51,7 @@ private struct SmallFace: View {
             ProgressLine(snapshot: snapshot)
                 .padding(.top, 6)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(Color.widgetInk)
     }
 }
 
@@ -80,7 +66,7 @@ private struct MediumFace: View {
                 Text(eyebrow)
                     .font(.system(size: 10, weight: .bold))
                     .tracking(1.2)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(Color.widgetInk.opacity(0.7))
                     .padding(.bottom, 4)
                 Titles(snapshot: snapshot, titleSize: 16, lines: 2)
                 Spacer(minLength: 6)
@@ -95,7 +81,7 @@ private struct MediumFace: View {
                 .padding(.top, 8)
             }
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(Color.widgetInk)
     }
 
     private var eyebrow: String {
@@ -134,7 +120,7 @@ private struct LargeFace: View {
             UpNextList(snapshot: snapshot, queueArtwork: queueArtwork, maxRows: 4, rowHeight: 38)
                 .padding(.top, 10)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(Color.widgetInk)
     }
 }
 
@@ -168,12 +154,12 @@ private struct ExtraLargeFace: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Rectangle()
-                .fill(.white.opacity(0.16))
+                .fill(Color.widgetInk.opacity(0.16))
                 .frame(width: 0.5)
             UpNextList(snapshot: snapshot, queueArtwork: queueArtwork, maxRows: 6, rowHeight: 42)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(Color.widgetInk)
     }
 }
 
@@ -233,7 +219,7 @@ private struct StateEyebrow: View {
         Text(text)
             .font(.system(size: 10, weight: .bold))
             .tracking(1.2)
-            .foregroundStyle(.white.opacity(0.7))
+            .foregroundStyle(Color.widgetInk.opacity(0.7))
             .lineLimit(1)
     }
 
@@ -251,7 +237,7 @@ private struct AlbumLine: View {
         if let snapshot, !snapshot.artist.isEmpty, !snapshot.album.isEmpty {
             Text(snapshot.album)
                 .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.55))
+                .foregroundStyle(Color.widgetInk.opacity(0.55))
                 .lineLimit(1)
         }
     }
@@ -274,7 +260,7 @@ private struct TimeRow: View {
                     .frame(width: 64, alignment: .trailing)
             }
             .font(.system(size: 11, weight: .medium).monospacedDigit())
-            .foregroundStyle(.white.opacity(0.7))
+            .foregroundStyle(Color.widgetInk.opacity(0.7))
         }
         .opacity(snapshot == nil ? 0 : 1)
     }
@@ -361,12 +347,12 @@ private struct UpNextList: View {
                 Text("UP NEXT")
                     .font(.system(size: 10, weight: .bold))
                     .tracking(1.2)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(Color.widgetInk.opacity(0.7))
                 Spacer(minLength: 8)
                 if let more = waitingLabel {
                     Text(more)
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(Color.widgetInk.opacity(0.5))
                 }
             }
             if songs.isEmpty {
@@ -397,7 +383,7 @@ private struct UpNextList: View {
                             if !song.artist.isEmpty {
                                 Text(song.artist)
                                     .font(.system(size: 11))
-                                    .foregroundStyle(.white.opacity(0.62))
+                                    .foregroundStyle(Color.widgetInk.opacity(0.62))
                                     .lineLimit(1)
                             }
                         }
@@ -419,7 +405,7 @@ private struct UpNextList: View {
                  ? "The queue starts again from the top."
                  : "Add songs in Kultr with Play next or Add to queue.")
                 .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.62))
+                .foregroundStyle(Color.widgetInk.opacity(0.62))
                 .lineLimit(2)
         }
         .padding(.top, 2)
@@ -446,10 +432,10 @@ private struct Thumbnail: View {
                     .scaledToFill()
             } else {
                 ZStack {
-                    Color.white.opacity(0.14)
+                    Color.widgetInk.opacity(0.14)
                     Image(systemName: "music.note")
                         .font(.system(size: size * 0.4, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.75))
+                        .foregroundStyle(Color.widgetInk.opacity(0.75))
                 }
             }
         }
@@ -470,7 +456,7 @@ private struct Titles: View {
                 .lineLimit(lines)
             Text(subtitle)
                 .font(.system(size: titleSize - 3))
-                .foregroundStyle(.white.opacity(0.72))
+                .foregroundStyle(Color.widgetInk.opacity(0.72))
                 .lineLimit(1)
         }
     }
@@ -496,16 +482,16 @@ private struct ArtworkTile: View {
                     .scaledToFill()
             } else {
                 ZStack {
-                    Color.white.opacity(0.14)
+                    Color.widgetInk.opacity(0.14)
                     Image(systemName: "music.note")
                         .font(.system(size: size * 0.36, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(Color.widgetInk.opacity(0.8))
                 }
             }
         }
         .frame(width: size, height: size)
         .clipShape(shape)
-        .overlay(shape.strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
+        .overlay(shape.strokeBorder(Color.widgetInk.opacity(0.18), lineWidth: 0.5))
         .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
     }
 }
@@ -526,7 +512,7 @@ private struct ProgressLine: View {
             .overlay {
                 bar
                     .progressViewStyle(.linear)
-                    .tint(.white)
+                    .tint(Color.widgetInk)
             }
             .opacity(snapshot == nil ? 0 : 1)
     }
@@ -556,9 +542,9 @@ private struct ToggleButton<Intent: AppIntent>: View {
         Button(intent: intent) {
             Image(systemName: icon)
                 .font(.system(size: size * 0.38, weight: .bold))
-                .foregroundStyle(on ? Color.white : Color.white.opacity(0.5))
+                .foregroundStyle(on ? Color.widgetInk : Color.widgetInk.opacity(0.5))
                 .frame(width: size, height: size)
-                .background(Circle().fill(on ? Color.white.opacity(0.24) : Color.clear))
+                .background(Circle().fill(on ? Color.widgetInk.opacity(0.24) : Color.clear))
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
@@ -578,9 +564,9 @@ private struct ControlButton<Intent: AppIntent>: View {
         Button(intent: intent) {
             Image(systemName: icon)
                 .font(.system(size: size * 0.4, weight: .bold))
-                .foregroundStyle(prominent ? Color.black : Color.white)
+                .foregroundStyle(prominent ? Color.widgetPage : Color.widgetInk)
                 .frame(width: size, height: size)
-                .background(Circle().fill(prominent ? Color.white : Color.white.opacity(0.16)))
+                .background(Circle().fill(prominent ? Color.widgetInk : Color.widgetInk.opacity(0.16)))
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
@@ -588,15 +574,14 @@ private struct ControlButton<Intent: AppIntent>: View {
 }
 
 private extension Color {
-    init(rgb: UInt32) {
-        self.init(
-            .sRGB,
-            red: Double((rgb >> 16) & 0xff) / 255,
-            green: Double((rgb >> 8) & 0xff) / 255,
-            blue: Double(rgb & 0xff) / 255,
-            opacity: 1
-        )
-    }
+    /** Warm black on the cream widget, white on the dark one. */
+    static let widgetInk = Color(UIColor { $0.userInterfaceStyle == .dark ? .white : UIColor(red: 0x1F / 255.0, green: 0x1A / 255.0, blue: 0x14 / 255.0, alpha: 1) })
+    /** The widget's page colour: cream, or charcoal in dark mode. */
+    static let widgetPage = Color(UIColor {
+        $0.userInterfaceStyle == .dark
+            ? UIColor(red: 0x1C / 255.0, green: 0x1A / 255.0, blue: 0x17 / 255.0, alpha: 1)
+            : UIColor(red: 0xF6 / 255.0, green: 0xF0 / 255.0, blue: 0xE5 / 255.0, alpha: 1)
+    })
 }
 
 private extension Image {
