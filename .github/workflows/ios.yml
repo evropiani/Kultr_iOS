@@ -101,7 +101,7 @@ jobs:
             xcrun simctl shutdown "$UDID" || true
           }
           shoot 26 "" welcome home widget widget-large library albums songs album artist mini player search found settings stats sync
-          LOOK=light shoot 26 "light-" mini found
+          LOOK=light shoot 26 "light-" home library albums album artist player settings mini found
 
       - name: Publish screenshots
         if: always() && github.ref != 'refs/heads/main'
