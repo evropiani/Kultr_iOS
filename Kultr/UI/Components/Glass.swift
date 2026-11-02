@@ -5,12 +5,14 @@ import UIKit
 // player, floating buttons), not for the content itself.
 
 private struct GlassSurface<S: InsettableShape>: ViewModifier {
+    @Environment(\.kultr) private var theme
     let shape: S
     var tint: Color?
     var interactive = false
 
     func body(content: Content) -> some View {
-        var glass = Glass.regular
+        // Kultr Studio's glass: frosted, or clear.
+        var glass = theme.settings.clearGlass ? Glass.clear : Glass.regular
         if let tint { glass = glass.tint(tint) }
         if interactive { glass = glass.interactive() }
         return content.glassEffect(glass, in: shape)

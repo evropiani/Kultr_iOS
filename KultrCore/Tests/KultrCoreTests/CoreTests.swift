@@ -415,6 +415,7 @@ final class InjektTests: XCTestCase {
         XCTAssertEqual(parseCommand("timer 1h"), .sleep(minutes: 60))
         XCTAssertEqual(parseCommand("sleep after this song"), .sleepAfterTrack)
         XCTAssertEqual(parseCommand("next"), .next)
+        XCTAssertEqual(parseCommand("Shuffle all"), .shuffleAll)
         XCTAssertEqual(parseCommand("pause"), .pause)
         XCTAssertEqual(parseCommand("open settings"), .open(.settings))
         XCTAssertEqual(parseCommand("show my stations"), .open(.stations))
@@ -425,6 +426,35 @@ final class InjektTests: XCTestCase {
         XCTAssertEqual(parseCommand("play gym", crates: ["Gym"]), .playCrate("Gym"))
         XCTAssertNil(parseCommand("radiohead"))
         XCTAssertNil(parseCommand("love"))
+    }
+
+    func testStudioTemplatesStylesAndWidgets() {
+        let values = ["year": "2019", "genre": "", "format": "FLAC", "bitrate": "1024"]
+        XCTAssertEqual(renderTemplate("{year}{?genre: · {genre}} · {format}{?bitrate: · {bitrate} kbps}", values), "2019 · FLAC · 1024 kbps")
+        XCTAssertEqual(renderTemplate("{?genre:only {genre}}", values), "")
+        XCTAssertEqual(renderTemplate("plain {unknown}text", values), "plain text")
+        XCTAssertEqual(renderTemplate("open {brace", values), "open {brace")
+
+        let console = STUDIO_PRESETS.first { $0.name == "Console" }!
+        let applied = console.applied(to: Settings())
+        XCTAssertEqual(applied.corners, .sharp)
+        XCTAssertEqual(applied.playerBlocks.first, .title)
+        XCTAssertTrue(console.matches(applied))
+        XCTAssertFalse(console.matches(Settings()))
+        XCTAssertEqual(StudioStyle.read(console.link), console)
+        let fromFile = StudioStyle.read(#"{"name":"Mine","corners":"round"}"#)
+        XCTAssertEqual(fromFile?.corners, .round)
+        XCTAssertEqual(fromFile?.playerBlocks, PlayerBlock.allCases)
+        XCTAssertNil(StudioStyle.read("kultr://style/not-base64!"))
+
+        let widgets = [
+            HomeWidget(kind: .listening, size: .small),
+            HomeWidget(kind: .nowPlaying, size: .medium),
+            HomeWidget(kind: .nextMix, size: .small),
+            HomeWidget(kind: .station, size: .small),
+            HomeWidget(kind: .crate, size: .small),
+        ]
+        XCTAssertEqual(homeWidgetRows(widgets), [[0], [1], [2, 3], [4]])
     }
 
     func testCalmestFirstPutsQuietSlowTracksFirst() {

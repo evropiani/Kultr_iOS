@@ -1,27 +1,25 @@
 **KultrPre is a test build.** It installs next to Kultr as a separate app called **Kultr Pre**, with its own bundle ID (`app.kultr.ios.pre`), App Group and data. Your Kultr install stays as it is. You'll need to sign in to your server again in Kultr Pre. The in-app update check and the Kultr source never offer test builds.
 
-## What's being tested: step 4, the energy planner and the command bar
+## What's being tested: step 5, Kultr Studio and widgets on Home
 
-Everything from 1.4.1 to 1.4.3 is still here. The What's new page opens once after updating.
+This is the last step before everything goes to Kultr as 1.5.0. Everything from 1.4.1 to 1.4.4 is still here, and the What's new page opens once after updating.
 
-- **Energy planner:** tap "Plan a set" on Home (or ••• on the Stations page).
-  - Draw the shape of the set with your finger, low for calm and high for peak, or start from a shape: Warm up and peak, Steady, Build, Wind down.
-  - Choose 30 minutes to 2 hours, and the whole library or one station's music.
-  - "Build the set" picks, for each moment, the track whose energy is closest to your line. It also has to mix well out of the one before (close tempo, a neighbouring key), can't be by the same artist and can't repeat. Dots on the drawing show where each track lands.
-  - Play it as it is, or save it as a playlist. It only uses tracks InjeKt has analysed; the page says how many are left.
-- **Command bar:** Search also does things. Type a command and an orange row appears above the results; tap it or press Return.
-  - Playing: "play Night Drive" (a station), "play" or "shuffle" and an artist or album, "shuffle all", "play" and a crate's name.
-  - Controls: "pause", "play", "next", "back", "mix now".
-  - Sleep timer: "sleep in 30 minutes", "stop in an hour", "sleep after this song".
-  - Pages: "open settings", "show my stations", "open recap", "open" and a crate.
-  - Planning: "plan an hour".
-- **In your own words:** with Apple Intelligence on, longer requests the usual phrasings don't cover get an "Ask Kultr to do it" row. Apple's model reads it on the iPhone itself, and nothing is sent anywhere. Without Apple Intelligence, the row doesn't appear.
+- **Kultr Studio:** Settings → Kultr Studio has the whole look in one place, with a live preview of the player at the top.
+  - **Start from a style:** Cream (the default), Night (pure black), Ember (dark, colour from the cover, blurred cover behind the player, glowing playhead), Paper (light, sharp corners, compact) or Console (dark, sharp, tempo and key in the info line, the cover at the bottom). A style only changes the look; your library and other settings stay.
+  - **Colours, shape and glass:** theme, night mode, colour from the artwork, corners, cover size, compact rows, the playhead, and clear instead of frosted glass for everything that floats.
+  - **The player, top to bottom:** cover, title, info line, progress and buttons. Switch parts off, or hold a row and drag it to reorder.
+  - **The info line:** write your own with names in braces, like `{bpm} BPM{?key: · {key}}`. A part in `{?key:…}` only shows when the track has that value. Tap a name to add it; the "Looks like" line previews it. bpm, key and energy come from InjeKt's analysis.
+  - **Share:** send the style as a link or a file, copy the link, or use one from the clipboard or a file. Opening a `kultr://style/…` link shows a preview first, with "Use this style" or "Not now".
+- **Widgets on Home:** under the buttons at the top of Home, three to start with: Now playing (medium), This week and Next mix (small).
+  - **Kinds:** now playing (play, skip, tap to open the player), listening this week against your usual, the next mix with a countdown, a station, a crate, or a shortcut that does anything you could type in Search ("shuffle all", "sleep in 30 minutes", your own words).
+  - **Sizes:** small ones sit side by side; medium and large ones go across.
+  - **Editing:** hold a widget and they all wiggle. The minus takes one away, dragging one onto another moves it, "Add a widget" offers the rest, and "Done" stops.
 
 ## Please check
 
-- **Planner:** draw a shape, build a set, and look at whether the dots follow your line. Play it: do the mixes hold together?
-- **Command bar:** try the commands above, and some of your own. Tell me what you'd expect to work but doesn't.
-- **Apple Intelligence:** if your iPhone has it, try something like "put on something calm for an hour".
+- **Studio:** try each style, then change a few things and watch the preview. Share the link to yourself (Notes or Messages) and open it: you should see the preview sheet first.
+- **Player blocks:** move the cover to the bottom and switch off the info line. Does the player still pull down and scroll well?
+- **Widgets:** hold one to edit, move a widget, add a station, a crate and a shortcut, and remove one. Do the sizes fit on your screen?
 
 ## Install
 

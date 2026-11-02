@@ -70,6 +70,7 @@ struct SettingsScreen: View {
                 }
             }
             Section {
+                link("Kultr Studio", "wand.and.stars") { StudioScreen() }
                 link("Appearance", "paintpalette.fill") { AppearanceSettings() }
                 link("Home page", "house.fill") { HomeSettings() }
             }
@@ -263,7 +264,7 @@ private struct AppIconPicker: View {
     }
 }
 
-private struct AppearanceSettings: View {
+struct AppearanceSettings: View {
     @Environment(\.kultr) private var theme
 
     var body: some View {

@@ -9,6 +9,7 @@ enum CommandPlace: String, CaseIterable, Hashable {
 enum KultrCommand: Hashable {
     case play(String)
     case shuffle(String)
+    case shuffleAll
     case station(String)
     case sleep(minutes: Int)
     case sleepAfterTrack
@@ -45,6 +46,7 @@ func parseCommand(_ text: String, stations: [String] = [], crates: [String] = []
     case "next", "skip", "next track", "next song", "skip this": return .next
     case "previous", "back", "go back", "previous track", "previous song", "last song": return .previous
     case "mix", "mix now", "mix it", "blend", "mix into the next one": return .mixNow
+    case "shuffle", "shuffle all", "shuffle everything", "shuffle my library", "surprise me": return .shuffleAll
     case "sleep after this", "sleep after this song", "sleep after this track", "stop after this song", "stop after this track":
         return .sleepAfterTrack
     default: break

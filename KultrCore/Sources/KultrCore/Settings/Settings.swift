@@ -211,6 +211,14 @@ struct Settings: Codable, Hashable {
     var annotations: [String: Annotation] = [:]
     /** Your crates, in the order Library shows them. */
     var crates: [Crate] = []
+    /** The widgets at the top of Home, in order. */
+    var homeWidgets: [HomeWidget] = DEFAULT_HOME_WIDGETS
+    /** Clear glass instead of frosted, for every floating control. */
+    var clearGlass: Bool = false
+    /** The player's parts, top to bottom; the ones left out are hidden. */
+    var playerBlocks: [PlayerBlock] = PlayerBlock.allCases
+    /** The player's info line as a Studio template; empty for Kultr's own. */
+    var factsTemplate: String = ""
 
     init() {}
 
@@ -226,7 +234,7 @@ struct Settings: Codable, Hashable {
         case autoSyncOnStart, autoSyncMinutes, syncPlaylistContents
         case showLyrics, homeTiles, favouriteRadios, hasSeenWelcome
         case coverDoubleTap, coverHold, coverSwipeUp, sleepWindDown, beatPulse, beatHaptics, stations, liveActivity
-        case annotations, crates
+        case annotations, crates, homeWidgets, clearGlass, playerBlocks, factsTemplate
     }
 
     /** Missing or unreadable values fall back to their defaults, one by one. */
@@ -305,6 +313,10 @@ struct Settings: Codable, Hashable {
         liveActivity = v(.liveActivity, d.liveActivity)
         annotations = v(.annotations, d.annotations)
         crates = v(.crates, d.crates)
+        homeWidgets = v(.homeWidgets, d.homeWidgets)
+        clearGlass = v(.clearGlass, d.clearGlass)
+        playerBlocks = v(.playerBlocks, d.playerBlocks)
+        factsTemplate = v(.factsTemplate, d.factsTemplate)
     }
 
     /** EQ gains, always exactly one per band. */
