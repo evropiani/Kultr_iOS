@@ -250,6 +250,8 @@ private struct StationDial: View {
                 Color.clear
                     .frame(width: size, height: size)
                     .kultrGlass(Circle(), interactive: true)
+                    // Glass on a dark page needs an edge to read as a dial.
+                    .overlay(Circle().strokeBorder(c.edge, lineWidth: 1))
                 Circle()
                     .fill(c.background)
                     .frame(width: size * 0.62, height: size * 0.62)
@@ -419,7 +421,7 @@ struct MixStationCard: View {
                     .font(.headline)
                     .foregroundStyle(c.ink)
                     .lineLimit(1)
-                Text(graph.stations.counts[station.id].map { Format.count($0, "track") } ?? station.summary)
+                Text(cardLine(graph.stations.counts[station.id]))
                     .font(KFont.bodySmall)
                     .foregroundStyle(c.ink3)
                     .lineLimit(1)
@@ -434,6 +436,12 @@ struct MixStationCard: View {
             Button { graph.actions.navigate(.stations) } label: { Label("Open Stations", systemImage: "dial.medium") }
         }
         .accessibilityLabel("Play the station \(station.name)")
+    }
+
+    private func cardLine(_ count: Int?) -> String {
+        guard let count else { return station.summary }
+        if count > 0 { return Format.count(count, "track") }
+        return station.needsAnalysis || (station.bpm.map { !$0.isOpen } ?? false) ? "Needs InjeKt analysis" : "No tracks yet"
     }
 }
 
