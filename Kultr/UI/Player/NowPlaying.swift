@@ -40,7 +40,7 @@ struct NowPlayingScreen: View {
                         }
                         .pickerStyle(.segmented)
                         .padding(.horizontal, 20)
-                        .padding(.top, 18)
+                        .padding(.top, 16)
                         .padding(.bottom, 12)
                         switch tab {
                         case .queue: QueueList(state: state)
@@ -179,7 +179,7 @@ private struct PlayerTopBar: View {
         }
         .padding(.horizontal, 12)
         // Below the sheet's own grabber.
-        .padding(.top, 14)
+        .padding(.top, 16)
     }
 }
 
@@ -422,8 +422,8 @@ private struct KarouselHeading: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 6)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
         .accessibilityElement(children: .combine)
     }
 }
@@ -644,7 +644,7 @@ private struct AnalysisCard: View {
             Text(value).font(.system(size: 20, weight: .bold)).foregroundStyle(c.ink).lineLimit(1).minimumScaleFactor(0.7)
             Text(note).font(.system(size: 11)).foregroundStyle(c.ink3).lineLimit(1)
         }
-        .padding(10)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(shape.fill(c.glass))
         .overlay(shape.strokeBorder(c.line, lineWidth: 1))

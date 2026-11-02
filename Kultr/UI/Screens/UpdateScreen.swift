@@ -30,7 +30,7 @@ struct UpdateScreen: View {
                                 .foregroundStyle(c.ink2)
                         }
                     }
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 8)
                     ReleaseNotesView(markdown: release.notes)
                     VStack(spacing: 10) {
                         if let ipa = release.ipaUrl {
@@ -44,7 +44,7 @@ struct UpdateScreen: View {
                             if let url = URL(string: release.pageUrl) { openURL(url) }
                         }
                     }
-                    .padding(.top, 10)
+                    .padding(.top, 12)
                     Text(installers.isEmpty
                         ? "Download Kultr.ipa there and install it the way you installed Kultr, with the same Apple ID. Your library, downloads and settings stay."
                         : "Installed Kultr with Sideloadly, AltServer or Impactor rather than \(installers.map(\.name).joined(separator: " or "))? Install the new version the same way, with the same Apple ID. Your library, downloads and settings stay.")
@@ -86,7 +86,7 @@ struct ReleaseNotesView: View {
                     Text(attributed(text))
                         .font(.system(size: level <= 2 ? 19 : 16, weight: .bold))
                         .foregroundStyle(c.ink)
-                        .padding(.top, 6)
+                        .padding(.top, 8)
                 case .bullet(let level, let text):
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Text(level == 0 ? "•" : "◦").foregroundStyle(c.accent)
@@ -148,7 +148,7 @@ struct UpdateBanner: View {
         }
         .padding(.leading, 16)
         .padding(.trailing, 8)
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
         .contentShape(Capsule())
         .onTapGesture(perform: onOpen)
         .kultrGlass(Capsule(), interactive: true)

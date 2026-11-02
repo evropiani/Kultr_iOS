@@ -172,13 +172,13 @@ struct SongRow: View {
                 Image(systemName: "arrow.down.circle.fill")
                     .font(.system(size: 13))
                     .foregroundStyle(c.ink3)
-                    .padding(.trailing, 6)
+                    .padding(.trailing, 8)
             }
             if AppGraph.shared.ui.isStarred(song) {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 13))
                     .foregroundStyle(c.accent)
-                    .padding(.trailing, 6)
+                    .padding(.trailing, 8)
             }
             if let duration = song.duration {
                 Text(Format.time(Double(duration)))
@@ -325,7 +325,7 @@ struct SelectionBar: View {
             .kultrGlass(Capsule())
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
     }
 
     private func iconButton(_ icon: String, _ label: String, _ action: @escaping () -> Void) -> some View {

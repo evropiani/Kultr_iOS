@@ -227,7 +227,7 @@ private struct ActiveRow: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
     }
 }
 
