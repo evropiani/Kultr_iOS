@@ -5,18 +5,7 @@ import SwiftUI
 enum LibraryTab: String, CaseIterable, Hashable {
     case albums, artists, songs, playlists, genres, favourites, downloads, radio
 
-    var label: String {
-        switch self {
-        case .albums: return "Albums"
-        case .artists: return "Artists"
-        case .songs: return "Songs"
-        case .playlists: return "Playlists"
-        case .genres: return "Genres"
-        case .favourites: return "Favourites"
-        case .downloads: return "Downloads"
-        case .radio: return "Radio"
-        }
-    }
+    var label: String { rawValue.capitalized }
 }
 
 extension LibraryTab {
@@ -37,17 +26,7 @@ enum DownloadsPage: String, CaseIterable, Hashable {
 enum MainTab: String, CaseIterable, Hashable {
     case home, library, settings, search
 
-    /** The tabs inside the bar; search sits beside it. */
-    static let bar: [MainTab] = [.home, .library, .settings]
-
-    var label: String {
-        switch self {
-        case .home: return "Home"
-        case .library: return "Library"
-        case .search: return "Search"
-        case .settings: return "Settings"
-        }
-    }
+    var label: String { rawValue.capitalized }
 
     var icon: String {
         switch self {
@@ -107,8 +86,6 @@ final class AppUI {
 
     /** What is typed in the search field, kept while you look at other tabs. */
     var searchQuery = ""
-    /** The tab you came to search from; the collapsed tab bar goes back to it. */
-    var previousTab: MainTab = .home
     var login: LoginRequest?
     var addToPlaylist: [Song]?
     var rate: Song?
@@ -121,13 +98,6 @@ final class AppUI {
         get { paths[tab] ?? [] }
         set { paths[tab] = newValue }
     }
-
-    func path(for tab: MainTab) -> [Route] { paths[tab] ?? [] }
-
-    func setPath(_ path: [Route], for tab: MainTab) { paths[tab] = path }
-
-    /** Forget every open page, in every tab (a different server has a different library). */
-    func resetPaths() { paths = [:] }
 
     /** The Downloads page shows everything the floating download strip would. */
     var onDownloadsPage: Bool {
@@ -176,9 +146,8 @@ final class AppActions {
     /** Switch tabs; choosing the tab you are on goes back to its start page. */
     func selectTab(_ tab: MainTab) {
         if ui.tab == tab {
-            ui.setPath([], for: tab)
+            ui.paths[tab] = []
         } else {
-            if tab == .search { ui.previousTab = ui.tab }
             ui.tab = tab
         }
     }

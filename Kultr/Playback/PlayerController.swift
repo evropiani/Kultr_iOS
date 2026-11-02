@@ -517,23 +517,22 @@ final class PlayerController: EngineHost {
     }
 
     func playNext(_ songs: [Song]) {
-        guard !songs.isEmpty else { return }
-        if engine.queue.isEmpty {
-            play(songs)
-        } else {
-            engine.addItems(at: engine.index + 1, engine.newItems(songs))
-        }
-        graph.messages.show(songs.count == 1 ? "“\(songs[0].title)” plays next" : "\(songs.count) tracks play next")
+        add(songs, at: engine.index + 1, songs.count == 1 ? "“\(songs[0].title)” plays next" : "\(songs.count) tracks play next")
     }
 
     func enqueue(_ songs: [Song]) {
+        add(songs, at: engine.queue.count, songs.count == 1 ? "Added “\(songs[0].title)” to the queue" : "Added \(songs.count) tracks to the queue")
+    }
+
+    /** Into the queue at [index]; into an empty queue, playing. */
+    private func add(_ songs: [Song], at index: Int, _ message: String) {
         guard !songs.isEmpty else { return }
         if engine.queue.isEmpty {
             play(songs)
         } else {
-            engine.addItems(at: engine.queue.count, engine.newItems(songs))
+            engine.addItems(at: index, engine.newItems(songs))
         }
-        graph.messages.show(songs.count == 1 ? "Added “\(songs[0].title)” to the queue" : "Added \(songs.count) tracks to the queue")
+        graph.messages.show(message)
     }
 
     func toggle() {
@@ -606,10 +605,6 @@ final class PlayerController: EngineHost {
         if start < engine.queue.count { engine.removeRange(start, engine.queue.count) }
     }
 
-    func setShuffle(_ enabled: Bool) {
-        engine.setShuffle(enabled)
-    }
-
     var shuffleMode: ShuffleMode {
         if graph.settings.current.karousel { return .karousel }
         return state.shuffle ? .shuffle : .off
@@ -629,13 +624,13 @@ final class PlayerController: EngineHost {
         }
         switch next {
         case .shuffle:
-            setShuffle(true)
+            engine.setShuffle(true)
         case .karousel:
             if engine.repeatMode != .off { engine.setRepeat(.off) }
             graph.settings.update { $0.karousel = true }
         case .off:
             graph.settings.update { $0.karousel = false }
-            setShuffle(false)
+            engine.setShuffle(false)
         }
         return next
     }

@@ -31,7 +31,8 @@ final class AppGraph {
         auth.observeActive { [unowned self] profile in
             self.library.activate(profile?.id)
             self.offline.reload()
-            self.ui.resetPaths()
+            // A different server has a different library: close every open page.
+            self.ui.paths = [:]
         }
         if !auth.profiles.isEmpty && !ui.welcomed { ui.finishWelcome() }
         offline.start()

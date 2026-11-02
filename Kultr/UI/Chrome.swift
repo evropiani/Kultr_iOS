@@ -161,8 +161,8 @@ private struct TabStack: View {
     let tab: MainTab
 
     var body: some View {
-        let ui = AppGraph.shared.ui
-        NavigationStack(path: Binding(get: { ui.path(for: tab) }, set: { ui.setPath($0, for: tab) })) {
+        @Bindable var ui = AppGraph.shared.ui
+        NavigationStack(path: $ui.paths[tab, default: []]) {
             TabRoot(tab: tab)
                 .navigationDestination(for: Route.self) { RouteView(route: $0) }
         }
