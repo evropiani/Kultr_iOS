@@ -208,6 +208,29 @@ jobs:
           gh release create "$TAG" out/KultrPre.ipa --prerelease --latest=false \
             --title "KultrPre ${VERSION} (build ${{ github.run_number }})" --notes-file "$NOTES_FILE" --target "$GITHUB_SHA"
 
+      # The KultrPre source for SideStore, FlareStore and the like, made fresh
+      # from the pre-releases, on a branch of its own so its address never
+      # changes; and a release whose KultrPre.ipa is always the newest build.
+      - name: Publish the KultrPre source
+        if: github.ref == 'refs/heads/KultrPre'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 .github/scripts/pre-source.py out/source/kultrpre.json
+          VERSION=$(grep -m1 "MARKETING_VERSION" Kultr.xcodeproj/project.pbxproj | sed -E 's/.*= ([^;]+);/\1/')
+          gh release delete kultrpre-latest --cleanup-tag -y || true
+          gh release create kultrpre-latest out/KultrPre.ipa --prerelease --latest=false \
+            --title "KultrPre, newest build" --target "$GITHUB_SHA" \
+            --notes "Always the newest KultrPre build, now ${VERSION} (build ${{ github.run_number }}). The download link stays the same with every build: https://github.com/${REPOSITORY}/releases/download/kultrpre-latest/KultrPre.ipa — or add the source https://raw.githubusercontent.com/${REPOSITORY}/kultrpre-source/kultrpre.json in SideStore or FlareStore."
+          cd out/source
+          git init -q
+          git checkout -q -b kultrpre-source
+          git add kultrpre.json
+          git -c user.name="Kultr CI" -c user.email="ci@kultr.invalid" commit -qm "KultrPre source: ${VERSION} (build ${{ github.run_number }})"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" kultrpre-source
+
       # The AltStore / SideStore source lives in a gist; this adds each new
       # release to it (gist.github.com/evropiani/6e3a3c18525a228d03924674430c4d48,
       # or SOURCE_GIST_ID if set). Needs a secret GIST_TOKEN (a classic token
