@@ -57,10 +57,7 @@ final class LibraryRepository {
         if let open = databases[profileId] { return open }
         let url = Self.directory.appendingPathComponent(LibraryDatabase.fileName(profileId: profileId))
         guard let database = try? LibraryDatabase(path: url.path) else { return nil }
-        var excluded = url
-        var values = URLResourceValues()
-        values.isExcludedFromBackup = true
-        try? excluded.setResourceValues(values)
+        url.excludeFromBackup()
         let coalescer = self.coalescer
         database.onChange = { changes in coalescer.note(changes) }
         databases[profileId] = database
@@ -507,5 +504,15 @@ final class ChangeCoalescer: @unchecked Sendable {
             lock.unlock()
             MainActor.assumeIsolated { onFlush?(batch) }
         }
+    }
+}
+
+extension URL {
+    /** Keeps a file or folder out of iCloud and computer backups: it can all be fetched again. */
+    func excludeFromBackup() {
+        var url = self
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
     }
 }

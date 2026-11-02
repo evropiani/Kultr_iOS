@@ -126,6 +126,20 @@ private struct DetailLoading: View {
     }
 }
 
+/** The heart in a detail page's bar; [set] gets the new state. */
+private struct FavouriteToolbarButton: View {
+    let starred: Bool
+    let set: (Bool) -> Void
+
+    var body: some View {
+        Button { set(!starred) } label: {
+            Image(systemName: starred ? "heart.fill" : "heart")
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .accessibilityLabel(starred ? "Remove from favourites" : "Add to favourites")
+    }
+}
+
 /** Download everything here, or, once it is all on the phone, offer to remove it. */
 struct DownloadToolbarButton: View {
     let songs: [Song]
@@ -256,13 +270,7 @@ struct AlbumScreen: View {
                         if !text.isEmpty { AboutText(title: "About this album", text: text) }
                     }
                 } actions: {
-                    Button {
-                        graph.actions.setAlbumFavourite(shown, !graph.ui.isStarred(shown))
-                    } label: {
-                        Image(systemName: graph.ui.isStarred(shown) ? "heart.fill" : "heart")
-                            .contentTransition(.symbolEffect(.replace))
-                    }
-                    .accessibilityLabel(graph.ui.isStarred(shown) ? "Remove from favourites" : "Add to favourites")
+                    FavouriteToolbarButton(starred: graph.ui.isStarred(shown)) { graph.actions.setAlbumFavourite(shown, $0) }
                     DownloadToolbarButton(songs: songs, label: shown.name)
                     Menu {
                         Button { graph.actions.playNext(songs) } label: { Label("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") }
@@ -358,13 +366,7 @@ struct ArtistScreen: View {
                         if !text.isEmpty { AboutText(title: "About", text: text) }
                     }
                 } actions: {
-                    Button {
-                        graph.actions.setArtistFavourite(shown, !graph.ui.isStarred(shown))
-                    } label: {
-                        Image(systemName: graph.ui.isStarred(shown) ? "heart.fill" : "heart")
-                            .contentTransition(.symbolEffect(.replace))
-                    }
-                    .accessibilityLabel(graph.ui.isStarred(shown) ? "Remove from favourites" : "Add to favourites")
+                    FavouriteToolbarButton(starred: graph.ui.isStarred(shown)) { graph.actions.setArtistFavourite(shown, $0) }
                     DownloadToolbarButton(songs: songs, label: shown.name)
                     Menu {
                         Button {

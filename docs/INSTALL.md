@@ -47,7 +47,7 @@ unless you refresh it. Refreshing takes a minute and keeps all your data.
 
 | | |
 |---|---|
-| An **iPhone or iPad** | running iOS 17 or newer (Settings → General → About → iOS Version) |
+| An **iPhone or iPad** | running iOS 26 or newer (Settings → General → About → iOS Version) |
 | A **computer** | Windows 10/11, a Mac, or a Linux PC. You only need it for installing and refreshing. On iOS 27 you can [skip the computer](#without-a-computer-sideinstaller-and-localdevvpn) |
 | A **cable** | the one you charge your iPhone with. It must carry data, not only charge |
 | An **Apple ID** | the one you already use is fine. Some people make a second, free Apple ID just for sideloading. That's optional |
@@ -348,8 +348,7 @@ two free apps, the iPhone can do that job itself:
 | Your iOS version | Does it work without a computer? |
 |---|---|
 | **iOS 27** | ✅ Yes, start to finish |
-| **iOS 18 to 26** | ⚠️ Yes, but only after a one-time *pairing file* is made [on a computer](https://docs.sidestore.io/docs/advanced/pairing-file) |
-| **iOS 17** | ❌ No. Use a computer, as in sections 1 to 5 |
+| **iOS 26** | ⚠️ Yes, but only after a one-time *pairing file* is made [on a computer](https://docs.sidestore.io/docs/advanced/pairing-file) |
 
 > ⚠️ **Get SideInstaller only from https://sideinstaller.net/** (or its
 > [GitHub page](https://github.com/FrizzleM/SideInstaller)). You type your
@@ -495,7 +494,7 @@ you're on the latest Kultr release, and tell us if it keeps happening.
 - Other VPNs (work, privacy or ad-blocking VPNs) can't run at the same time.
   Turn them off while you install or refresh.
 - Be on Wi-Fi for the first setup.
-- On iOS 18 to 26 without a pairing file, this can't work. See the table in
+- On iOS 26 without a pairing file, this can't work. See the table in
   [*Without a computer*](#without-a-computer-sideinstaller-and-localdevvpn).
 
 ### Still stuck?

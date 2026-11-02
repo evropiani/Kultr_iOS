@@ -2,7 +2,6 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 private let ACCENTS = ["#7c8cff", "#ff6b9a", "#ff9f43", "#ffd166", "#45d67a", "#2ec4b6", "#4cc9f0", "#b388ff", "#f5f5f7"]
-private let BITRATES: [(Int, String)] = [(0, "Original"), (320, "320 kbps"), (256, "256 kbps"), (192, "192 kbps"), (128, "128 kbps"), (96, "96 kbps")]
 private let WEBSITE = "https://kultr.cc/"
 private let DISCORD = "https://discord.com/users/319246364246540288"
 private let SOURCE = "https://github.com/evropiani/Kultr_iOS"
@@ -20,8 +19,16 @@ private func setting<T>(_ read: @escaping (Settings) -> T, _ write: @escaping (i
     )
 }
 
-private func bitrateLabel(_ value: Int) -> String {
-    BITRATES.first { $0.0 == value }?.1 ?? "\(value) kbps"
+@MainActor
+private func setting<T>(_ path: WritableKeyPath<Settings, T>) -> Binding<T> {
+    setting({ $0[keyPath: path] }, { $0[keyPath: path] = $1 })
+}
+
+/** A bitrate picker's choices; 0 keeps the file as it is on the server. */
+private struct BitrateOptions: View {
+    var body: some View {
+        ForEach([0, 320, 256, 192, 128, 96], id: \.self) { Text($0 == 0 ? "Original" : "\($0) kbps").tag($0) }
+    }
 }
 
 private func signed(_ value: Double) -> String {
@@ -84,8 +91,7 @@ struct SettingsScreen: View {
                 link("About", "info.circle.fill", .gray) { AboutSection() }
             }
         }
-        .navigationTitle("Settings")
-        .settingsPage()
+        .settingsPage("Settings", inline: false)
     }
 
     private func link<Destination: View>(_ title: String, _ icon: String, _ color: Color, @ViewBuilder destination: @escaping () -> Destination) -> some View {
@@ -116,8 +122,10 @@ private struct SettingsIcon: View {
 
 private extension View {
     /** A settings list over Kultr's background, tinted with the accent. */
-    func settingsPage() -> some View {
+    func settingsPage(_ title: String, inline: Bool = true) -> some View {
         self
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(inline ? .inline : .automatic)
             .scrollContentBackground(.hidden)
             .kultrScreen()
     }
@@ -207,7 +215,7 @@ private struct AppearanceSettings: View {
         let c = theme.colors
         Form {
             Section {
-                Picker("Theme", selection: setting({ $0.theme }, { $0.theme = $1 })) {
+                Picker("Theme", selection: setting(\.theme)) {
                     Text("System").tag(ThemeMode.system)
                     Text("Light").tag(ThemeMode.light)
                     Text("Dark").tag(ThemeMode.dark)
@@ -275,13 +283,13 @@ private struct AppearanceSettings: View {
                 }
             }
             Section("Surfaces") {
-                SettingToggle("Blurred artwork background", isOn: setting({ $0.backdropArtwork }, { $0.backdropArtwork = $1 }))
-                Picker("Corners", selection: setting({ $0.corners }, { $0.corners = $1 })) {
+                SettingToggle("Blurred artwork background", isOn: setting(\.backdropArtwork))
+                Picker("Corners", selection: setting(\.corners)) {
                     Text("Sharp").tag(CornerStyle.sharp)
                     Text("Soft").tag(CornerStyle.soft)
                     Text("Round").tag(CornerStyle.round)
                 }
-                Picker("Panel borders", selection: setting({ $0.surfaceBorder }, { $0.surfaceBorder = $1 })) {
+                Picker("Panel borders", selection: setting(\.surfaceBorder)) {
                     Text("Neutral").tag(SurfaceBorder.neutral)
                     Text("Accent").tag(SurfaceBorder.accent)
                 }
@@ -293,23 +301,23 @@ private struct AppearanceSettings: View {
                 }
             }
             Section("Lists") {
-                Picker("Grid size", selection: setting({ $0.gridSize }, { $0.gridSize = $1 })) {
+                Picker("Grid size", selection: setting(\.gridSize)) {
                     Text("Small").tag(GridSize.small)
                     Text("Medium").tag(GridSize.medium)
                     Text("Large").tag(GridSize.large)
                 }
-                SettingToggle("Compact track rows", isOn: setting({ $0.compactRows }, { $0.compactRows = $1 }))
+                SettingToggle("Compact track rows", isOn: setting(\.compactRows))
             }
             Section {
-                Picker("Playhead", selection: setting({ $0.playhead }, { $0.playhead = $1 })) {
+                Picker("Playhead", selection: setting(\.playhead)) {
                     ForEach(PlayheadStyle.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
                 SettingToggle(
                     "Count time down",
-                    isOn: setting({ $0.timeRemaining }, { $0.timeRemaining = $1 }),
+                    isOn: setting(\.timeRemaining),
                     hint: "Show how much of the track is left. Tapping the time in the player switches it too."
                 )
-                SettingToggle("Show the lyrics tab", isOn: setting({ $0.showLyrics }, { $0.showLyrics = $1 }))
+                SettingToggle("Show the lyrics tab", isOn: setting(\.showLyrics))
             } header: {
                 Text("Player")
             } footer: {
@@ -318,14 +326,12 @@ private struct AppearanceSettings: View {
             Section {
                 SettingToggle(
                     "Reduce motion",
-                    isOn: setting({ $0.reduceMotion }, { $0.reduceMotion = $1 }),
+                    isOn: setting(\.reduceMotion),
                     hint: "Stops animated colour changes, sliding highlights and playhead effects. Kultr also follows Reduce Motion in iOS's Accessibility settings."
                 )
             }
         }
-        .navigationTitle("Appearance")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("Appearance")
     }
 }
 
@@ -386,9 +392,7 @@ private struct HomeSettings: View {
         }
         .environment(\.editMode, .constant(.active))
         .animation(theme.spring, value: s.homeTiles)
-        .navigationTitle("Home page")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("Home page")
     }
 }
 
@@ -403,51 +407,49 @@ private struct PlaybackSettings: View {
             Section {
                 SettingToggle(
                     "Crossfade between tracks",
-                    isOn: setting({ $0.crossfadeEnabled }, { $0.crossfadeEnabled = $1 }),
+                    isOn: setting(\.crossfadeEnabled),
                     hint: "Two decks play at once for the length of the fade."
                 )
                 SettingSlider(label: "Crossfade length", value: s.crossfadeSeconds, range: 1...20, format: { "\(Int($0)) s" }) { v in
                     update { $0.crossfadeSeconds = v.rounded() }
                 }
                 .disabled(!s.crossfadeEnabled)
-                Picker("Fade shape", selection: setting({ $0.crossfadeCurve }, { $0.crossfadeCurve = $1 })) {
+                Picker("Fade shape", selection: setting(\.crossfadeCurve)) {
                     ForEach(CrossfadeCurve.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
                 .disabled(!s.crossfadeEnabled)
                 SettingToggle(
                     "Also fade when you skip",
-                    isOn: setting({ $0.crossfadeOnSkip }, { $0.crossfadeOnSkip = $1 }),
+                    isOn: setting(\.crossfadeOnSkip),
                     hint: "A short fade instead of a hard cut on next and previous."
                 )
                 SettingToggle(
                     "Gapless playback",
-                    isOn: setting({ $0.gapless }, { $0.gapless = $1 }),
+                    isOn: setting(\.gapless),
                     hint: "With crossfade off, the next track starts the instant this one ends."
                 )
             }
             Section {
                 SettingToggle(
                     "Karousel",
-                    isOn: setting({ $0.karousel }, { $0.karousel = $1 }),
+                    isOn: setting(\.karousel),
                     hint: "When the queue runs out, music like what's been playing keeps coming: similar songs, artists like these and your own favourites. Its songs show under their own heading in Up next. Tapping the shuffle button twice turns it on too."
                 )
             }
             Section {
                 SettingToggle(
                     "Resume where you left off",
-                    isOn: setting({ $0.resumeOnStart }, { $0.resumeOnStart = $1 }),
+                    isOn: setting(\.resumeOnStart),
                     hint: "Restores the queue and position when Kultr opens. Pressing play on headphones or in Control Center picks it up too."
                 )
                 SettingToggle(
                     "Send plays to Navidrome",
-                    isOn: setting({ $0.scrobble }, { $0.scrobble = $1 }),
+                    isOn: setting(\.scrobble),
                     hint: "Counts each play on your server, so recently and most played are the same on every device and survive reinstalling. Plays made offline are sent, with their real time, once you are back."
                 )
             }
         }
-        .navigationTitle("Playback")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("Playback")
     }
 }
 
@@ -463,14 +465,14 @@ private struct InjektSettings: View {
             Section {
                 SettingToggle(
                     "Enable InjeKt",
-                    isOn: setting({ $0.injektEnabled }, { $0.injektEnabled = $1 }),
+                    isOn: setting(\.injektEnabled),
                     hint: "Beat-matched, key-aware transitions planned from each track's tempo, key and structure."
                 )
             }
             Section("Blending") {
                 SettingToggle(
                     "Beat-match",
-                    isOn: setting({ $0.injektBeatMatch }, { $0.injektBeatMatch = $1 }),
+                    isOn: setting(\.injektBeatMatch),
                     hint: "Start the next track at the tempo of the one playing and line up their bars. It keeps that tempo, so no track ever changes speed while it plays."
                 )
                 SettingSlider(
@@ -480,7 +482,7 @@ private struct InjektSettings: View {
                     format: { "\(Int($0))%" },
                     hint: "Per track. Further apart than this, tracks are crossfaded instead."
                 ) { v in update { $0.injektMaxTempoShift = v.rounded() } }
-                Picker("Transition length", selection: setting({ $0.injektBars }, { $0.injektBars = $1 })) {
+                Picker("Transition length", selection: setting(\.injektBars)) {
                     Text("4 bars").tag(4)
                     Text("8 bars").tag(8)
                     Text("16 bars").tag(16)
@@ -488,17 +490,17 @@ private struct InjektSettings: View {
                 }
                 SettingToggle(
                     "Bass swap",
-                    isOn: setting({ $0.injektBassSwap }, { $0.injektBassSwap = $1 }),
+                    isOn: setting(\.injektBassSwap),
                     hint: "Roll the outgoing bass off before the incoming bass comes up."
                 )
                 SettingToggle(
                     "Harmonic mixing",
-                    isOn: setting({ $0.injektHarmonic }, { $0.injektHarmonic = $1 }),
+                    isOn: setting(\.injektHarmonic),
                     hint: "When keys clash, filter out of the old track instead of blending."
                 )
                 SettingToggle(
                     "Skip long intros",
-                    isOn: setting({ $0.injektSkipIntro }, { $0.injektSkipIntro = $1 }),
+                    isOn: setting(\.injektSkipIntro),
                     hint: "Bring the next track in at its first real downbeat."
                 )
             }
@@ -506,20 +508,18 @@ private struct InjektSettings: View {
             Section("Analysis") {
                 SettingToggle(
                     "Analyse ahead",
-                    isOn: setting({ $0.injektAnalyseAhead }, { $0.injektAnalyseAhead = $1 }),
+                    isOn: setting(\.injektAnalyseAhead),
                     hint: "The current and next track are always analysed when a track starts. This also measures the one after, so skipping ahead lands on a transition that is ready too."
                 )
                 SettingToggle(
                     "Analyse on Wi-Fi only",
-                    isOn: setting({ $0.injektAnalyseOnWifiOnly }, { $0.injektAnalyseOnWifiOnly = $1 }),
+                    isOn: setting(\.injektAnalyseOnWifiOnly),
                     hint: "Never spend mobile data on analysis."
                 )
             }
             .disabled(!on)
         }
-        .navigationTitle("InjeKt")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("InjeKt")
     }
 }
 
@@ -532,7 +532,7 @@ private struct AudioSettings: View {
         let s = theme.settings
         Form {
             Section("Volume") {
-                Picker("Volume levelling", selection: setting({ $0.replayGainMode }, { $0.replayGainMode = $1 })) {
+                Picker("Volume levelling", selection: setting(\.replayGainMode)) {
                     ForEach(ReplayGainMode.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
                 SettingSlider(label: "ReplayGain pre-amp", value: s.replayGainPreamp, range: -12...12, format: signed) { v in
@@ -541,12 +541,12 @@ private struct AudioSettings: View {
                 .disabled(s.replayGainMode == .off)
             }
             Section {
-                Picker("On Wi-Fi", selection: setting({ $0.preferredBitrate }, { $0.preferredBitrate = $1 })) {
-                    ForEach(BITRATES.map { $0.0 }, id: \.self) { value in Text(bitrateLabel(value)).tag(value) }
+                Picker("On Wi-Fi", selection: setting(\.preferredBitrate)) {
+                    BitrateOptions()
                 }
-                Picker("On mobile data", selection: setting({ $0.preferredBitrateMobile }, { $0.preferredBitrateMobile = $1 })) {
+                Picker("On mobile data", selection: setting(\.preferredBitrateMobile)) {
                     Text("Same as Wi-Fi").tag(-1)
-                    ForEach(BITRATES.map { $0.0 }, id: \.self) { value in Text(bitrateLabel(value)).tag(value) }
+                    BitrateOptions()
                 }
                 Picker("Transcode format", selection: setting({ ["", "mp3", "aac"].contains($0.preferredFormat) ? $0.preferredFormat : "" }, { $0.preferredFormat = $1 })) {
                     Text("Server default").tag("")
@@ -559,9 +559,7 @@ private struct AudioSettings: View {
                 Text("Lower bitrates are transcoded by your server, in the format chosen here. iPhones cannot play Opus or Vorbis streams, so those are not offered.")
             }
         }
-        .navigationTitle("Audio")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("Audio")
     }
 }
 
@@ -575,7 +573,7 @@ private struct EqualiserSettings: View {
         let gains = s.eqBandGains
         Form {
             Section {
-                SettingToggle("Enable the equaliser", isOn: setting({ $0.eqEnabled }, { $0.eqEnabled = $1 }))
+                SettingToggle("Enable the equaliser", isOn: setting(\.eqEnabled))
                 Picker("Preset", selection: Binding(
                     get: { s.eqPreset },
                     set: { name in AppGraph.shared.settings.replace(AppGraph.shared.settings.current.withEqPreset(name)) }
@@ -614,9 +612,7 @@ private struct EqualiserSettings: View {
             }
             .disabled(!s.eqEnabled)
         }
-        .navigationTitle("Equaliser")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("Equaliser")
     }
 }
 
@@ -673,13 +669,13 @@ private struct OfflineSettings: View {
                 SettingSlider(label: "Parallel downloads", value: Double(s.offlineConcurrency), range: 1...8, format: { "\(Int($0))" }) { v in
                     update { $0.offlineConcurrency = Int(v) }
                 }
-                Picker("Download quality", selection: setting({ $0.offlineBitrate }, { $0.offlineBitrate = $1 })) {
-                    ForEach(BITRATES.map { $0.0 }, id: \.self) { value in Text(bitrateLabel(value)).tag(value) }
+                Picker("Download quality", selection: setting(\.offlineBitrate)) {
+                    BitrateOptions()
                 }
-                SettingToggle("Download on Wi-Fi only", isOn: setting({ $0.offlineWifiOnly }, { $0.offlineWifiOnly = $1 }))
+                SettingToggle("Download on Wi-Fi only", isOn: setting(\.offlineWifiOnly))
                 SettingToggle(
                     "Prefer offline copies",
-                    isOn: setting({ $0.offlineFirst }, { $0.offlineFirst = $1 }),
+                    isOn: setting(\.offlineFirst),
                     hint: "Play a downloaded file instead of streaming when one exists."
                 )
                 Button("Open Downloads") { graph.actions.openDownloads(.offline) }
@@ -689,7 +685,7 @@ private struct OfflineSettings: View {
                 Text("Original keeps the file exactly as it is on the server.")
             }
             Section {
-                Picker("Stream cache", selection: setting({ $0.streamCacheMb }, { $0.streamCacheMb = $1 })) {
+                Picker("Stream cache", selection: setting(\.streamCacheMb)) {
                     Text("256 MB").tag(256)
                     Text("1 GB").tag(1024)
                     Text("2 GB").tag(2048)
@@ -708,9 +704,7 @@ private struct OfflineSettings: View {
                 Text("Recently streamed audio is kept so replays do not refetch.")
             }
         }
-        .navigationTitle("Offline and cache")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("Offline and cache")
     }
 }
 
@@ -790,12 +784,10 @@ private struct ServerSettings: View {
                 }
             }
         }
-        .navigationTitle("Servers")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("Servers")
         .alert(
             "Rename server",
-            isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } }),
+            isPresented: Binding(isPresent: $renaming),
             presenting: renaming
         ) { profile in
             TextField(hostLabel(profile.serverUrl), text: $newName)
@@ -806,7 +798,7 @@ private struct ServerSettings: View {
         }
         .alert(
             "Forget \(forget?.label ?? "")?",
-            isPresented: Binding(get: { forget != nil }, set: { if !$0 { forget = nil } }),
+            isPresented: Binding(isPresent: $forget),
             presenting: forget
         ) { profile in
             Button("Cancel", role: .cancel) {}
@@ -897,9 +889,7 @@ private struct LocalMusicSettings: View {
                 }
             }
         }
-        .navigationTitle("Music on this iPhone")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("Music on this iPhone")
         .musicFolderPicker(isPresented: $picking) { _ in
             // The first folder starts the library on the phone; while it is in use, folders are read in at once.
             graph.auth.ensureLocalLibrary()
@@ -951,10 +941,8 @@ private struct BackupSettings: View {
                 Text("Reset")
             }
         }
-        .navigationTitle("Backup and reset")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
-        .alert("Settings imported", isPresented: Binding(get: { report != nil }, set: { if !$0 { report = nil } })) {
+        .settingsPage("Backup and reset")
+        .alert("Settings imported", isPresented: Binding(isPresent: $report)) {
             Button("OK", role: .cancel) { report = nil }
         } message: {
             Text(report ?? "")
@@ -1141,9 +1129,7 @@ private struct AboutSection: View {
                 link("Get in touch", "bubble.left.and.bubble.right.fill", "Questions, ideas, or something broken: @evropiani on Discord", DISCORD)
             }
         }
-        .navigationTitle("About")
-        .navigationBarTitleDisplayMode(.inline)
-        .settingsPage()
+        .settingsPage("About")
     }
 
     private func link(_ title: String, _ icon: String, _ detail: String, _ address: String) -> some View {

@@ -67,15 +67,7 @@ struct StatsScreen: View {
 
                         if !recent.isEmpty {
                             SectionHeader("Played recently", icon: "clock.arrow.circlepath")
-                            ForEach(Array(recent.enumerated()), id: \.element.id) { index, song in
-                                SongRow(
-                                    song: song,
-                                    isCurrent: song.id == graph.player.state.current?.id,
-                                    downloaded: graph.offline.downloadedIds.contains(song.id),
-                                    compact: theme.settings.compactRows,
-                                    onTap: { graph.actions.play(recent, index) }
-                                )
-                            }
+                            SongRows(songs: recent, keyPrefix: "recent") { graph.actions.play(recent, $0) }
                         }
                         if !mostPlayed.isEmpty {
                             SectionHeader("Played the most", icon: "play.fill")

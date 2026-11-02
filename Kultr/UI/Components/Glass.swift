@@ -1,100 +1,36 @@
 import SwiftUI
 import UIKit
 
-// Liquid glass on iOS 26 and later; a frosted material with a lit edge before.
-// Glass is for the layer that floats over the content (tab bar, mini player,
-// floating buttons), not for the content itself.
+// Liquid glass, for the layer that floats over the content (tab bar, mini
+// player, floating buttons), not for the content itself.
 
 private struct GlassSurface<S: InsettableShape>: ViewModifier {
-    @Environment(\.kultr) private var theme
     let shape: S
     var tint: Color?
     var interactive = false
-    var shadow = true
 
     func body(content: Content) -> some View {
-        if #available(iOS 26.0, *) {
-            content.glassEffect(glass, in: shape)
-        } else {
-            // As close to liquid glass as a material gets: a thin, see-through
-            // frost so the colours behind show, a bright rim where light
-            // catches the edge, and a soft shadow.
-            let dark = theme.colors.dark
-            content
-                .background(
-                    LinearGradient(
-                        colors: [.white.opacity(dark ? 0.10 : 0.45), .white.opacity(dark ? 0.02 : 0.15)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    ),
-                    in: shape
-                )
-                .background(tint.map { $0.opacity(0.18) } ?? .clear, in: shape)
-                .background(Material.ultraThinMaterial, in: shape)
-                .overlay(
-                    shape.strokeBorder(
-                        LinearGradient(
-                            colors: [.white.opacity(dark ? 0.45 : 0.95), .white.opacity(dark ? 0.08 : 0.3), .white.opacity(dark ? 0.2 : 0.6)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
-                        lineWidth: 1
-                    )
-                )
-                // The thickness: light gathers in the rounded edge all the way round,
-                // brightest along the top, like a slab of glass lying on the screen.
-                .overlay(
-                    shape
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [.white.opacity(dark ? 0.35 : 0.9), .white.opacity(dark ? 0.1 : 0.35), .white.opacity(dark ? 0.22 : 0.6)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ),
-                            lineWidth: 5
-                        )
-                        .blur(radius: 4)
-                        .clipShape(shape)
-                        .allowsHitTesting(false)
-                )
-                .overlay(
-                    // A faint dark line outside the rim, so the edge reads against light content too.
-                    shape.stroke(.black.opacity(dark ? 0.35 : 0.08), lineWidth: 0.5).allowsHitTesting(false)
-                )
-                .shadow(color: .black.opacity(shadow ? (dark ? 0.3 : 0.1) : 0), radius: 14, y: 6)
-        }
-    }
-
-    @available(iOS 26.0, *)
-    private var glass: Glass {
         var glass = Glass.regular
         if let tint { glass = glass.tint(tint) }
         if interactive { glass = glass.interactive() }
-        return glass
+        return content.glassEffect(glass, in: shape)
     }
 }
 
 extension View {
-    /** A piece of glass in [shape]: liquid glass on iOS 26, frosted before. */
-    func kultrGlass<S: InsettableShape>(_ shape: S, tint: Color? = nil, interactive: Bool = false, shadow: Bool = true) -> some View {
-        modifier(GlassSurface(shape: shape, tint: tint, interactive: interactive, shadow: shadow))
+    /** A piece of liquid glass in [shape]. */
+    func kultrGlass<S: InsettableShape>(_ shape: S, tint: Color? = nil, interactive: Bool = false) -> some View {
+        modifier(GlassSurface(shape: shape, tint: tint, interactive: interactive))
     }
 }
 
-/**
- * Pieces of glass close together melt into each other on iOS 26 (and morph
- * when one appears or goes). Before iOS 26 this is just a stack.
- */
+/** Pieces of glass close together melt into each other, and morph when one appears or goes. */
 struct GlassGroup<Content: View>: View {
     var spacing: CGFloat = 12
     @ViewBuilder let content: Content
 
     var body: some View {
-        if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: spacing) { content }
-        } else {
-            content
-        }
+        GlassEffectContainer(spacing: spacing) { content }
     }
 }
 
@@ -122,12 +58,12 @@ struct GlassIconButton: View {
                 .contentShape(Circle())
         }
         .buttonStyle(PressScaleStyle())
-        .kultrGlass(Circle(), tint: prominent ? c.accent : nil, interactive: true, shadow: false)
+        .kultrGlass(Circle(), tint: prominent ? c.accent : nil, interactive: true)
         .accessibilityLabel(label)
     }
 }
 
-/** A wide button (Play, Shuffle, Connect): glass on iOS 26, filled with the accent when prominent. */
+/** A wide button (Play, Shuffle, Connect): glass, tinted with the accent when prominent. */
 struct WideGlassButton: View {
     @Environment(\.kultr) private var theme
     let title: String
@@ -152,14 +88,7 @@ struct WideGlassButton: View {
         }
         .buttonStyle(PressScaleStyle())
         .disabled(!enabled)
-        .background(shape.fill(prominent && !Self.glassTints ? c.accent : .clear))
-        .kultrGlass(shape, tint: prominent ? c.accent : nil, interactive: true, shadow: false)
-    }
-
-    /** On iOS 26 the glass itself carries the accent; before, the button is filled with it. */
-    private static var glassTints: Bool {
-        if #available(iOS 26.0, *) { return true }
-        return false
+        .kultrGlass(shape, tint: prominent ? c.accent : nil, interactive: true)
     }
 }
 

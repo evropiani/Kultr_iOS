@@ -684,26 +684,8 @@ struct SearchResult3: Decodable, Hashable {
     }
 }
 
-struct Starred: Decodable, Hashable {
-    var artist: [Artist]
-    var album: [Album]
-    var song: [Song]
-
-    init(artist: [Artist] = [], album: [Album] = [], song: [Song] = []) {
-        self.artist = artist
-        self.album = album
-        self.song = song
-    }
-
-    enum CodingKeys: String, CodingKey { case artist, album, song }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        artist = c.list(Artist.self, .artist) ?? []
-        album = c.list(Album.self, .album) ?? []
-        song = c.list(Song.self, .song) ?? []
-    }
-}
+/** getStarred2 answers with the same three lists a search does. */
+typealias Starred = SearchResult3
 
 struct ServerInfo: Decodable, Hashable {
     var version: String?

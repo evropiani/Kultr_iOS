@@ -128,10 +128,7 @@ final class OfflineManager {
             .appendingPathComponent(String(md5Hex(profileId).prefix(16)), isDirectory: true)
         if !FileManager.default.fileExists(atPath: url.path) {
             try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-            var excluded = url
-            var values = URLResourceValues()
-            values.isExcludedFromBackup = true
-            try? excluded.setResourceValues(values)
+            url.excludeFromBackup()
         }
         return url
     }

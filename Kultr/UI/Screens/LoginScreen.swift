@@ -125,51 +125,46 @@ struct LoginScreen: View {
     }
 
     private func field(_ title: String, text: Binding<String>, icon: String? = nil, placeholder: String) -> some View {
-        let c = theme.colors
-        return VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(KFont.labelMedium).foregroundStyle(c.ink2)
-            HStack(spacing: 10) {
-                if let icon { Image(systemName: icon).foregroundStyle(c.ink3) }
-                TextField("", text: text, prompt: Text(placeholder).foregroundStyle(c.ink4))
-                    .foregroundStyle(c.ink)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: theme.radii.xs, style: .continuous).strokeBorder(c.edge, lineWidth: 1))
+        box(title) {
+            if let icon { Image(systemName: icon).foregroundStyle(theme.colors.ink3) }
+            TextField("", text: text, prompt: Text(placeholder).foregroundStyle(theme.colors.ink4))
         }
     }
 
     private var passwordField: some View {
+        box("Password") {
+            Group {
+                if showPassword {
+                    TextField("", text: $password)
+                } else {
+                    SecureField("", text: $password)
+                }
+            }
+            .textContentType(.password)
+            .submitLabel(.go)
+            .onSubmit { submit() }
+            Button {
+                showPassword.toggle()
+            } label: {
+                Image(systemName: showPassword ? "eye.slash" : "eye").foregroundStyle(theme.colors.ink3)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(showPassword ? "Hide password" : "Show password")
+        }
+    }
+
+    /** A labelled, outlined text box; nothing typed in it is corrected or capitalised. */
+    private func box<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
         let c = theme.colors
         return VStack(alignment: .leading, spacing: 4) {
-            Text("Password").font(KFont.labelMedium).foregroundStyle(c.ink2)
-            HStack(spacing: 10) {
-                Group {
-                    if showPassword {
-                        TextField("", text: $password)
-                    } else {
-                        SecureField("", text: $password)
-                    }
-                }
+            Text(title).font(KFont.labelMedium).foregroundStyle(c.ink2)
+            HStack(spacing: 10) { content() }
                 .foregroundStyle(c.ink)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-                .textContentType(.password)
-                .submitLabel(.go)
-                .onSubmit { submit() }
-                Button {
-                    showPassword.toggle()
-                } label: {
-                    Image(systemName: showPassword ? "eye.slash" : "eye").foregroundStyle(c.ink3)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(showPassword ? "Hide password" : "Show password")
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: theme.radii.xs, style: .continuous).strokeBorder(c.edge, lineWidth: 1))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: theme.radii.xs, style: .continuous).strokeBorder(c.edge, lineWidth: 1))
         }
     }
 

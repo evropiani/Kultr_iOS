@@ -1,43 +1,57 @@
 import SwiftUI
 
 extension GridSize {
-    var minCell: CGFloat {
-        switch self {
-        case .small: return 104
-        case .medium: return 144
-        case .large: return 190
+    /** A card grid's columns: as many as fit at this size. */
+    var columns: [GridItem] {
+        let minimum: CGFloat = switch self {
+        case .small: 104
+        case .medium: 144
+        case .large: 190
         }
+        return [GridItem(.adaptive(minimum: minimum), spacing: 0, alignment: .top)]
+    }
+}
+
+/** A grid card: artwork over a one-line title and subtitle. */
+private struct CardLayout<Art: View>: View {
+    @Environment(\.kultr) private var theme
+    let title: String
+    var subtitle: String?
+    var alignment: HorizontalAlignment = .leading
+    @ViewBuilder let art: Art
+
+    var body: some View {
+        VStack(alignment: alignment, spacing: 0) {
+            art
+            Spacer().frame(height: 8)
+            Text(title)
+                .font(KFont.bodyMedium.weight(.semibold))
+                .foregroundStyle(theme.colors.ink)
+            if let subtitle {
+                Text(subtitle)
+                    .font(KFont.bodySmall)
+                    .foregroundStyle(theme.colors.ink3)
+            }
+        }
+        .lineLimit(1)
+        .padding(6)
     }
 }
 
 struct AlbumCard: View {
-    @Environment(\.kultr) private var theme
     let album: Album
 
     var body: some View {
         let sub = [album.artist, album.year.map(String.init)].compactMap { $0 }.joined(separator: " · ")
-        VStack(alignment: .leading, spacing: 0) {
+        CardLayout(title: album.name, subtitle: sub) {
             ArtworkFill(coverId: album.coverArt ?? album.id, label: album.name)
-            Spacer().frame(height: 8)
-            Text(album.name)
-                .font(KFont.bodyMedium.weight(.semibold))
-                .foregroundStyle(theme.colors.ink)
-                .lineLimit(1)
-            Text(sub)
-                .font(KFont.bodySmall)
-                .foregroundStyle(theme.colors.ink3)
-                .lineLimit(1)
         }
-        .padding(6)
         .contentShape(Rectangle())
         .onTapGesture { AppGraph.shared.actions.openAlbum(album.id) }
         .contextMenu {
             CollectionMenuItems(name: album.name) { await AppGraph.shared.library.songsOfAlbumNow(album.id) }
             Divider()
-            let starred = AppGraph.shared.ui.isStarred(album)
-            Button { AppGraph.shared.actions.setAlbumFavourite(album, !starred) } label: {
-                Label(starred ? "Remove from favourites" : "Add to favourites", systemImage: starred ? "heart.slash" : "heart")
-            }
+            FavouriteMenuItem(starred: AppGraph.shared.ui.isStarred(album)) { AppGraph.shared.actions.setAlbumFavourite(album, $0) }
             if album.artistId != nil {
                 Button { AppGraph.shared.actions.openArtist(album.artistId) } label: { Label("Go to artist", systemImage: "person.fill") }
             }
@@ -46,60 +60,33 @@ struct AlbumCard: View {
 }
 
 struct ArtistCard: View {
-    @Environment(\.kultr) private var theme
     let artist: Artist
 
     var body: some View {
         let external = artist.coverArt == nil && (artist.artistImageUrl ?? "").hasPrefix("http") ? URL(string: artist.artistImageUrl!) : nil
-        VStack(spacing: 0) {
+        CardLayout(title: artist.name, subtitle: artist.albumCount.map { Format.count($0, "album") }, alignment: .center) {
             ArtworkFill(coverId: artist.coverArt, circle: true, label: artist.name, imageUrl: external)
-            Spacer().frame(height: 8)
-            Text(artist.name)
-                .font(KFont.bodyMedium.weight(.semibold))
-                .foregroundStyle(theme.colors.ink)
-                .lineLimit(1)
-                .multilineTextAlignment(.center)
-            if let count = artist.albumCount {
-                Text(Format.count(count, "album"))
-                    .font(KFont.bodySmall)
-                    .foregroundStyle(theme.colors.ink3)
-            }
         }
-        .padding(6)
         .contentShape(Rectangle())
         .onTapGesture { AppGraph.shared.actions.openArtist(artist.id) }
         .contextMenu {
             CollectionMenuItems(name: artist.name) { await AppGraph.shared.actions.artistSongs(artist) }
             Divider()
-            let starred = AppGraph.shared.ui.isStarred(artist)
-            Button { AppGraph.shared.actions.setArtistFavourite(artist, !starred) } label: {
-                Label(starred ? "Remove from favourites" : "Add to favourites", systemImage: starred ? "heart.slash" : "heart")
-            }
+            FavouriteMenuItem(starred: AppGraph.shared.ui.isStarred(artist)) { AppGraph.shared.actions.setArtistFavourite(artist, $0) }
         }
     }
 }
 
 struct PlaylistCard: View {
-    @Environment(\.kultr) private var theme
     let playlist: Playlist
 
     var body: some View {
         let sub = [playlist.songCount.map { Format.count($0, "track") }, playlist.duration.map { Format.duration(Int64($0)) }]
             .compactMap { $0 }
             .joined(separator: " · ")
-        VStack(alignment: .leading, spacing: 0) {
+        CardLayout(title: playlist.name, subtitle: sub) {
             ArtworkFill(coverId: playlist.coverArt, label: playlist.name)
-            Spacer().frame(height: 8)
-            Text(playlist.name)
-                .font(KFont.bodyMedium.weight(.semibold))
-                .foregroundStyle(theme.colors.ink)
-                .lineLimit(1)
-            Text(sub)
-                .font(KFont.bodySmall)
-                .foregroundStyle(theme.colors.ink3)
-                .lineLimit(1)
         }
-        .padding(6)
         .contentShape(Rectangle())
         .onTapGesture { AppGraph.shared.actions.openPlaylist(playlist.id) }
         .contextMenu {
@@ -108,26 +95,28 @@ struct PlaylistCard: View {
     }
 }
 
+/** A long-press menu's favourite toggle; [set] gets the new state. */
+private struct FavouriteMenuItem: View {
+    let starred: Bool
+    let set: (Bool) -> Void
+
+    var body: some View {
+        Button { set(!starred) } label: {
+            Label(starred ? "Remove from favourites" : "Add to favourites", systemImage: starred ? "heart.slash" : "heart")
+        }
+    }
+}
+
 struct StationCard: View {
-    @Environment(\.kultr) private var theme
     let station: RadioStation
 
     var body: some View {
         Button {
             AppGraph.shared.actions.play([station.asSong()])
         } label: {
-            VStack(alignment: .leading, spacing: 0) {
+            CardLayout(title: station.name, subtitle: "Radio") {
                 ArtworkFill(coverId: nil, label: station.name)
-                Spacer().frame(height: 8)
-                Text(station.name)
-                    .font(KFont.bodyMedium)
-                    .foregroundStyle(theme.colors.ink)
-                    .lineLimit(1)
-                Text("Radio")
-                    .font(KFont.bodySmall)
-                    .foregroundStyle(theme.colors.ink3)
             }
-            .padding(6)
         }
         .buttonStyle(PressScaleStyle())
     }

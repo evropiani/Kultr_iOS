@@ -88,25 +88,12 @@ final class Biquad {
         block[4] = na2 / na0
     }
 
-    func lowShelf(_ rate: Int, _ frequency: Double, _ gainDb: Double) {
-        bypass = abs(gainDb) < 0.05
-        if bypass { return }
-        let a = pow(10, gainDb / 40)
-        let w0 = 2 * Double.pi * min(frequency, Double(rate) * 0.45) / Double(rate)
-        let cw = cos(w0)
-        let alpha = sin(w0) / 2 * 2.0.squareRoot()
-        let sa = 2 * a.squareRoot() * alpha
-        set(
-            a * ((a + 1) - (a - 1) * cw + sa),
-            2 * a * ((a - 1) - (a + 1) * cw),
-            a * ((a + 1) - (a - 1) * cw - sa),
-            (a + 1) + (a - 1) * cw + sa,
-            -2 * ((a - 1) + (a + 1) * cw),
-            (a + 1) + (a - 1) * cw - sa
-        )
-    }
+    func lowShelf(_ rate: Int, _ frequency: Double, _ gainDb: Double) { shelf(rate, frequency, gainDb, -1) }
 
-    func highShelf(_ rate: Int, _ frequency: Double, _ gainDb: Double) {
+    func highShelf(_ rate: Int, _ frequency: Double, _ gainDb: Double) { shelf(rate, frequency, gainDb, 1) }
+
+    /** The cookbook shelf: [s] is -1 for a low shelf and 1 for a high one. */
+    private func shelf(_ rate: Int, _ frequency: Double, _ gainDb: Double, _ s: Double) {
         bypass = abs(gainDb) < 0.05
         if bypass { return }
         let a = pow(10, gainDb / 40)
@@ -115,12 +102,12 @@ final class Biquad {
         let alpha = sin(w0) / 2 * 2.0.squareRoot()
         let sa = 2 * a.squareRoot() * alpha
         set(
-            a * ((a + 1) + (a - 1) * cw + sa),
-            -2 * a * ((a - 1) + (a + 1) * cw),
-            a * ((a + 1) + (a - 1) * cw - sa),
-            (a + 1) - (a - 1) * cw + sa,
-            2 * ((a - 1) - (a + 1) * cw),
-            (a + 1) - (a - 1) * cw - sa
+            a * ((a + 1) + s * (a - 1) * cw + sa),
+            -2 * s * a * ((a - 1) + s * (a + 1) * cw),
+            a * ((a + 1) + s * (a - 1) * cw - sa),
+            (a + 1) - s * (a - 1) * cw + sa,
+            2 * s * ((a - 1) - s * (a + 1) * cw),
+            (a + 1) - s * (a - 1) * cw - sa
         )
     }
 

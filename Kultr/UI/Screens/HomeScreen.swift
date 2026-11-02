@@ -151,8 +151,6 @@ private struct HomeShelf: View {
 
     var body: some View {
         let graph = AppGraph.shared
-        let playing = graph.player.state.current?.id
-        let downloaded = graph.offline.downloadedIds
         // A stack, not a Group: a Group with nothing in it yet is no view at
         // all, and its .task would never run to fill it.
         VStack(alignment: .leading, spacing: 0) {
@@ -161,15 +159,7 @@ private struct HomeShelf: View {
                 if !songs.isEmpty {
                     header
                     VStack(spacing: 0) {
-                        ForEach(Array(songs.prefix(10).enumerated()), id: \.offset) { index, song in
-                            SongRow(
-                                song: song,
-                                isCurrent: song.id == playing,
-                                downloaded: downloaded.contains(song.id),
-                                compact: theme.settings.compactRows,
-                                onTap: { graph.actions.play(Array(songs.prefix(10)), index) }
-                            )
-                        }
+                        SongRows(songs: Array(songs.prefix(10)), keyPrefix: tile.id) { graph.actions.play(Array(songs.prefix(10)), $0) }
                     }
                 }
             case .albums:
