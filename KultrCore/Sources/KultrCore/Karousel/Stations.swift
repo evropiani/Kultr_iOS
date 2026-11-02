@@ -164,7 +164,13 @@ struct Station: Codable, Hashable, Identifiable {
         }
     }
 
-    /** The first day a track must have been added on to fit [addedDays], as "2026-01-31". */
+    /** A station per decade, made from the years in the library. */
+    static func decade(_ start: Int) -> Station {
+        Station(id: "decade-\(start)", name: "\(start)s", icon: "calendar", years: Bounds(Double(start), Double(start + 9)))
+    }
+}
+
+/** The first day a track must have been added on to fit [addedDays], as "2026-01-31". */
 func addedSinceDay(_ addedDays: Int?, now: Date = Date()) -> String? {
     guard let addedDays else { return nil }
     let formatter = DateFormatter()
@@ -172,12 +178,6 @@ func addedSinceDay(_ addedDays: Int?, now: Date = Date()) -> String? {
     formatter.timeZone = TimeZone(identifier: "UTC")
     formatter.dateFormat = "yyyy-MM-dd"
     return formatter.string(from: now.addingTimeInterval(-Double(addedDays) * 86_400))
-}
-
-/** A station per decade, made from the years in the library. */
-    static func decade(_ start: Int) -> Station {
-        Station(id: "decade-\(start)", name: "\(start)s", icon: "calendar", years: Bounds(Double(start), Double(start + 9)))
-    }
 }
 
 /** The stations Kultr starts with; each can be changed or removed. */

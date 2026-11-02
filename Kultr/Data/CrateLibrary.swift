@@ -80,7 +80,7 @@ final class CrateLibrary {
     func songs(_ crate: Crate) async -> [Song] {
         let library = graph.library
         if let rules = crate.rules {
-            return await graph.stations.pool(rules, playableOnly: false).map(\.0).sorted { a, b in
+            return await graph.stations.pool(rules, playableOnly: false).map { $0.0 }.sorted { a, b in
                 let x = (Format.sortKey(a.artist), a.album ?? "", a.discNumber ?? 1, a.track ?? 0)
                 let y = (Format.sortKey(b.artist), b.album ?? "", b.discNumber ?? 1, b.track ?? 0)
                 return x < y
