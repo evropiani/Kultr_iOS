@@ -66,6 +66,10 @@ enum ScreenshotDriver {
             graph.ui.searchQuery = "love"
         case "settings": actions.selectTab(.settings)
         case "stats": actions.navigate(.stats)
+        case "recap":
+            await seedListening()
+            actions.navigate(.recap)
+        case "whatsnew": graph.ui.whatsNew = true
         case "sync": actions.navigate(.sync)
         case "downloads": actions.openDownloads(.now)
         case "album":
@@ -98,6 +102,33 @@ enum ScreenshotDriver {
             }
         default:
             actions.selectTab(.home)
+        }
+    }
+
+    /**
+     * Made-up plays on this phone, this month and last, so the recap has
+     * something to show. Marked as sent, so none of it reaches the demo server.
+     */
+    private static func seedListening() async {
+        let library = AppGraph.shared.library
+        guard let db = library.db, db.recentHistory(1).isEmpty else { return }
+        let songs = await library.randomSongs(30)
+        let calendar = Calendar.current
+        let now = Format.nowMs()
+        guard let start = calendar.dateInterval(of: .month, for: Date())?.start else { return }
+        let monthStart = Int64(start.timeIntervalSince1970 * 1000)
+        let span = max(3_600_000, now - monthStart - 60_000)
+        var plays: [(String, Int, Int64)] = []
+        for (rank, song) in songs.enumerated() {
+            for _ in 0..<max(1, 6 - rank / 4) { plays.append((song.id, song.duration ?? 200, 0)) }
+        }
+        for (i, play) in plays.enumerated() {
+            let at = monthStart + span * Int64(i) / Int64(max(1, plays.count))
+            _ = try? db.insertHistory(HistoryEntry(songId: play.0, playedAt: at, seconds: play.1, completed: true, source: "screenshot", submitted: true))
+        }
+        for (i, song) in songs.prefix(12).enumerated() {
+            let at = monthStart - Int64(i + 1) * 86_400_000
+            _ = try? db.insertHistory(HistoryEntry(songId: song.id, playedAt: at, seconds: song.duration ?? 200, completed: true, source: "screenshot", submitted: true))
         }
     }
 

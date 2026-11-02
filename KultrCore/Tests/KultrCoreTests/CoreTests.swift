@@ -75,6 +75,43 @@ final class UtilTests: XCTestCase {
         XCTAssertEqual(album, 0.7079, accuracy: 0.001)
         XCTAssertEqual(replayGainFor(song, Settings().with { $0.replayGainMode = .off }), 1)
     }
+
+    func testMonthRecapCountsOneMonth() {
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = TimeZone(identifier: "UTC")!
+        func play(_ id: String, _ at: String, _ seconds: Int) -> HistoryEntry {
+            HistoryEntry(songId: id, playedAt: Format.isoMs(at)!, seconds: seconds, completed: true, source: "", submitted: true)
+        }
+        let songs = [
+            "a": Song(id: "a", title: "A", album: "One", artist: "Ann", albumId: "al1", artistId: "ar1"),
+            "b": Song(id: "b", title: "B", album: "One", artist: "Ann", albumId: "al1", artistId: "ar1"),
+            "c": Song(id: "c", title: "C", album: "Two", artist: "Bo", albumId: "al2", artistId: "ar2"),
+        ]
+        let history = [
+            play("a", "2026-09-20T10:00:00Z", 100),
+            play("a", "2026-10-01T09:00:00Z", 200),
+            play("a", "2026-10-03T09:00:00Z", 200),
+            play("b", "2026-10-03T12:00:00Z", 180),
+            play("c", "2026-10-15T12:00:00Z", 240),
+            play("gone", "2026-10-16T12:00:00Z", 60),
+            play("c", "2026-11-01T00:00:00Z", 240),
+        ]
+        XCTAssertEqual(recapMonths(history, calendar: utc).map { Format.iso(Int64($0.timeIntervalSince1970 * 1000)) },
+                       ["2026-11-01T00:00:00Z", "2026-10-01T00:00:00Z", "2026-09-01T00:00:00Z"])
+        let october = monthRecap(history, songs: songs, month: Date(timeIntervalSince1970: Double(Format.isoMs("2026-10-20T00:00:00Z")!) / 1000), calendar: utc)
+        XCTAssertEqual(october.plays, 5)
+        XCTAssertEqual(october.seconds, 880)
+        XCTAssertEqual(october.tracks, 4)
+        XCTAssertEqual(october.artists, 2)
+        XCTAssertEqual(october.topSongs.map { $0.item.id }, ["a", "c", "b"])
+        XCTAssertEqual(october.topSongs.first?.plays, 2)
+        XCTAssertEqual(october.topArtists.map { $0.item.name }, ["Ann", "Bo"])
+        XCTAssertEqual(october.topAlbums.map { $0.item.id }, ["al1", "al2"])
+        XCTAssertEqual(october.busiestDay?.seconds, 380)
+        XCTAssertEqual(october.firstListens, 3)
+        XCTAssertEqual(october.previousSeconds, 100)
+        XCTAssertTrue(monthRecap(history, songs: songs, month: Date(timeIntervalSince1970: 0), calendar: utc).isEmpty)
+    }
 }
 
 final class DspTests: XCTestCase {
@@ -261,6 +298,16 @@ final class InjektTests: XCTestCase {
         XCTAssertEqual(planTransition(current: radio, next: b, context: context, settings: Settings(), analysisA: nil, analysisB: nil).type, .cut)
         let intro = planTransition(current: a, next: b, context: context, settings: Settings(), analysisA: analysis("a", 120), analysisB: analysis("b", 120, introEnd: 17.3))
         XCTAssertGreaterThanOrEqual(intro.inStartOffset, 17.3)
+    }
+
+    func testCalmestFirstPutsQuietSlowTracksFirst() {
+        let loud = analysis("loud", 128, energy: 0.9)
+        let quiet = analysis("quiet", 80, energy: 0.2)
+        XCTAssertLessThan(calmness(quiet), calmness(loud))
+        XCTAssertEqual(calmness(nil), 0.5)
+        let table = ["loud": loud, "quiet": quiet]
+        let order = calmestFirst([Song(id: "loud"), Song(id: "unknown"), Song(id: "quiet")]) { table[$0.id] }
+        XCTAssertEqual(order.map { $0.id }, ["quiet", "unknown", "loud"])
     }
 
     func testAffinityPrefersSimilarTracks() {
@@ -504,6 +551,22 @@ final class DatabaseTests: XCTestCase {
         try db.putAnalysis(analysis)
         XCTAssertEqual(db.analysis("a"), analysis)
         XCTAssertEqual(db.analysisCount(version: ANALYSIS_VERSION), 1)
+    }
+
+    func testRediscoverFindsLovedAlbumsNotPlayedForAYear() throws {
+        let db = try LibraryDatabase(path: path)
+        let now = Format.isoMs("2026-11-02T00:00:00Z")!
+        let yearAgo = now - 365 * 86_400_000
+        try db.upsertAlbums([
+            Album(id: "old", name: "Old favourite", playCount: 12, played: "2024-05-01T10:00:00.123Z"),
+            Album(id: "recent", name: "On repeat", playCount: 30, played: "2026-10-30T10:00:00Z"),
+            Album(id: "hearted", name: "Hearted, never played", starred: "2023-01-01T00:00:00Z"),
+            Album(id: "phone", name: "Played on this phone", playCount: 5, played: "2024-01-01T00:00:00Z"),
+            Album(id: "once", name: "Played once", playCount: 1, played: "2020-01-01T00:00:00Z"),
+        ])
+        try db.replaceAlbumSongs(["phone": [Song(id: "p1", title: "One", albumId: "phone")]])
+        _ = try db.insertHistory(HistoryEntry(songId: "p1", playedAt: now - 86_400_000, seconds: 200, completed: true, source: "test", submitted: true))
+        XCTAssertEqual(db.forgottenAlbums(before: yearAgo, 10).map { $0.id }, ["old", "hearted"])
     }
 
     /** Run an async throwing call from a synchronous test. */

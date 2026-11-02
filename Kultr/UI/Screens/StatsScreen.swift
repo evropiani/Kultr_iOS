@@ -44,7 +44,8 @@ struct StatsScreen: View {
                 )
                 .frame(maxHeight: .infinity)
             } else if !loaded {
-                LoadingView().frame(maxHeight: .infinity)
+                ScrollView { SkeletonRows(count: 10, artwork: true).padding(.top, 72) }
+                    .scrollDisabled(true)
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
@@ -65,6 +66,8 @@ struct StatsScreen: View {
                         .padding(.top, 8)
                         .padding(.bottom, 12)
 
+                        RecapLink(history: history)
+
                         if !recent.isEmpty {
                             SectionHeader("Played recently")
                             SongRows(songs: recent, keyPrefix: "recent") { graph.actions.play(recent, $0) }
@@ -72,51 +75,12 @@ struct StatsScreen: View {
                         if !mostPlayed.isEmpty {
                             SectionHeader("Played the most")
                             ForEach(Array(mostPlayed.enumerated()), id: \.element.id) { index, song in
-                                HStack(spacing: 0) {
-                                    SongRow(
-                                        song: song,
-                                        isCurrent: song.id == graph.player.state.current?.id,
-                                        downloaded: graph.offline.downloadedIds.contains(song.id),
-                                        compact: theme.settings.compactRows,
-                                        onTap: { graph.actions.play(mostPlayed, index) }
-                                    )
-                                    Text("\(song.playCount ?? 0)×")
-                                        .font(KFont.bodySmall.monospacedDigit())
-                                        .foregroundStyle(c.ink3)
-                                        .padding(.trailing, 12)
-                                }
+                                CountedSongRow(song: song, count: song.playCount ?? 0) { graph.actions.play(mostPlayed, index) }
                             }
                         }
                         if !artists.isEmpty {
                             SectionHeader("Top artists")
-                            let peak = max(1, artists[0].plays)
-                            VStack(alignment: .leading, spacing: 10) {
-                                ForEach(Array(artists.enumerated()), id: \.offset) { _, artist in
-                                    Button {
-                                        graph.actions.openArtist(artist.artistId)
-                                    } label: {
-                                        VStack(alignment: .leading, spacing: 5) {
-                                            HStack {
-                                                Text(artist.name ?? "Unknown artist").foregroundStyle(c.ink).lineLimit(1)
-                                                Spacer()
-                                                Text(Format.count(Int(artist.plays), "play"))
-                                                    .font(KFont.bodySmall.monospacedDigit())
-                                                    .foregroundStyle(c.ink3)
-                                            }
-                                            GeometryReader { proxy in
-                                                Capsule()
-                                                    .fill(c.accent)
-                                                    .frame(width: max(6, proxy.size.width * CGFloat(Double(artist.plays) / Double(peak))))
-                                            }
-                                            .frame(height: 5)
-                                        }
-                                        .contentShape(Rectangle())
-                                    }
-                                    .buttonStyle(PressScaleStyle())
-                                    .disabled(artist.artistId == nil)
-                                }
-                            }
-                            .padding(.horizontal, 16)
+                            PlayBars(rows: artists.map { PlayBar(name: $0.name, artistId: $0.artistId, plays: $0.plays) })
                         }
 
                         SectionHeader("The last two weeks on this phone")
@@ -182,6 +146,50 @@ struct StatsScreen: View {
             self.pending = values.5
             loaded = true
         }
+    }
+}
+
+/** This month so far, opening the full recap. */
+private struct RecapLink: View {
+    @Environment(\.kultr) private var theme
+    let history: [HistoryEntry]
+
+    var body: some View {
+        let c = theme.colors
+        let now = monthRecap(history, songs: [:], month: Date())
+        Button {
+            AppGraph.shared.actions.navigate(.recap)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "calendar")
+                    .font(.title2)
+                    .foregroundStyle(c.accent)
+                    .frame(width: 32)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Monthly recap")
+                        .font(.headline)
+                        .foregroundStyle(c.ink)
+                    Text(
+                        now.isEmpty
+                            ? "Nothing played this month yet"
+                            : "\(RecapScreen.monthTitle.string(from: now.month)) so far: \(Format.duration(now.seconds)), \(Format.count(now.plays, "play"))"
+                    )
+                    .font(KFont.bodySmall)
+                    .foregroundStyle(c.ink3)
+                    .lineLimit(2)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.bold())
+                    .foregroundStyle(c.ink3)
+            }
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(c.sand))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressScaleStyle())
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
     }
 }
 

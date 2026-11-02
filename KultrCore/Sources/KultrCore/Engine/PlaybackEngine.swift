@@ -459,6 +459,29 @@ final class PlaybackEngine: DeckListener {
         host.onStateChanged()
     }
 
+    /**
+     * Put Karousel's upcoming picks in a new order, lowest [score] first. The
+     * next track stays put (its transition may already be planned), and songs
+     * you queued yourself keep their places: only the slots Karousel filled
+     * swap among themselves.
+     */
+    func reorderKarousel(by score: (Song) -> Double) {
+        let first = index + 2
+        guard index >= 0, first < queue.count else { return }
+        let slots = (first..<queue.count).filter { queue[$0].karousel }
+        guard slots.count > 1 else { return }
+        let ordered = slots.map { queue[$0] }.enumerated()
+            .map { (offset: $0.offset, item: $0.element, score: score($0.element.song)) }
+            .sorted { a, b in a.score != b.score ? a.score < b.score : a.offset < b.offset }
+            .map { $0.item }
+        var list = queue
+        for (slot, item) in zip(slots, ordered) { list[slot] = item }
+        if list.map(\.uid) == queue.map(\.uid) { return }
+        queue = list
+        revalidatePending()
+        host.onStateChanged()
+    }
+
     /** Move [from]..[to] (exclusive) so it starts at [newIndex]. */
     func moveRange(_ from: Int, _ to: Int, newIndex: Int) {
         if queue.isEmpty { return }
@@ -851,15 +874,29 @@ final class PlaybackEngine: DeckListener {
     }
 
     /** Jump to another item, with a short crossfade if that is switched on. */
-    private func skipTo(_ target: Int, _ positionMs: Int64, manual: Bool) {
+    /**
+     * "Mix now": on to the next track with a crossfade as long as the one set
+     * for transitions, from wherever this track is. Not beat-matched: the
+     * InjeKt plan belongs to the end of the track, not to this moment.
+     */
+    func mixNow() {
+        guard !queue.isEmpty else { return }
+        let next = index + 1 < queue.count ? index + 1 : (repeatMode == .all ? 0 : nil)
+        guard let next else { return }
+        skipTo(next, 0, manual: true, fadeSeconds: max(2, host.settings().crossfadeSeconds))
+    }
+
+    private func skipTo(_ target: Int, _ positionMs: Int64, manual: Bool, fadeSeconds: Double? = nil) {
         cancelTransition()
         clearPending()
         lastError = nil
         let item = queue[target]
         let s = host.settings()
+        let canFade = playWhenReady && !stopped && active.isPlaying && !item.song.isRadio && active.item?.song.isRadio != true
         let fadeMs: Int64
-        if manual && s.crossfadeOnSkip && s.crossfadeEnabled && playWhenReady && !stopped &&
-            active.isPlaying && !item.song.isRadio && active.item?.song.isRadio != true {
+        if let fadeSeconds, canFade {
+            fadeMs = ms(fadeSeconds)
+        } else if manual && s.crossfadeOnSkip && s.crossfadeEnabled && canFade {
             fadeMs = ms(min(s.crossfadeSeconds, 2.0))
         } else {
             fadeMs = 0

@@ -46,10 +46,19 @@ struct MainUI: View {
             graph.sync.refreshListening()
             graph.updates.checkInBackground()
         }
-        .task { graph.updates.checkInBackground() }
+        .task {
+            graph.updates.checkInBackground()
+            // A moment after opening, so it slides up over the app rather than with it.
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            ui.checkWhatsNew()
+        }
         .animation(theme.ease, value: graph.updates.available?.version)
         .sheet(item: $ui.update) { release in
             UpdateScreen(release: release)
+                .environment(\.kultr, theme)
+        }
+        .sheet(isPresented: $ui.whatsNew, onDismiss: { ui.finishWhatsNew() }) {
+            WhatsNewScreen { ui.finishWhatsNew() }
                 .environment(\.kultr, theme)
         }
         .modifier(Dialogs(active: !playerOpen))
@@ -237,6 +246,7 @@ private struct RouteView: View {
         case .genre(let name): GenreScreen(name: name)
         case .sync: SyncScreen()
         case .stats: StatsScreen()
+        case .recap: RecapScreen()
         case .downloads(let page): DownloadsScreen(initialPage: page)
         }
     }

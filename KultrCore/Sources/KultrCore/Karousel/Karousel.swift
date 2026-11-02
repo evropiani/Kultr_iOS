@@ -1,5 +1,23 @@
 import Foundation
 
+/**
+ * How calm a track is, from 0 (calmest) to 1: mostly its energy, partly its
+ * tempo. A track not analysed yet sits in the middle.
+ */
+func calmness(_ analysis: TrackAnalysis?) -> Double {
+    guard let analysis else { return 0.5 }
+    let tempo = analysis.bpm > 0 ? min(1, analysis.bpm / 180) : 0.5
+    return min(1, max(0, analysis.energy)) * 0.7 + tempo * 0.3
+}
+
+/** [songs] calmest first; equally calm ones keep their order. */
+func calmestFirst(_ songs: [Song], _ analysis: (Song) -> TrackAnalysis?) -> [Song] {
+    songs.enumerated()
+        .map { (offset: $0.offset, song: $0.element, score: calmness(analysis($0.element))) }
+        .sorted { a, b in a.score != b.score ? a.score < b.score : a.offset < b.offset }
+        .map { $0.song }
+}
+
 /** An artist as the library knows them: the name, and their id where there is one. */
 struct ArtistRef: Hashable {
     let name: String

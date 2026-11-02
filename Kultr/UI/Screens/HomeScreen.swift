@@ -215,6 +215,7 @@ private struct HomeShelf: View {
         case "randomSongs": songs = await library.randomSongs(10)
         case "mostPlayedAlbums": albums = await library.mostPlayedAlbums(16)
         case "recentlyAdded": albums = await library.recentlyAdded(16)
+        case "rediscover": albums = await library.forgottenAlbums(16)
         case "favouriteAlbums": albums = await library.starredAlbums()
         case "randomAlbums": albums = await library.randomAlbums(16)
         case "mostPlayedArtists": artists = await library.mostPlayedArtists(16)

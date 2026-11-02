@@ -131,6 +131,8 @@ final class PlayerController: EngineHost {
     private(set) var state = PlayerUiState()
     private(set) var transition = TransitionInfo()
     private(set) var sleepTimer: SleepTimer?
+    /** In a sleep timer's last 15 minutes: Karousel's picks go calmest first. */
+    @ObservationIgnored private var windingDown = false
 
     @ObservationIgnored private unowned let graph: AppGraph
     @ObservationIgnored private let eq = EqState()
@@ -349,9 +351,11 @@ final class PlayerController: EngineHost {
         if engine.playWhenReady && engine.status == .ready {
             tracker.advance(delta, durationMs: engine.durationMs, positionMs: engine.positionMs)
         }
+        checkWindDown()
         if let ends = sleepTimer?.endsAt, Date() >= ends {
             PlaybackLog.note("Sleep timer finished: pausing")
             sleepTimer = nil
+            windingDown = false
             pause()
             graph.messages.show("Sleep timer finished. Good night.")
         }
@@ -417,7 +421,27 @@ final class PlayerController: EngineHost {
     }
 
     func extendQueue(seeds: [Song], queued: [Song]) async throws -> [Song] {
-        await karousel.next(seeds: seeds, queued: queued)
+        let picks = await karousel.next(seeds: seeds, queued: queued)
+        guard windingDown, picks.count > 1 else { return picks }
+        let known = await graph.analysis.cachedMany(picks.map(\.id))
+        return calmestFirst(picks) { known[$0.id] }
+    }
+
+    /** Once a timed sleep timer is down to its last 15 minutes, put the calmest of Karousel's picks first. */
+    private func checkWindDown() {
+        guard let ends = sleepTimer?.endsAt, graph.settings.current.sleepWindDown else {
+            windingDown = false
+            return
+        }
+        guard !windingDown, ends.timeIntervalSinceNow <= 15 * 60 else { return }
+        windingDown = true
+        PlaybackLog.note("Sleep timer: winding down")
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let known = await self.graph.analysis.cachedMany(self.engine.queue.filter(\.karousel).map(\.song.id))
+            guard self.windingDown else { return }
+            self.engine.reorderKarousel { calmness(known[$0.id]) }
+        }
     }
 
     func onStateChanged() {
@@ -572,6 +596,15 @@ final class PlayerController: EngineHost {
         }
     }
 
+    /** Fade into the next track now, over the whole crossfade, instead of skipping. False when there is no next track. */
+    @discardableResult
+    func mixNow() -> Bool {
+        let hasNext = engine.index + 1 < engine.queue.count || (engine.repeatMode == .all && !engine.queue.isEmpty)
+        guard hasNext else { return false }
+        engine.mixNow()
+        return true
+    }
+
     func previous() {
         guard !engine.queue.isEmpty else { return }
         let hasPrevious = engine.index > 0 || engine.repeatMode == .all
@@ -653,6 +686,8 @@ final class PlayerController: EngineHost {
     func setSleepTimer(minutes: Int) {
         engine.pauseAtEndOfTrack = false
         sleepTimer = SleepTimer(endsAt: Date().addingTimeInterval(Double(minutes) * 60), endOfTrack: false)
+        windingDown = false
+        checkWindDown()
         scheduleTick()
     }
 
@@ -663,6 +698,7 @@ final class PlayerController: EngineHost {
 
     func clearSleepTimer() {
         sleepTimer = nil
+        windingDown = false
         engine.pauseAtEndOfTrack = false
     }
 

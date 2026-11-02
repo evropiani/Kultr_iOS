@@ -37,11 +37,11 @@ struct SearchScreen: View {
                     if trimmed.count < 2 {
                         EmptyState(icon: "magnifyingglass", title: "Find anything", message: "Type at least two letters.")
                     } else if loading && results.isEmpty {
-                        LoadingView()
+                        SkeletonRows(count: 8)
                     } else if let error {
                         EmptyState(icon: "icloud.slash", title: "Search failed", message: error)
                     } else if results.isEmpty {
-                        EmptyState(icon: "magnifyingglass", title: "Nothing matches “\(trimmed)”")
+                        EmptyState(icon: "magnifyingglass", title: "Nothing matches “\(trimmed)”", message: "Check the spelling, or try fewer words.")
                     } else {
                         if !results.artists.isEmpty {
                             SectionHeader("Artists")

@@ -20,6 +20,10 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   picks up new files on its own; favourites, ratings, play counts, playlists
   and InjeKt all work. Switch between them in Settings.
 
+- **A quiet look.** Cream pages and warm black text in light mode, warm
+  charcoal in dark, and one orange for whatever you can tap, laid out like
+  Apple Music. No gradients: the album cover is the colour. Four app icons
+  to choose from in Settings → Appearance.
 - **Liquid glass.** The tab bar is the system's own liquid glass bar, with
   the lens that follows your finger, a round search button that grows into
   the search field, and the mini player riding on it. Light

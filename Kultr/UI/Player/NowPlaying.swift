@@ -29,26 +29,35 @@ struct NowPlayingScreen: View {
         ZStack {
             if let song = state.current {
                 let current = live?.id == song.id ? live! : song
-                ScrollView {
-                    VStack(spacing: 0) {
-                        PlayerTopBar(song: current, onClose: close)
-                        header(current, state: state, settings: settings)
-                        Picker("Show", selection: Binding(get: { tab }, set: { value in withAnimation(theme.ease) { tab = value } })) {
-                            ForEach(PlayerTab.allCases.filter { $0 != .lyrics || settings.showLyrics }, id: \.self) { entry in
-                                Text(entry.label).tag(entry)
+                ScrollViewReader { scroller in
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            PlayerTopBar(song: current, onClose: close)
+                            header(current, state: state, settings: settings) { shown in
+                                // Swiping up the cover: open that panel and scroll it into view.
+                                withAnimation(theme.ease) {
+                                    tab = shown == .lyrics && !settings.showLyrics ? .queue : shown
+                                    scroller.scrollTo("panels", anchor: .top)
+                                }
+                            }
+                            Picker("Show", selection: Binding(get: { tab }, set: { value in withAnimation(theme.ease) { tab = value } })) {
+                                ForEach(PlayerTab.allCases.filter { $0 != .lyrics || settings.showLyrics }, id: \.self) { entry in
+                                    Text(entry.label).tag(entry)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 16)
+                            .padding(.bottom, 12)
+                            .id("panels")
+                            switch tab {
+                            case .queue: QueueList(state: state)
+                            case .lyrics: LyricsPanel(song: current)
+                            case .injekt: InjektPanel(state: state)
                             }
                         }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 16)
-                        .padding(.bottom, 12)
-                        switch tab {
-                        case .queue: QueueList(state: state)
-                        case .lyrics: LyricsPanel(song: current)
-                        case .injekt: InjektPanel(state: state)
-                        }
+                        .padding(.bottom, 32)
                     }
-                    .padding(.bottom, 32)
                 }
                 .task(id: "\(song.id):\(graph.library.version)") {
                     live = await graph.library.song(song.id)
@@ -73,11 +82,11 @@ struct NowPlayingScreen: View {
     }
 
     @ViewBuilder
-    private func header(_ current: Song, state: PlayerUiState, settings: Settings) -> some View {
+    private func header(_ current: Song, state: PlayerUiState, settings: Settings, show: @escaping (PlayerTab) -> Void) -> some View {
         let graph = AppGraph.shared
         let c = theme.colors
         VStack(spacing: 0) {
-            SwipeArtwork(song: current)
+            SwipeArtwork(song: current, show: show)
                 .padding(.top, 8)
             Text(current.title)
                 .font(KFont.headlineSmall)
@@ -227,30 +236,122 @@ private struct SongFacts: View {
     }
 }
 
-/** The big artwork; swipe it sideways to skip. */
+/**
+ * The big artwork. Swipe it sideways to skip; double-tap, hold and swipe up do
+ * what Settings > Playback > The cover says (by default: heart the track, mix
+ * into the next one, show the queue).
+ */
 private struct SwipeArtwork: View {
     @Environment(\.kultr) private var theme
     let song: Song
+    /** Opens a panel under the player and scrolls to it. */
+    let show: (PlayerTab) -> Void
     @State private var drag: CGFloat = 0
+    /** The symbol that pops up over the cover after a gesture, briefly. */
+    @State private var flash: String?
+    @State private var flashId = 0
 
     var body: some View {
+        let settings = theme.settings
         ArtworkFill(coverId: song.artworkId, radius: theme.radii.xl, label: song.isRadio ? song.title : nil, pixels: 800)
+            .overlay {
+                if let flash {
+                    Image(systemName: flash)
+                        .font(.system(size: 88, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.35), radius: 12)
+                        .transition(.scale(scale: 0.4).combined(with: .opacity))
+                        .id(flashId)
+                }
+            }
             .shadow(color: .black.opacity(0.35), radius: 24, y: 10)
             .padding(.horizontal, 12)
             .offset(x: drag)
             .rotationEffect(.degrees(Double(drag) / 60))
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2) { perform(settings.coverDoubleTap) }
+            .onLongPressGesture(minimumDuration: 0.45) { perform(settings.coverHold) }
             .gesture(
                 DragGesture(minimumDistance: 20)
                     .onChanged { value in
                         if abs(value.translation.width) > abs(value.translation.height) { drag = value.translation.width }
                     }
-                    .onEnded { _ in
+                    .onEnded { value in
                         let player = AppGraph.shared.player
-                        if drag > 90 { player.previous() } else if drag < -90 { player.next() }
+                        let up = -value.translation.height
+                        if drag > 90 {
+                            player.previous()
+                        } else if drag < -90 {
+                            player.next()
+                        } else if up > 60, up > abs(value.translation.width) * 1.5 {
+                            perform(settings.coverSwipeUp)
+                        }
                         withAnimation(.spring()) { drag = 0 }
                     }
             )
             .onChange(of: song.id) { _, _ in drag = 0 }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Cover of \(song.album ?? song.title)")
+            .accessibilityAction(named: "Next track") { AppGraph.shared.player.next() }
+            .accessibilityAction(named: "Previous track") { AppGraph.shared.player.previous() }
+            .modifier(CoverAccessibility(actions: [settings.coverDoubleTap, settings.coverHold, settings.coverSwipeUp], perform: perform))
+    }
+
+    private func perform(_ action: CoverAction) {
+        let graph = AppGraph.shared
+        switch action {
+        case .none:
+            return
+        case .favourite:
+            guard !song.isRadio else { return }
+            let starred = graph.ui.isStarred(song)
+            graph.actions.setFavourite(song, !starred)
+            pop(starred ? "heart.slash.fill" : "heart.fill")
+        case .queue:
+            show(.queue)
+        case .lyrics:
+            show(.lyrics)
+        case .mixNow:
+            if graph.player.mixNow() {
+                Haptics.tap()
+                pop("arrow.triangle.merge")
+                graph.messages.show("Mixing into the next track")
+            } else {
+                graph.messages.show("Nothing to mix into: this is the last track")
+            }
+        case .playPause:
+            Haptics.tap()
+            let playing = graph.player.state.playWhenReady
+            graph.player.toggle()
+            pop(playing ? "pause.fill" : "play.fill")
+        case .addToPlaylist:
+            guard !song.isRadio else { return }
+            graph.actions.addToPlaylist([song])
+        }
+    }
+
+    private func pop(_ symbol: String) {
+        flashId += 1
+        let id = flashId
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { flash = symbol }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 700_000_000)
+            if flashId == id { withAnimation(.easeOut(duration: 0.25)) { flash = nil } }
+        }
+    }
+}
+
+/** The cover's gestures as VoiceOver actions, without the ones switched off or doubled. */
+private struct CoverAccessibility: ViewModifier {
+    let actions: [CoverAction]
+    let perform: (CoverAction) -> Void
+
+    func body(content: Content) -> some View {
+        var seen = Set<CoverAction>()
+        let unique = actions.filter { $0 != .none && seen.insert($0).inserted }
+        return unique.reduce(AnyView(content)) { view, action in
+            AnyView(view.accessibilityAction(named: action.label) { perform(action) })
+        }
     }
 }
 
@@ -364,15 +465,47 @@ private struct ModeButton: View {
 private struct QueueList: View {
     @Environment(\.kultr) private var theme
     let state: PlayerUiState
+    /** The tracks about to be saved as a playlist, while it is being named. */
+    @State private var saving: [Song]?
+    @State private var name = ""
+
+    private static let stamp: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.setLocalizedDateFormatFromTemplate("d MMM HH:mm")
+        return formatter
+    }()
 
     var body: some View {
         let upNext = state.upNext
+        let all = state.queue.map(\.song).filter { !$0.isRadio }
+        let played = state.index >= 0 ? state.queue.prefix(state.index + 1).map(\.song).filter { !$0.isRadio } : []
         LazyVStack(spacing: 0) {
             HStack {
                 Text(upNext.isEmpty ? "Nothing queued after this track." : "\(upNext.count) up next")
                     .font(KFont.bodyMedium)
                     .foregroundStyle(theme.colors.ink3)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                if !all.isEmpty {
+                    Menu {
+                        Section("Save as a playlist") {
+                            if played.count > 1 {
+                                Button { save(played) } label: {
+                                    Label("What you've played, \(Format.count(played.count, "track"))", systemImage: "clock.arrow.circlepath")
+                                }
+                            }
+                            Button { save(all) } label: {
+                                Label("The whole queue, \(Format.count(all.count, "track"))", systemImage: "list.bullet")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "text.badge.plus")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(theme.colors.ink2)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Save as a playlist")
+                }
                 if !upNext.isEmpty {
                     IconButton(icon: "trash", tint: theme.colors.ink2, size: 18, label: "Clear up next") {
                         AppGraph.shared.player.clearUpcoming()
@@ -394,6 +527,33 @@ private struct QueueList: View {
                 }
             } else if theme.settings.karousel && state.current?.isRadio != true {
                 KarouselHeading(text: "On: when the queue runs out, music like it keeps playing.")
+            }
+        }
+        .alert("Save as a playlist", isPresented: Binding(isPresent: $saving)) {
+            TextField("Name", text: $name)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") { commit() }
+                .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+        } message: {
+            Text(Format.count(saving?.count ?? 0, "track"))
+        }
+    }
+
+    private func save(_ songs: [Song]) {
+        name = "Session, \(Self.stamp.string(from: Date()))"
+        saving = songs
+    }
+
+    private func commit() {
+        guard let songs = saving else { return }
+        let title = name.trimmingCharacters(in: .whitespaces)
+        let graph = AppGraph.shared
+        saving = nil
+        Task {
+            if let error = await graph.library.createPlaylist(title, songs) {
+                graph.messages.error(error)
+            } else {
+                graph.messages.show("Saved “\(title)”: \(Format.count(songs.count, "track"))", .success)
             }
         }
     }

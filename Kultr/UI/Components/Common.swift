@@ -185,15 +185,135 @@ extension EmptyState where Action == EmptyView {
     }
 }
 
-struct LoadingView: View {
+/**
+ * Shapes where the content will be while a page loads, so the page keeps its
+ * layout instead of jumping from a spinner to a list. They fade gently unless
+ * motion is reduced.
+ */
+private struct Placeholder: ViewModifier {
+    @Environment(\.kultr) private var theme
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+    @State private var dim = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(dim ? 0.45 : 1)
+            .onAppear {
+                guard !systemReduceMotion, !theme.settings.reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { dim = true }
+            }
+            .allowsHitTesting(false)
+            .accessibilityElement()
+            .accessibilityLabel("Loading")
+    }
+}
+
+/** Track or list rows still loading: artwork, a title and a line under it. */
+struct SkeletonRows: View {
+    @Environment(\.kultr) private var theme
+    var count = 8
+    var artwork = true
+
+    private static let widths: [(CGFloat, CGFloat)] = [(0.62, 0.38), (0.48, 0.3), (0.7, 0.44), (0.55, 0.26), (0.66, 0.4)]
+
+    var body: some View {
+        let fill = theme.colors.sand
+        VStack(spacing: 0) {
+            ForEach(0..<count, id: \.self) { i in
+                let width = Self.widths[i % Self.widths.count]
+                HStack(spacing: 12) {
+                    if artwork {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous).fill(fill).frame(width: 44, height: 44)
+                    }
+                    GeometryReader { proxy in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Capsule().fill(fill).frame(width: proxy.size.width * width.0, height: 12)
+                            Capsule().fill(fill).frame(width: proxy.size.width * width.1, height: 10)
+                        }
+                        .frame(maxHeight: .infinity, alignment: .center)
+                    }
+                }
+                .frame(height: 44)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+        }
+        .modifier(Placeholder())
+    }
+}
+
+/** A grid of cards still loading, in the same columns as the real one. */
+struct SkeletonGrid: View {
+    @Environment(\.kultr) private var theme
+    var count = 12
+    /** Round, for artists. */
+    var round = false
+
+    var body: some View {
+        let fill = theme.colors.sand
+        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
+            ForEach(0..<count, id: \.self) { _ in
+                VStack(alignment: .leading, spacing: 8) {
+                    Group {
+                        if round {
+                            Circle().fill(fill)
+                        } else {
+                            RoundedRectangle(cornerRadius: theme.radii.md, style: .continuous).fill(fill)
+                        }
+                    }
+                    .aspectRatio(1, contentMode: .fit)
+                    Capsule().fill(fill).frame(height: 12).padding(.trailing, 24)
+                    Capsule().fill(fill).frame(height: 10).padding(.trailing, 56)
+                }
+            }
+        }
+        .padding(16)
+        .modifier(Placeholder())
+    }
+}
+
+/** An album, artist or playlist page still loading: the cover, the title, then tracks. */
+struct SkeletonDetail: View {
     @Environment(\.kultr) private var theme
 
     var body: some View {
-        ProgressView()
-            .tint(theme.colors.accent)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
-            .padding(48)
+        let fill = theme.colors.sand
+        ScrollView {
+            VStack(spacing: 12) {
+                VStack(spacing: 12) {
+                    RoundedRectangle(cornerRadius: theme.radii.lg, style: .continuous)
+                        .fill(fill)
+                        .frame(width: 240, height: 240)
+                        .padding(.top, 16)
+                    Capsule().fill(fill).frame(width: 200, height: 18)
+                    Capsule().fill(fill).frame(width: 140, height: 12)
+                    HStack(spacing: 12) {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous).fill(fill).frame(height: 48)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous).fill(fill).frame(height: 48)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                }
+                .modifier(Placeholder())
+                SkeletonRows(count: 6, artwork: false)
+            }
+        }
+        .scrollDisabled(true)
+    }
+}
+
+/** A filter that matches nothing. */
+struct NoMatches: View {
+    let query: String
+    let what: String
+
+    var body: some View {
+        EmptyState(
+            icon: "line.3.horizontal.decrease.circle",
+            title: "No \(what) match “\(query)”",
+            message: "Check the spelling, or try part of a name."
+        )
+        .padding(.top, 24)
     }
 }
 
