@@ -106,7 +106,7 @@ func monthRecap(
         }
     }
 
-    func ranked<Item>(_ items: [(Item, Int, Int64, String)]) -> [MonthRecap.Entry<Item>] {
+    func ranked<Item: Equatable>(_ items: [(Item, Int, Int64, String)]) -> [MonthRecap.Entry<Item>] {
         items
             .sorted { a, b in a.1 != b.1 ? a.1 > b.1 : a.2 != b.2 ? a.2 > b.2 : a.3 < b.3 }
             .prefix(top)
@@ -120,7 +120,9 @@ func monthRecap(
         plays: plays,
         tracks: bySong.count,
         artists: artistKeys.count,
-        topSongs: ranked(bySong.compactMap { id, count in songs[id].map { ($0, count.plays, count.seconds, id) } }),
+        topSongs: ranked(bySong.compactMap { id, count -> (Song, Int, Int64, String)? in
+            songs[id].map { ($0, count.plays, count.seconds, id) }
+        }),
         topArtists: ranked(byArtist.map { key, value in (value.name, value.plays, value.seconds, key) }),
         topAlbums: ranked(byAlbum.map { key, value in (value.name, value.plays, value.seconds, key) }),
         busiestDay: byDay.max { a, b in a.value != b.value ? a.value < b.value : a.key > b.key }

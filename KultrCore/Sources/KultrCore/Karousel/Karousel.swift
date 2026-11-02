@@ -15,7 +15,7 @@ func calmestFirst(_ songs: [Song], _ analysis: (Song) -> TrackAnalysis?) -> [Son
     songs.enumerated()
         .map { (offset: $0.offset, song: $0.element, score: calmness(analysis($0.element))) }
         .sorted { a, b in a.score != b.score ? a.score < b.score : a.offset < b.offset }
-        .map(\.song)
+        .map { $0.song }
 }
 
 /** An artist as the library knows them: the name, and their id where there is one. */

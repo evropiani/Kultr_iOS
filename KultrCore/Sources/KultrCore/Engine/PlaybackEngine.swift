@@ -473,7 +473,7 @@ final class PlaybackEngine: DeckListener {
         let ordered = slots.map { queue[$0] }.enumerated()
             .map { (offset: $0.offset, item: $0.element, score: score($0.element.song)) }
             .sorted { a, b in a.score != b.score ? a.score < b.score : a.offset < b.offset }
-            .map(\.item)
+            .map { $0.item }
         var list = queue
         for (slot, item) in zip(slots, ordered) { list[slot] = item }
         if list.map(\.uid) == queue.map(\.uid) { return }
