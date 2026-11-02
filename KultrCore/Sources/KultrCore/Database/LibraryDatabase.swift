@@ -722,6 +722,11 @@ final class LibraryDatabase: @unchecked Sendable {
         readIn("SELECT * FROM analysis WHERE songId", ids, Self.analysis)
     }
 
+    /** Every current analysis, for matching stations against the whole library. */
+    func allAnalyses(version: Int) -> [TrackAnalysis] {
+        read("SELECT * FROM analysis WHERE version = ?", [version], Self.analysis)
+    }
+
     func putAnalysis(_ a: TrackAnalysis) throws {
         try db.execute(
             "INSERT OR REPLACE INTO analysis VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",

@@ -24,16 +24,19 @@ final class SettingsStore {
         }
         moveToCream()
         addShelf("rediscover", after: "mostPlayedAlbums")
+        addShelf("stations", after: nil)
     }
 
-    /** A new home shelf, once, so it shows up without a trip to Settings. Removing it afterwards sticks. */
-    private func addShelf(_ id: String, after: String) {
+    /** A new home shelf, once, so it shows up without a trip to Settings; after [after], or first. Removing it afterwards sticks. */
+    private func addShelf(_ id: String, after: String?) {
         let key = "home.added.\(id)"
         guard !UserDefaults.standard.bool(forKey: key) else { return }
         UserDefaults.standard.set(true, forKey: key)
         update { s in
             guard !s.homeTiles.contains(id) else { return }
-            if let at = s.homeTiles.firstIndex(of: after) {
+            if after == nil {
+                s.homeTiles.insert(id, at: 0)
+            } else if let after, let at = s.homeTiles.firstIndex(of: after) {
                 s.homeTiles.insert(id, at: at + 1)
             } else {
                 s.homeTiles.append(id)

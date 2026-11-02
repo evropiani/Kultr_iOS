@@ -300,6 +300,55 @@ final class InjektTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(intro.inStartOffset, 17.3)
     }
 
+    func testBeatGridFindsTheDownbeats() {
+        var a = analysis("a", 120)
+        a.downbeatOffset = 0.5
+        let grid = BeatGrid(a)!
+        XCTAssertEqual(grid.bar, 2, accuracy: 0.0001)
+        XCTAssertEqual(grid.sinceDownbeat(0.5), 0, accuracy: 0.0001)
+        XCTAssertEqual(grid.sinceDownbeat(3.0), 0.5, accuracy: 0.0001)
+        XCTAssertEqual(grid.untilDownbeat(3.0), 1.5, accuracy: 0.0001)
+        XCTAssertEqual(grid.untilDownbeat(0.2), 0.3, accuracy: 0.0001)
+        XCTAssertEqual(grid.pulse(4.5), 1, accuracy: 0.0001)
+        XCTAssertLessThan(grid.pulse(4.9), 0.02)
+        XCTAssertEqual(grid.pulse(0.1), 0)
+        XCTAssertNil(BeatGrid(analysis("b", 120, confidence: 0.1)))
+    }
+
+    func testStationsMatchTheirRules() {
+        let drive = STATION_PRESETS.first { $0.id == "night-drive" }!
+        let fits = analysis("a", 100, energy: 0.5)
+        let tooFast = analysis("b", 128, energy: 0.5)
+        XCTAssertTrue(drive.matches(Song(id: "a"), fits))
+        XCTAssertFalse(drive.matches(Song(id: "b"), tooFast))
+        XCTAssertFalse(drive.matches(Song(id: "c"), nil), "energy needs analysis")
+        let tagged = Station(name: "Tempo only", bpm: Bounds(90, 110))
+        XCTAssertTrue(tagged.matches(Song(id: "d", bpm: 100), nil), "a tempo tag is enough")
+        let nineties = Station.decade(1990)
+        XCTAssertTrue(nineties.matches(Song(id: "e", year: 1994), nil))
+        XCTAssertFalse(nineties.matches(Song(id: "f", year: 2001), nil))
+        let rock = Station(name: "Rock", genres: ["Rock"])
+        XCTAssertTrue(rock.matches(Song(id: "g", genre: "Indie Rock"), nil))
+        XCTAssertFalse(rock.matches(Song(id: "h", genre: "Jazz"), nil))
+        XCTAssertFalse(Station(name: "New", unplayed: true).matches(Song(id: "i", playCount: 3), nil))
+        XCTAssertEqual(drive.summary, "88–112 BPM · energy 4–7")
+        XCTAssertEqual(Station(name: "All").summary, "Your whole library")
+        XCTAssertEqual(decadeStations(Array(repeating: 1995, count: 25) + [2004, 2005]).map { $0.name }, ["1990s"])
+
+        let decoded = try? JSONDecoder().decode(Station.self, from: Data(#"{"id":"x","name":"Old","bpm":{"min":100}}"#.utf8))
+        XCTAssertEqual(decoded?.bpm?.min, 100)
+        XCTAssertFalse(decoded?.unplayed ?? true)
+    }
+
+    func testStationPicksSkipWhatPlayedUntilNothingIsLeft() {
+        var random = SystemRandomNumberGenerator()
+        let pool: [(Song, TrackAnalysis?)] = [(Song(id: "a"), nil), (Song(id: "b"), nil)]
+        let picks = stationPicks(pool: pool, seed: nil, exclude: ["a"], queued: [], count: 5, random: &random)
+        XCTAssertEqual(picks.map { $0.id }, ["b"])
+        let again = stationPicks(pool: pool, seed: nil, exclude: ["a", "b"], queued: ["b"], count: 5, random: &random)
+        XCTAssertEqual(again.map { $0.id }, ["a"])
+    }
+
     func testCalmestFirstPutsQuietSlowTracksFirst() {
         let loud = analysis("loud", 128, energy: 0.9)
         let quiet = analysis("quiet", 80, energy: 0.2)

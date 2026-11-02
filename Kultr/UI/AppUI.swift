@@ -61,6 +61,7 @@ enum Route: Hashable {
     case sync
     case stats
     case recap
+    case stations
     case downloads(DownloadsPage)
 }
 

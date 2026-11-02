@@ -517,6 +517,27 @@ private struct PlaybackSettings: View {
             }
             Section {
                 SettingToggle(
+                    "Pulse on the beat",
+                    isOn: setting(\.beatPulse),
+                    hint: "The play button swells a little on the first beat of every bar, once InjeKt has analysed the track. Off with Reduce motion."
+                )
+                SettingToggle(
+                    "Tap on the beat",
+                    isOn: setting(\.beatHaptics),
+                    hint: "The phone taps your hand on the same beat while the player is open."
+                )
+            } header: {
+                Text("Beat pulse")
+            }
+            Section {
+                SettingToggle(
+                    "Live Activity",
+                    isOn: setting(\.liveActivity),
+                    hint: "The track, its progress and a countdown to the next mix, on the Lock Screen and in the Dynamic Island. It starts the next time music starts with Kultr open."
+                )
+            }
+            Section {
+                SettingToggle(
                     "Resume where you left off",
                     isOn: setting(\.resumeOnStart),
                     hint: "Restores the queue and position when Kultr opens. Pressing play on headphones or in Control Center picks it up too."

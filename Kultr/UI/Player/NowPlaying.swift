@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 private enum PlayerTab: CaseIterable {
     case queue, lyrics, injekt
@@ -396,6 +397,7 @@ private struct Transport: View {
                         }
                     }
                     .frame(width: 84, height: 84)
+                    .modifier(BeatPulse(song: song, playing: state.playWhenReady && !state.buffering && !state.ended))
                     .contentShape(Circle())
                 }
                 .buttonStyle(PressScaleStyle())
@@ -427,6 +429,57 @@ private struct Transport: View {
                 IconButton(icon: "moon.fill", tint: player.sleepTimer != nil ? c.accent : c.ink2, label: "Sleep timer") {
                     graph.ui.sleepTimer = true
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Beat pulse: the play button swells a little on each downbeat InjeKt found,
+ * with a soft orange ring behind it, and (if switched on) the phone taps
+ * along. Only while playing a track with a confident tempo, with the player
+ * open and the app in front; never with Reduce motion.
+ */
+private struct BeatPulse: ViewModifier {
+    @Environment(\.kultr) private var theme
+    @Environment(\.scenePhase) private var phase
+    let song: Song
+    let playing: Bool
+    @State private var grid: BeatGrid?
+
+    func body(content: Content) -> some View {
+        let settings = theme.settings
+        let visual = settings.beatPulse && !theme.reduceMotion
+        let live = playing && phase == .active && grid != nil
+        let graph = AppGraph.shared
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !(live && visual))) { _ in
+            let amount = live && visual ? (grid?.pulse(Double(graph.player.positionMs()) / 1000) ?? 0) : 0
+            content
+                .background {
+                    Circle()
+                        .fill(theme.colors.accent.opacity(0.22 * amount))
+                        .scaleEffect(0.82 + 0.18 * amount)
+                }
+                .scaleEffect(1 + 0.06 * amount)
+        }
+        .task(id: "\(song.id):\(graph.analysis.lastAnalysed == song.id)") {
+            grid = song.isRadio ? nil : (await graph.analysis.cached(song.id)).flatMap(BeatGrid.init)
+        }
+        .task(id: "\(live):\(settings.beatHaptics):\(song.id)") {
+            guard live, settings.beatHaptics, let grid else { return }
+            let tap = UIImpactFeedbackGenerator(style: .soft)
+            tap.prepare()
+            while !Task.isCancelled {
+                let wait = grid.untilDownbeat(Double(graph.player.positionMs()) / 1000)
+                try? await Task.sleep(nanoseconds: UInt64(max(0.05, wait) * 1_000_000_000))
+                if Task.isCancelled { break }
+                // A seek can land anywhere; only tap when this really is a downbeat.
+                let since = grid.sinceDownbeat(Double(graph.player.positionMs()) / 1000)
+                if since >= 0 && (since < 0.08 || grid.bar - since < 0.08) {
+                    tap.impactOccurred(intensity: 0.7)
+                }
+                try? await Task.sleep(nanoseconds: 120_000_000)
+                tap.prepare()
             }
         }
     }
@@ -520,12 +573,24 @@ private struct QueueList: View {
             ForEach(upNext[..<firstKarousel]) { entry in
                 QueueRow(index: entry.index, song: entry.song, size: state.queue.count, currentIndex: state.index)
             }
+            let station = AppGraph.shared.player.station
+            if let station {
+                KarouselHeading(
+                    icon: station.icon,
+                    title: station.name,
+                    text: "\(station.summary). Tracks that fit, mixed by InjeKt, for as long as you like.",
+                    onEnd: {
+                        AppGraph.shared.player.endStation()
+                        AppGraph.shared.messages.show("Station ended")
+                    }
+                )
+            }
             if firstKarousel < upNext.count {
-                KarouselHeading(text: "Music like what's playing, so it never stops.")
+                if station == nil { KarouselHeading(text: "Music like what's playing, so it never stops.") }
                 ForEach(upNext[firstKarousel...]) { entry in
                     QueueRow(index: entry.index, song: entry.song, size: state.queue.count, currentIndex: state.index)
                 }
-            } else if theme.settings.karousel && state.current?.isRadio != true {
+            } else if station == nil && theme.settings.karousel && state.current?.isRadio != true {
                 KarouselHeading(text: "On: when the queue runs out, music like it keeps playing.")
             }
         }
@@ -561,18 +626,21 @@ private struct QueueList: View {
 
 private struct KarouselHeading: View {
     @Environment(\.kultr) private var theme
+    var icon = "infinity"
+    var title = "Karousel"
     let text: String
+    var onEnd: (() -> Void)?
 
     var body: some View {
         let c = theme.colors
         HStack(spacing: 12) {
-            Image(systemName: "infinity")
+            Image(systemName: icon)
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(c.accent)
                 .frame(width: 30, height: 30)
                 .background(Circle().fill(c.accent.opacity(0.24)))
             VStack(alignment: .leading, spacing: 1) {
-                Text("Karousel")
+                Text(title)
                     .font(KFont.titleSmall.weight(.semibold))
                     .foregroundStyle(c.ink)
                 Text(text)
@@ -580,11 +648,17 @@ private struct KarouselHeading: View {
                     .foregroundStyle(c.ink3)
             }
             Spacer(minLength: 0)
+            if let onEnd {
+                Button("End", action: onEnd)
+                    .font(KFont.labelLarge)
+                    .foregroundStyle(c.accent)
+                    .accessibilityLabel("End the station")
+            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
         .padding(.bottom, 8)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: onEnd == nil ? .combine : .contain)
     }
 }
 
