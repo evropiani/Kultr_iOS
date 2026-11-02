@@ -392,6 +392,41 @@ final class InjektTests: XCTestCase {
         XCTAssertEqual(again.map { $0.id }, ["a"])
     }
 
+    func testEnergyPlanFollowsTheLine() {
+        var random = SystemRandomNumberGenerator()
+        let candidates: [(Song, TrackAnalysis)] = (0..<20).map { i in
+            (Song(id: "t\(i)", artistId: "ar\(i)"), analysis("t\(i)", 120, energy: Double(i) / 20))
+        }
+        let set = planSet(curve: .build, minutes: 40, candidates: candidates, random: &random)
+        XCTAssertGreaterThanOrEqual(set.count, 9)
+        XCTAssertLessThan(set.first!.energy, set.last!.energy)
+        XCTAssertEqual(Set(set.map { $0.song.id }).count, set.count)
+        XCTAssertEqual(EnergyCurve.build.value(at: 0.5), 0.625, accuracy: 0.001)
+        XCTAssertEqual(EnergyCurve([0.2]).points, [0.5, 0.5])
+    }
+
+    func testCommandsFromPlainWords() {
+        let stations = ["Night Drive", "Warm Up"]
+        XCTAssertEqual(parseCommand("Play Night Drive", stations: stations), .station("Night Drive"))
+        XCTAssertEqual(parseCommand("play radiohead"), .play("radiohead"))
+        XCTAssertEqual(parseCommand("Shuffle Daft Punk!"), .shuffle("daft punk"))
+        XCTAssertEqual(parseCommand("sleep in 30 minutes"), .sleep(minutes: 30))
+        XCTAssertEqual(parseCommand("stop in an hour"), .sleep(minutes: 60))
+        XCTAssertEqual(parseCommand("timer 1h"), .sleep(minutes: 60))
+        XCTAssertEqual(parseCommand("sleep after this song"), .sleepAfterTrack)
+        XCTAssertEqual(parseCommand("next"), .next)
+        XCTAssertEqual(parseCommand("pause"), .pause)
+        XCTAssertEqual(parseCommand("open settings"), .open(.settings))
+        XCTAssertEqual(parseCommand("show my stations"), .open(.stations))
+        XCTAssertEqual(parseCommand("plan an hour"), .plan(minutes: 60))
+        XCTAssertEqual(parseCommand("plan a set"), .plan(minutes: nil))
+        XCTAssertEqual(parseCommand("tune in to warm up", stations: stations), .station("Warm Up"))
+        XCTAssertEqual(parseCommand("open gym", crates: ["Gym"]), .crate("Gym"))
+        XCTAssertEqual(parseCommand("play gym", crates: ["Gym"]), .playCrate("Gym"))
+        XCTAssertNil(parseCommand("radiohead"))
+        XCTAssertNil(parseCommand("love"))
+    }
+
     func testCalmestFirstPutsQuietSlowTracksFirst() {
         let loud = analysis("loud", 128, energy: 0.9)
         let quiet = analysis("quiet", 80, energy: 0.2)

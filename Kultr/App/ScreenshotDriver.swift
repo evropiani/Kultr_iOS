@@ -71,6 +71,11 @@ enum ScreenshotDriver {
             actions.navigate(.recap)
         case "whatsnew": graph.ui.whatsNew = true
         case "stations": actions.navigate(.stations)
+        case "planner": actions.navigate(.planner(60))
+        case "command":
+            // A command typed into Search: its row sits above the results.
+            actions.selectTab(.search)
+            graph.ui.searchQuery = "shuffle love"
         case "crates", "crate":
             // A crate of the newest albums, with a note and a tag on the first, so the pages have something in them.
             if graph.crates.all.isEmpty {

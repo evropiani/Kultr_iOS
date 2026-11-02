@@ -13,6 +13,23 @@ struct WhatsNewItem: Identifiable {
  */
 enum WhatsNew {
     static let notes: [String: [WhatsNewItem]] = [
+        "1.4.4": [
+            WhatsNewItem(
+                icon: "waveform.path.ecg",
+                title: "Energy planner",
+                text: "Draw how the next hour should feel, calm to peak, and Kultr builds a set that follows your line, with tempos and keys that mix. Play it or keep it as a playlist. “Plan a set” on Home."
+            ),
+            WhatsNewItem(
+                icon: "text.magnifyingglass",
+                title: "The command bar",
+                text: "Search does things too: type “play Night Drive”, “shuffle” and an artist, “sleep in 30 minutes”, “next”, “open settings” or “plan an hour”, and tap the orange row or press Return."
+            ),
+            WhatsNewItem(
+                icon: "apple.intelligence",
+                title: "In your own words",
+                text: "With Apple Intelligence on, Kultr reads requests the usual phrasings don't cover, on the iPhone itself. Nothing is sent anywhere."
+            ),
+        ],
         "1.4.3": [
             WhatsNewItem(
                 icon: "shippingbox.fill",

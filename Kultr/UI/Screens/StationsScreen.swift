@@ -119,6 +119,7 @@ struct StationsScreen: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button { graph.actions.navigate(.planner(nil)) } label: { Label("Energy planner", systemImage: "waveform.path.ecg") }
                     Button { resetting = true } label: { Label("Back to the starting stations", systemImage: "arrow.counterclockwise") }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -186,7 +187,7 @@ struct StationsScreen: View {
 }
 
 /** Some stations need InjeKt's analysis; say how far along it is, with a way to finish it. */
-private struct AnalysisNote: View {
+struct AnalysisNote: View {
     @Environment(\.kultr) private var theme
     @State private var analysed = 0
     @State private var missing = 0
