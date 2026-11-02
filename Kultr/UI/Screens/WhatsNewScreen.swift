@@ -13,6 +13,28 @@ struct WhatsNewItem: Identifiable {
  */
 enum WhatsNew {
     static let notes: [String: [WhatsNewItem]] = [
+        "1.4.2": [
+            WhatsNewItem(
+                icon: "dial.medium.fill",
+                title: "Stations",
+                text: "Endless mixes from your own library: Warm Up, Night Drive, Peak Hour, Deep Focus, Wind Down, Unplayed gems, Favourites and a station per decade. Turn the dial on the Stations page (the first shelf on Home) to choose; while one plays, turning it mixes into the next."
+            ),
+            WhatsNewItem(
+                icon: "slider.horizontal.3",
+                title: "Make your own",
+                text: "Every station is a set of rules you can change: tempo, energy, key, genres, years, never played, favourites and rating, with a count of the tracks that fit."
+            ),
+            WhatsNewItem(
+                icon: "platter.filled.top.iphone",
+                title: "Live Activity",
+                text: "The Lock Screen and the Dynamic Island show the track, its progress and a countdown to the next mix. Switch it off in Settings → Playback."
+            ),
+            WhatsNewItem(
+                icon: "waveform.path",
+                title: "Beat pulse",
+                text: "The play button swells on the first beat of every bar, once InjeKt knows the track. Settings → Playback can make the phone tap along too."
+            ),
+        ],
         "1.4.1": [
             WhatsNewItem(
                 icon: "arrow.counterclockwise.circle.fill",
