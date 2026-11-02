@@ -112,8 +112,7 @@ private struct DetailMessage: View {
 
 private struct DetailLoading: View {
     var body: some View {
-        LoadingView()
-            .frame(maxHeight: .infinity)
+        SkeletonDetail()
             .kultrScreen()
     }
 }
@@ -246,7 +245,7 @@ struct AlbumScreen: View {
                             .foregroundStyle(c.ink3)
                         }
                     }
-                    if songs.isEmpty { LoadingView() }
+                    if songs.isEmpty { SkeletonRows(count: 6, artwork: false) }
                     ForEach(discs, id: \.key) { entry in
                         let disc = entry.key
                         let discSongs = entry.value

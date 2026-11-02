@@ -123,6 +123,11 @@ final class LibraryRepository {
     func recentlyAdded(_ limit: Int) async -> [Album] { await read([]) { $0.recentlyAdded(limit) } }
     func mostPlayedSongs(_ limit: Int) async -> [Song] { await read([]) { $0.mostPlayedSongs(limit) } }
     func mostPlayedAlbums(_ limit: Int) async -> [Album] { await read([]) { $0.mostPlayedAlbums(limit) } }
+    /** Albums you love and haven't played for a year. */
+    func forgottenAlbums(_ limit: Int) async -> [Album] {
+        let yearAgo = Format.nowMs() - 365 * 86_400_000
+        return await read([]) { $0.forgottenAlbums(before: yearAgo, limit) }
+    }
     func mostPlayedArtists(_ limit: Int) async -> [Artist] { await read([]) { $0.mostPlayedArtists(limit) } }
     func history(_ limit: Int) async -> [HistoryEntry] { await read([]) { $0.recentHistory(limit) } }
     func randomAlbums(_ count: Int) async -> [Album] { await read([]) { $0.randomAlbums(count) } }

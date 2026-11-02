@@ -60,6 +60,7 @@ enum Route: Hashable {
     case genre(String)
     case sync
     case stats
+    case recap
     case downloads(DownloadsPage)
 }
 

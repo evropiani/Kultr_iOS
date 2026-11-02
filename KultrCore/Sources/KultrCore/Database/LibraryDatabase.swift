@@ -642,6 +642,33 @@ final class LibraryDatabase: @unchecked Sendable {
         read("SELECT * FROM albums WHERE playCount > 0 ORDER BY playCount DESC LIMIT ?", [limit], Self.album)
     }
 
+    /** Albums you hearted, or played at least three times, most played first. */
+    func lovedAlbums() -> [Album] {
+        read("SELECT * FROM albums WHERE (starred IS NOT NULL AND starred != '') OR playCount >= 3 ORDER BY playCount DESC", [], Self.album)
+    }
+
+    /** Albums with a track played on this phone since [millis]. */
+    func albumIdsPlayedSince(_ millis: Int64) -> [String] {
+        read(
+            "SELECT DISTINCT songs.albumId FROM history JOIN songs ON songs.id = history.songId WHERE history.playedAt >= ?",
+            [millis]
+        ) { $0.string(0) ?? "" }.filter { !$0.isEmpty }
+    }
+
+    /**
+     * Rediscover: albums you love that nobody has played since [millis], on the
+     * server or on this phone. One the server never saw played counts from when
+     * you hearted it.
+     */
+    func forgottenAlbums(before millis: Int64, _ limit: Int) -> [Album] {
+        let recent = Set(albumIdsPlayedSince(millis))
+        let forgotten = lovedAlbums().filter { album in
+            guard !recent.contains(album.id), let since = Format.isoMs(album.played) ?? Format.isoMs(album.starred) else { return false }
+            return since < millis
+        }
+        return Array(forgotten.prefix(limit))
+    }
+
     func mostPlayedArtists(_ limit: Int) -> [Artist] {
         read(
             "SELECT artists.* FROM artists JOIN (SELECT artistId, SUM(COALESCE(playCount, 0)) AS plays FROM songs " +

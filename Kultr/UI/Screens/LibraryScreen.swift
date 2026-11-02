@@ -145,11 +145,31 @@ struct PillLabel: View {
     }
 }
 
+/** A Library page with nothing in it, because the library has not been synced or read yet. */
 struct EmptyLibrary: View {
-    var body: some View {
-        EmptyState(icon: "square.stack.fill", title: "Nothing here yet", message: "Sync your library to browse it on this phone.") {
-            Pill("Open Sync", accent: true) { AppGraph.shared.actions.navigate(.sync) }
+    let tab: LibraryTab
+
+    private var copy: (title: String, message: String) {
+        let local = AppGraph.shared.isLocal
+        let fill = local
+            ? "Choose the folders your music is in, and Kultr reads them."
+            : "Kultr keeps a copy of your library on this phone. Sync it once, and after that only changes are fetched."
+        switch tab {
+        case .albums: return ("No albums yet", fill)
+        case .artists: return ("No artists yet", fill)
+        case .songs: return ("No tracks yet", fill)
+        case .genres: return ("No genres yet", "Genres come from the tags in your music. " + fill)
+        default: return ("Nothing here yet", fill)
         }
+    }
+
+    var body: some View {
+        EmptyState(icon: tab.icon, title: copy.title, message: copy.message) {
+            Pill(AppGraph.shared.isLocal ? "Open Sync" : "Sync my library", icon: "arrow.triangle.2.circlepath", accent: true) {
+                AppGraph.shared.actions.navigate(.sync)
+            }
+        }
+        .frame(maxHeight: .infinity)
     }
 }
 
@@ -167,26 +187,30 @@ private struct AlbumsTab: View {
         Group {
             if let albums {
                 if albums.isEmpty {
-                    EmptyLibrary()
+                    EmptyLibrary(tab: .albums)
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
-                            Section {
-                                ForEach(shown) { AlbumCard(album: $0) }
-                            } header: {
-                                HStack {
-                                    Text(Format.count(shown.count, "album")).foregroundStyle(theme.colors.ink3)
-                                    Spacer()
-                                    SortMenu(current: sort, options: AlbumSort.allCases, label: { $0.rawValue }) { sort = $0 }
+                        if shown.isEmpty && !query.isEmpty {
+                            NoMatches(query: query, what: "albums")
+                        } else {
+                            LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
+                                Section {
+                                    ForEach(shown) { AlbumCard(album: $0) }
+                                } header: {
+                                    HStack {
+                                        Text(Format.count(shown.count, "album")).foregroundStyle(theme.colors.ink3)
+                                        Spacer()
+                                        SortMenu(current: sort, options: AlbumSort.allCases, label: { $0.rawValue }) { sort = $0 }
+                                    }
+                                    .padding(.vertical, 4)
                                 }
-                                .padding(.vertical, 4)
                             }
+                            .padding(16)
                         }
-                        .padding(16)
                     }
                 }
             } else {
-                LoadingView()
+                ScrollView { SkeletonGrid() }.scrollDisabled(true)
             }
         }
         .task(id: graph.library.version) { albums = await graph.library.albums() }
@@ -221,25 +245,29 @@ private struct ArtistsTab: View {
         Group {
             if let artists {
                 if artists.isEmpty {
-                    EmptyLibrary()
+                    EmptyLibrary(tab: .artists)
                 } else {
                     let shown = artists.filter { matches(query, $0.name) }
                     ScrollView {
-                        LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
-                            Section {
-                                ForEach(shown) { ArtistCard(artist: $0) }
-                            } header: {
-                                Text(Format.count(shown.count, "artist"))
-                                    .foregroundStyle(theme.colors.ink3)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 4)
+                        if shown.isEmpty && !query.isEmpty {
+                            NoMatches(query: query, what: "artists")
+                        } else {
+                            LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
+                                Section {
+                                    ForEach(shown) { ArtistCard(artist: $0) }
+                                } header: {
+                                    Text(Format.count(shown.count, "artist"))
+                                        .foregroundStyle(theme.colors.ink3)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.vertical, 4)
+                                }
                             }
+                            .padding(16)
                         }
-                        .padding(16)
                     }
                 }
             } else {
-                LoadingView()
+                ScrollView { SkeletonGrid(round: true) }.scrollDisabled(true)
             }
         }
         .task(id: graph.library.version) { artists = await graph.library.artists() }
@@ -261,7 +289,7 @@ private struct SongsTab: View {
         Group {
             if let songs {
                 if songs.isEmpty {
-                    EmptyLibrary()
+                    EmptyLibrary(tab: .songs)
                 } else {
                     VStack(spacing: 0) {
                         SelectionBar(selection: selection, songs: shown)
@@ -280,6 +308,12 @@ private struct SongsTab: View {
                             .listRowInsets(EdgeInsets())
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
+                            if shown.isEmpty && !query.isEmpty {
+                                NoMatches(query: query, what: "tracks")
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowBackground(Color.clear)
+                                    .listRowSeparator(.hidden)
+                            }
                             SongRows(songs: shown, selection: selection) { index in
                                 graph.actions.playWindow(shown, index)
                             }
@@ -290,7 +324,7 @@ private struct SongsTab: View {
                     }
                 }
             } else {
-                LoadingView()
+                ScrollView { SkeletonRows(count: 12).padding(.top, 52) }.scrollDisabled(true)
             }
         }
         .task(id: graph.library.version) { songs = await graph.library.songs() }
@@ -362,10 +396,16 @@ private struct PlaylistsTab: View {
                             Spacer()
                         }
                         .padding(.bottom, 12)
-                        if shown.isEmpty {
+                        if shown.isEmpty && !query.isEmpty {
+                            NoMatches(query: query, what: "playlists")
+                        } else if shown.isEmpty {
                             // Across the whole page, not in the grid's first column.
-                            EmptyState(icon: "square.stack.fill", title: "No playlists", message: "Create one, or add tracks to a new playlist from any track's menu.")
-                                .padding(.top, 24)
+                            EmptyState(
+                                icon: "music.note.list",
+                                title: "No playlists yet",
+                                message: "Tap New playlist, or choose Add to playlist in any track's ••• menu. Playlists on your server show up here too."
+                            )
+                            .padding(.top, 24)
                         } else {
                             LazyVGrid(columns: theme.settings.gridSize.columns, spacing: 16) {
                                 ForEach(shown) { PlaylistCard(playlist: $0) }
@@ -375,7 +415,7 @@ private struct PlaylistsTab: View {
                     .padding(16)
                 }
             } else {
-                LoadingView()
+                ScrollView { SkeletonGrid() }.scrollDisabled(true)
             }
         }
         .task(id: graph.library.version) { playlists = await graph.library.playlists() }
@@ -404,10 +444,11 @@ private struct GenresTab: View {
         Group {
             if let genres {
                 if genres.isEmpty {
-                    EmptyLibrary()
+                    EmptyLibrary(tab: .genres)
                 } else {
                     let shown = genres.filter { matches(query, $0.value) }
                     ScrollView {
+                        if shown.isEmpty && !query.isEmpty { NoMatches(query: query, what: "genres") }
                         LazyVStack(spacing: 0) {
                             ForEach(shown) { genre in
                                 HStack(spacing: 12) {
@@ -434,7 +475,7 @@ private struct GenresTab: View {
                     }
                 }
             } else {
-                LoadingView()
+                ScrollView { SkeletonRows(count: 12) }.scrollDisabled(true)
             }
         }
         .task(id: graph.library.version) { genres = await graph.library.genres() }
@@ -455,7 +496,14 @@ private struct FavouritesTab: View {
         let graph = AppGraph.shared
         Group {
             if loaded && songs.isEmpty && albums.isEmpty && artists.isEmpty {
-                EmptyState(icon: "heart", title: "No favourites yet", message: "Heart a track, album or artist and it shows up here.")
+                EmptyState(
+                    icon: "heart",
+                    title: "No favourites yet",
+                    message: "Tap the heart on a track, an album or an artist, or double-tap the cover in the player. What you heart shows up here, and on your server."
+                )
+                .frame(maxHeight: .infinity)
+            } else if !loaded {
+                ScrollView { SkeletonRows(count: 10).padding(.top, 52) }.scrollDisabled(true)
             } else {
                 VStack(spacing: 0) {
                     SelectionBar(selection: selection, songs: songs)
@@ -515,7 +563,12 @@ private struct RadioTab: View {
         Group {
             if let stations {
                 if stations.isEmpty {
-                    EmptyState(icon: "radio", title: "No radio stations", message: error ?? "Add internet radio stations in Navidrome and they appear here.")
+                    EmptyState(
+                        icon: "dot.radiowaves.left.and.right",
+                        title: error == nil ? "No radio stations" : "Couldn't load the stations",
+                        message: error ?? "Internet radio stations are set up on your server. In Navidrome, open Radios and add a stream; it shows up here."
+                    )
+                    .frame(maxHeight: .infinity)
                 } else {
                     let shown = stations.filter { matches(query, $0.name) }
                         .enumerated()
@@ -556,7 +609,7 @@ private struct RadioTab: View {
                     }
                 }
             } else {
-                LoadingView()
+                ScrollView { SkeletonRows(count: 8) }.scrollDisabled(true)
             }
         }
         .task {

@@ -71,6 +71,23 @@ enum ReplayGainMode: String, Codable, CaseIterable, Hashable {
     }
 }
 
+/** What a gesture on the player's cover does. */
+enum CoverAction: String, Codable, CaseIterable, Hashable {
+    case none, favourite, queue, lyrics, mixNow, playPause, addToPlaylist
+
+    var label: String {
+        switch self {
+        case .none: return "Nothing"
+        case .favourite: return "Heart the track"
+        case .queue: return "Show the queue"
+        case .lyrics: return "Show the lyrics"
+        case .mixNow: return "Mix into the next track"
+        case .playPause: return "Play or pause"
+        case .addToPlaylist: return "Add to a playlist"
+        }
+    }
+}
+
 let EQ_BANDS: [Int] = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
 
 /** Equaliser presets, in the order they are offered. */
@@ -171,10 +188,17 @@ struct Settings: Codable, Hashable {
     // ---- misc
     var showLyrics: Bool = true
     /** Which shelves the home page shows, in order. Ids come from [HOME_TILES]. */
-    var homeTiles: [String] = ["mostPlayedSongs", "mostPlayedAlbums", "randomSongs", "mostPlayedArtists"]
+    var homeTiles: [String] = ["mostPlayedSongs", "mostPlayedAlbums", "rediscover", "randomSongs", "mostPlayedArtists"]
     /** Radio stations you have hearted. Navidrome has no concept of this. */
     var favouriteRadios: [String] = []
     var hasSeenWelcome: Bool = false
+
+    // ---- the cover in the player
+    var coverDoubleTap: CoverAction = .favourite
+    var coverHold: CoverAction = .mixNow
+    var coverSwipeUp: CoverAction = .queue
+    /** In a sleep timer's last 15 minutes, Karousel picks calmer music. */
+    var sleepWindDown: Bool = true
 
     init() {}
 
@@ -189,6 +213,7 @@ struct Settings: Codable, Hashable {
         case offlineConcurrency, offlineBitrate, offlineWifiOnly, offlineFirst, streamCacheMb
         case autoSyncOnStart, autoSyncMinutes, syncPlaylistContents
         case showLyrics, homeTiles, favouriteRadios, hasSeenWelcome
+        case coverDoubleTap, coverHold, coverSwipeUp, sleepWindDown
     }
 
     /** Missing or unreadable values fall back to their defaults, one by one. */
@@ -257,6 +282,10 @@ struct Settings: Codable, Hashable {
         homeTiles = v(.homeTiles, d.homeTiles)
         favouriteRadios = v(.favouriteRadios, d.favouriteRadios)
         hasSeenWelcome = v(.hasSeenWelcome, d.hasSeenWelcome)
+        coverDoubleTap = v(.coverDoubleTap, d.coverDoubleTap)
+        coverHold = v(.coverHold, d.coverHold)
+        coverSwipeUp = v(.coverSwipeUp, d.coverSwipeUp)
+        sleepWindDown = v(.sleepWindDown, d.sleepWindDown)
     }
 
     /** EQ gains, always exactly one per band. */
@@ -306,6 +335,7 @@ let HOME_TILES: [HomeTile] = [
     HomeTile(id: "randomSongs", title: "Something else", note: "A different handful of tracks every time you open the page.", kind: .songs),
     HomeTile(id: "randomAlbums", title: "Albums at random", note: "A different handful of albums every time.", kind: .albums),
     HomeTile(id: "randomArtists", title: "Artists at random", note: "A different handful of artists every time.", kind: .artists),
+    HomeTile(id: "rediscover", title: "Rediscover", note: "Albums you hearted or played a lot, and haven’t played for a year.", kind: .albums),
     HomeTile(id: "recentlyAdded", title: "Recently added", note: "The newest albums in your library.", kind: .albums),
     HomeTile(id: "favouriteSongs", title: "Favourites", note: "Tracks you have hearted.", kind: .songs),
     HomeTile(id: "favouriteAlbums", title: "Favourite albums", note: "Albums you have hearted.", kind: .albums),
