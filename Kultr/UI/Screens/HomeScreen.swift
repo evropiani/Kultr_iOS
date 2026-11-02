@@ -1,15 +1,5 @@
 import SwiftUI
 
-private func tileIcon(_ id: String) -> String {
-    if id == "recentlyPlayed" { return "clock.arrow.circlepath" }
-    if id.hasPrefix("mostPlayed") { return "play.fill" }
-    if id.hasPrefix("random") { return "shuffle" }
-    if id == "recentlyAdded" { return "opticaldisc" }
-    if id == "favouritePlaylists" { return "music.note.list" }
-    if id.hasPrefix("favourite") { return "heart.fill" }
-    return "radio"
-}
-
 struct HomeScreen: View {
     @Environment(\.kultr) private var theme
     @State private var counts = LibraryCounts()
@@ -187,25 +177,32 @@ private struct HomeShelf: View {
         .task(id: reloadKey) { await load() }
     }
 
+    /** The shelf's title; where there is more to see, the title opens it, as in Apple Music. */
+    @ViewBuilder
     private var header: some View {
-        SectionHeader(tile.title, icon: tileIcon(tile.id)) {
-            if let tab = seeAllTab {
-                Button {
-                    AppGraph.shared.actions.openLibrary(tab)
-                } label: {
-                    HStack(spacing: 3) {
-                        Text("See all")
-                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
-                    }
-                    .font(KFont.labelLarge)
-                    .foregroundStyle(theme.colors.accent)
-                    .frame(minHeight: 44)
-                    .contentShape(Rectangle())
+        if let tab = seeAllTab {
+            Button {
+                AppGraph.shared.actions.openLibrary(tab)
+            } label: {
+                HStack(spacing: 4) {
+                    Text(tile.title)
+                        .font(.title3.bold())
+                        .foregroundStyle(theme.colors.ink)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(theme.colors.ink3)
                 }
-                .buttonStyle(PressScaleStyle())
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(PressScaleStyle())
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .accessibilityHint("Shows all of them")
+        } else {
+            SectionHeader(tile.title)
         }
-        .padding(.top, 12)
     }
 
     private func load() async {

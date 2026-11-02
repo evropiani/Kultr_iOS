@@ -117,7 +117,7 @@ private struct Hello: View {
                 .frame(maxWidth: 380)
                 .padding(.top, 12)
             Spacer()
-            WideGlassButton(title: "Get started", icon: "arrow.right", prominent: true, action: onNext)
+            WideButton(title: "Get started", icon: "arrow.right", prominent: true, action: onNext)
                 .frame(maxWidth: 420)
                 .padding(.bottom, 24)
         }
@@ -221,7 +221,8 @@ private struct ChoiceCard: View {
             .contentShape(shape)
         }
         .buttonStyle(PressScaleStyle())
-        .kultrGlass(shape, interactive: true)
+        .background(shape.fill(c.elevated))
+        .overlay(shape.strokeBorder(c.line, lineWidth: 1))
     }
 }
 
@@ -249,11 +250,11 @@ private struct Folders: View {
                 .multilineTextAlignment(.center)
             MusicFolders()
                 .padding(16)
-                .kultrGlass(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(c.elevated))
                 .padding(.top, 8)
             HStack(spacing: 10) {
-                WideGlassButton(title: "Back", icon: "chevron.left", prominent: false, action: onBack)
-                WideGlassButton(title: "Continue", icon: "arrow.right", prominent: true, enabled: !folders.isEmpty, action: onDone)
+                WideButton(title: "Back", icon: "chevron.left", prominent: false, action: onBack)
+                WideButton(title: "Continue", icon: "arrow.right", prominent: true, enabled: !folders.isEmpty, action: onDone)
             }
             .padding(.top, 8)
         }
@@ -309,7 +310,7 @@ private struct Tour: View {
                             .font(.system(size: 44, weight: .semibold))
                             .foregroundStyle(c.accent)
                             .frame(width: 112, height: 112)
-                            .kultrGlass(Circle(), tint: c.accent.opacity(0.25))
+                            .background(Circle().fill(c.accentSoft))
                         Text(feature.title)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(c.ink)
@@ -335,7 +336,7 @@ private struct Tour: View {
             }
             .animation(theme.spring, value: page)
             .padding(.bottom, 20)
-            WideGlassButton(title: last ? "Start listening" : "Next", icon: last ? "play.fill" : "arrow.right", prominent: true) {
+            WideButton(title: last ? "Start listening" : "Next", icon: last ? "play.fill" : "arrow.right", prominent: true) {
                 if last {
                     onDone()
                 } else {

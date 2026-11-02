@@ -63,8 +63,8 @@ struct GlassIconButton: View {
     }
 }
 
-/** A wide button (Play, Shuffle, Connect): glass, tinted with the accent when prominent. */
-struct WideGlassButton: View {
+/** A wide button (Play, Shuffle, Connect): orange when prominent, sand with an orange label otherwise. */
+struct WideButton: View {
     @Environment(\.kultr) private var theme
     let title: String
     let icon: String
@@ -74,21 +74,22 @@ struct WideGlassButton: View {
 
     var body: some View {
         let c = theme.colors
-        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
         Button {
             Haptics.tap()
             action()
         } label: {
             Label(title, systemImage: icon)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle((prominent ? c.onAccent : c.accent).opacity(enabled ? 1 : 0.5))
+                .font(.headline)
+                .foregroundStyle(prominent ? c.onAccent : c.accent)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
+                .background(shape.fill(prominent ? c.accent : c.sand))
+                .opacity(enabled ? 1 : 0.5)
                 .contentShape(shape)
         }
         .buttonStyle(PressScaleStyle())
         .disabled(!enabled)
-        .kultrGlass(shape, tint: prominent ? c.accent : nil, interactive: true)
     }
 }
 

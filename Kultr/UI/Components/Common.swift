@@ -35,7 +35,7 @@ struct GlassPanel<Content: View>: View {
     }
 }
 
-/** Rounded pill button, optionally filled with the accent. */
+/** A capsule button: orange for the one action that leads, sand with an orange label otherwise. */
 struct Pill: View {
     @Environment(\.kultr) private var theme
     let text: String
@@ -73,16 +73,17 @@ struct Pill: View {
                     .background(Capsule().fill(accent ? Color.white.opacity(0.22) : c.accentSoft))
             }
         }
-        if accent {
-            Button(action: tapped) { label.foregroundStyle(.white) }
-                .buttonStyle(.glassProminent)
-                .tint(c.accent)
-                .disabled(!enabled)
-        } else {
-            Button(action: tapped) { label.foregroundStyle(c.ink.opacity(enabled ? 1 : 0.45)) }
-                .buttonStyle(.glass)
-                .disabled(!enabled)
+        Button(action: tapped) {
+            label
+                .foregroundStyle(accent ? c.onAccent : c.accent)
+                .padding(.horizontal, 14)
+                .frame(height: 36)
+                .background(Capsule().fill(accent ? c.accent : c.sand))
+                .opacity(enabled ? 1 : 0.45)
+                .contentShape(Capsule())
         }
+        .buttonStyle(PressScaleStyle())
+        .disabled(!enabled)
     }
 
     private func tapped() {
@@ -91,72 +92,37 @@ struct Pill: View {
     }
 }
 
-/** A small chip used for years, genres, formats. */
-struct Tag: View {
-    @Environment(\.kultr) private var theme
-    let text: String
-    var action: (() -> Void)?
-
-    init(_ text: String, action: (() -> Void)? = nil) {
-        self.text = text
-        self.action = action
-    }
-
-    var body: some View {
-        let label = Text(text)
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(theme.colors.ink2)
-            .lineLimit(1)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
-            .background(Capsule().fill(theme.colors.glass))
-            .overlay(Capsule().strokeBorder(theme.colors.edge, lineWidth: 1))
-        if let action {
-            Button(action: action) { label }.buttonStyle(PressableStyle())
-        } else {
-            label
-        }
-    }
-}
-
+/** A section's title, bold like Apple Music's, with room for an action on the right. */
 struct SectionHeader<Action: View>: View {
     @Environment(\.kultr) private var theme
     let title: String
-    var icon: String?
     @ViewBuilder var action: Action
 
     var body: some View {
         HStack(spacing: 8) {
-            if let icon {
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(theme.colors.accent)
-                    .frame(width: 18)
-            }
             Text(title)
-                .font(KFont.titleMedium)
+                .font(.title3.bold())
                 .foregroundStyle(theme.colors.ink)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
             action
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
 }
 
 extension SectionHeader where Action == EmptyView {
-    init(_ title: String, icon: String? = nil) {
+    init(_ title: String) {
         self.title = title
-        self.icon = icon
         self.action = EmptyView()
     }
 }
 
 extension SectionHeader {
-    init(_ title: String, icon: String? = nil, @ViewBuilder action: () -> Action) {
+    init(_ title: String, @ViewBuilder action: () -> Action) {
         self.title = title
-        self.icon = icon
         self.action = action()
     }
 }
@@ -170,9 +136,8 @@ struct Eyebrow: View {
     }
 
     var body: some View {
-        Text(text.uppercased())
-            .font(KFont.eyebrow)
-            .tracking(1.4)
+        Text(text)
+            .font(.subheadline.weight(.semibold))
             .foregroundStyle(theme.colors.ink3)
             .lineLimit(1)
     }
@@ -294,35 +259,12 @@ struct Rule: View {
     }
 }
 
-/** A soft wash of the accent behind a header, fading into the background. */
-struct AccentWash: View {
-    @Environment(\.kultr) private var theme
-    var height: CGFloat = 320
-
-    var body: some View {
-        LinearGradient(colors: [theme.colors.accent.opacity(theme.colors.night ? 0.18 : 0.28), .clear], startPoint: .top, endPoint: .bottom)
-            .frame(height: height)
-            .frame(maxHeight: .infinity, alignment: .top)
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-    }
-}
-
-/** The colour field behind screens that have no artwork of their own. */
+/** The plain page colour behind screens. */
 struct PlainBackdrop: View {
     @Environment(\.kultr) private var theme
 
     var body: some View {
-        ZStack {
-            theme.colors.background
-            RadialGradient(
-                colors: [theme.colors.accent.opacity(theme.colors.night ? 0.12 : theme.colors.dark ? 0.22 : 0.16), .clear],
-                center: .topLeading,
-                startRadius: 0,
-                endRadius: 560
-            )
-        }
-        .ignoresSafeArea()
+        theme.colors.background.ignoresSafeArea()
     }
 }
 
@@ -352,11 +294,8 @@ struct ArtworkBackdrop: View {
                 .transition(.opacity)
                 .id(url)
             }
-            LinearGradient(
-                colors: [theme.colors.background.opacity(0.3), theme.colors.accent.opacity(0.1), theme.colors.background.opacity(0.9)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            // Flat, so text reads the same at the top and the bottom.
+            theme.colors.background.opacity(0.55)
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
@@ -412,49 +351,6 @@ struct Shelf<Item: Identifiable, Card: View>: View {
                 }
             }
             .padding(.horizontal, 10)
-        }
-    }
-}
-
-/** A text field in Kultr's rounded style, with a search icon and a clear button. */
-struct FilterField: View {
-    @Environment(\.kultr) private var theme
-    @Binding var text: String
-    let placeholder: String
-    var focused: FocusState<Bool>.Binding?
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(theme.colors.ink3)
-            field
-                .foregroundStyle(theme.colors.ink)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .submitLabel(.search)
-            if !text.isEmpty {
-                Button { text = "" } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(theme.colors.ink3)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Clear")
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(RoundedRectangle(cornerRadius: theme.radii.xl, style: .continuous).fill(theme.colors.glass))
-        .overlay(RoundedRectangle(cornerRadius: theme.radii.xl, style: .continuous).strokeBorder(theme.colors.edge, lineWidth: 1))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-    }
-
-    @ViewBuilder
-    private var field: some View {
-        let input = TextField("", text: $text, prompt: Text(placeholder).foregroundStyle(theme.colors.ink3))
-        if let focused {
-            input.focused(focused)
-        } else {
-            input
         }
     }
 }

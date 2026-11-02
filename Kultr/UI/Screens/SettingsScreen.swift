@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-private let ACCENTS = ["#7c8cff", "#ff6b9a", "#ff9f43", "#ffd166", "#45d67a", "#2ec4b6", "#4cc9f0", "#b388ff", "#f5f5f7"]
+private let ACCENTS = ["#ff7a3d", "#ffa733", "#f2613f", "#ff6b9a", "#ffd166", "#45d67a", "#2ec4b6", "#4cc9f0", "#7c8cff"]
 private let WEBSITE = "https://kultr.cc/"
 private let DISCORD = "https://discord.com/users/319246364246540288"
 private let SOURCE = "https://github.com/evropiani/Kultr_iOS"
@@ -70,53 +70,51 @@ struct SettingsScreen: View {
                 }
             }
             Section {
-                link("Appearance", "paintpalette.fill", .pink) { AppearanceSettings() }
-                link("Home page", "house.fill", .orange) { HomeSettings() }
+                link("Appearance", "paintpalette.fill") { AppearanceSettings() }
+                link("Home page", "house.fill") { HomeSettings() }
             }
             Section {
-                link("Playback", "play.fill", .red) { PlaybackSettings() }
-                link("InjeKt", "sparkles", .purple) { InjektSettings() }
-                link("Audio", "waveform", .blue) { AudioSettings() }
-                link("Equaliser", "slider.vertical.3", .teal) { EqualiserSettings() }
+                link("Playback", "play.fill") { PlaybackSettings() }
+                link("InjeKt", "sparkles") { InjektSettings() }
+                link("Audio", "waveform") { AudioSettings() }
+                link("Equaliser", "slider.vertical.3") { EqualiserSettings() }
             }
             Section {
-                link("Music on this iPhone", "iphone", .mint) { LocalMusicSettings() }
-                link("Offline and cache", "arrow.down.circle.fill", .green) { OfflineSettings() }
+                link("Music on this iPhone", "iphone") { LocalMusicSettings() }
+                link("Offline and cache", "arrow.down.circle.fill") { OfflineSettings() }
                 // Signed in, the server card at the top already opens Servers.
                 if auth.active == nil {
-                    link("Servers", "server.rack", .indigo) { ServerSettings() }
+                    link("Servers", "server.rack") { ServerSettings() }
                 }
-                link("Backup and reset", "externaldrive.fill", .gray) { BackupSettings() }
+                link("Backup and reset", "externaldrive.fill") { BackupSettings() }
             }
             Section {
-                link("About", "info.circle.fill", .gray) { AboutSection() }
+                link("About", "info.circle.fill") { AboutSection() }
             }
         }
         .settingsPage("Settings", inline: false)
     }
 
-    private func link<Destination: View>(_ title: String, _ icon: String, _ color: Color, @ViewBuilder destination: @escaping () -> Destination) -> some View {
+    private func link<Destination: View>(_ title: String, _ icon: String, @ViewBuilder destination: @escaping () -> Destination) -> some View {
         NavigationLink(destination: destination) {
-            SettingsIcon(title: title, icon: icon, color: color)
+            SettingsIcon(title: title, icon: icon)
         }
     }
 }
 
-/** A row label in the style of the Settings app: a white symbol on a coloured tile. */
+/** A settings row: an orange symbol and its title. */
 private struct SettingsIcon: View {
+    @Environment(\.kultr) private var theme
     let title: String
     let icon: String
-    let color: Color
 
     var body: some View {
         Label {
             Text(title)
         } icon: {
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 29, height: 29)
-                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(color.gradient))
+                .foregroundStyle(theme.colors.accent)
+                .frame(width: 29)
         }
     }
 }

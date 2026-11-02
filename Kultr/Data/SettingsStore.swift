@@ -22,6 +22,26 @@ final class SettingsStore {
         } else {
             settings = Settings()
         }
+        moveToCream()
+    }
+
+    /**
+     * 1.4.0's look, once: the old defaults (periwinkle taken from the artwork,
+     * blurred covers behind every page, accent-tinted borders) become the new
+     * ones. A colour someone picked themselves is kept; everything here can be
+     * switched back in Settings > Appearance.
+     */
+    private func moveToCream() {
+        let key = "look.cream"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        let fresh = Settings()
+        update { s in
+            if s.accent.lowercased() == "#7c8cff" { s.accent = fresh.accent }
+            s.accentMode = fresh.accentMode
+            s.backdropArtwork = fresh.backdropArtwork
+            s.surfaceBorder = fresh.surfaceBorder
+        }
     }
 
     var current: Settings { settings }

@@ -2,10 +2,24 @@ import Foundation
 import Observation
 import SwiftUI
 
+/** The sections of the Library, in the order its list shows them. */
 enum LibraryTab: String, CaseIterable, Hashable {
-    case albums, artists, songs, playlists, genres, favourites, downloads, radio
+    case playlists, artists, albums, songs, genres, favourites, downloads, radio
 
     var label: String { rawValue.capitalized }
+
+    var icon: String {
+        switch self {
+        case .playlists: return "music.note.list"
+        case .artists: return "music.mic"
+        case .albums: return "square.stack"
+        case .songs: return "music.note"
+        case .genres: return "guitars"
+        case .favourites: return "heart"
+        case .downloads: return "arrow.down.circle"
+        case .radio: return "dot.radiowaves.left.and.right"
+        }
+    }
 }
 
 extension LibraryTab {

@@ -52,7 +52,10 @@ enum ScreenshotDriver {
         let actions = graph.actions
         let library = graph.library
         switch screen {
-        case "library", "library-switch": actions.selectTab(.library)
+        case "library": actions.selectTab(.library)
+        case "albums":
+            actions.selectTab(.library)
+            actions.openLibrary(.albums)
         case "songs":
             actions.selectTab(.home)
             actions.openLibrary(.songs)
@@ -118,7 +121,7 @@ struct LargeWidgetPreviewScreen: View {
     var body: some View {
         let bridge = WidgetBridge.shared
         ZStack {
-            LinearGradient(colors: [Color(red: 0.24, green: 0.18, blue: 0.42), Color(red: 0.06, green: 0.08, blue: 0.16)], startPoint: .top, endPoint: .bottom)
+            Color(red: 0.16, green: 0.14, blue: 0.12)
                 .ignoresSafeArea()
             VStack(spacing: 26) {
                 face(.systemLarge, CGSize(width: 364, height: 382), bridge)
@@ -134,7 +137,7 @@ struct LargeWidgetPreviewScreen: View {
         NowPlayingWidgetView(family: family, snapshot: bridge.snapshot, artwork: bridge.artwork, queueArtwork: bridge.queueArtwork)
             .padding(16)
             .frame(width: size.width, height: size.height)
-            .background { NowPlayingWidgetBackground(snapshot: bridge.snapshot, artwork: bridge.artwork) }
+            .background { NowPlayingWidgetBackground() }
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .shadow(color: .black.opacity(0.35), radius: 16, y: 8)
     }
@@ -145,7 +148,7 @@ struct WidgetPreviewScreen: View {
     var body: some View {
         let bridge = WidgetBridge.shared
         ZStack {
-            LinearGradient(colors: [Color(red: 0.24, green: 0.18, blue: 0.42), Color(red: 0.06, green: 0.08, blue: 0.16)], startPoint: .top, endPoint: .bottom)
+            Color(red: 0.16, green: 0.14, blue: 0.12)
                 .ignoresSafeArea()
             VStack(spacing: 22) {
                 home(.systemMedium, width: 364, bridge)
@@ -170,7 +173,7 @@ struct WidgetPreviewScreen: View {
         NowPlayingWidgetView(family: family, snapshot: bridge?.snapshot, artwork: bridge?.artwork)
             .padding(14)
             .frame(width: width, height: 170)
-            .background { NowPlayingWidgetBackground(snapshot: bridge?.snapshot, artwork: bridge?.artwork) }
+            .background { NowPlayingWidgetBackground() }
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .shadow(color: .black.opacity(0.35), radius: 16, y: 8)
     }

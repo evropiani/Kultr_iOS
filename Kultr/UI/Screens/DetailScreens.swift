@@ -13,7 +13,6 @@ private struct HeaderGoneKey: PreferenceKey {
  */
 struct DetailHeader<Subtitle: View>: View {
     @Environment(\.kultr) private var theme
-    let eyebrow: String
     let title: String
     let coverId: String?
     var circle = false
@@ -29,17 +28,12 @@ struct DetailHeader<Subtitle: View>: View {
                 .frame(width: 250, height: 250)
                 .shadow(color: .black.opacity(c.dark ? 0.45 : 0.22), radius: 26, y: 14)
                 .padding(.top, 8)
-            Text(eyebrow.uppercased())
-                .font(KFont.eyebrow)
-                .tracking(1.4)
-                .foregroundStyle(c.ink3)
-                .padding(.top, 20)
             Text(title)
-                .font(.system(size: 24, weight: .bold))
+                .font(.title2.bold())
                 .foregroundStyle(c.ink)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
-                .padding(.top, 4)
+                .padding(.top, 18)
                 .background(
                     GeometryReader { proxy in
                         Color.clear.preference(key: HeaderGoneKey.self, value: proxy.frame(in: .global).maxY < 110)
@@ -49,11 +43,10 @@ struct DetailHeader<Subtitle: View>: View {
                 .multilineTextAlignment(.center)
                 .padding(.top, 4)
             if play != nil || shuffle != nil {
-                GlassGroup(spacing: 12) {
-                    HStack(spacing: 12) {
-                        if let play { WideGlassButton(title: "Play", icon: "play.fill", prominent: true, action: play) }
-                        if let shuffle { WideGlassButton(title: "Shuffle", icon: "shuffle", prominent: false, action: shuffle) }
-                    }
+                // Two tinted buttons, as in Apple Music: neither shouts.
+                HStack(spacing: 12) {
+                    if let play { WideButton(title: "Play", icon: "play.fill", prominent: false, action: play) }
+                    if let shuffle { WideButton(title: "Shuffle", icon: "shuffle", prominent: false, action: shuffle) }
                 }
                 .padding(.top, 18)
             }
@@ -89,7 +82,6 @@ private struct DetailScaffold<Content: View, Actions: View>: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             SelectionBar(selection: selection, songs: songs)
         }
-        .background(alignment: .top) { AccentWash(height: 420) }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -222,7 +214,6 @@ struct AlbumScreen: View {
                 let seconds = shown.duration ?? songs.reduce(0) { $0 + ($1.duration ?? 0) }
                 DetailScaffold(title: shown.name, selection: selection, songs: songs) {
                     DetailHeader(
-                        eyebrow: shown.isCompilation == true ? "Compilation" : "Album",
                         title: shown.name,
                         coverId: shown.coverArt ?? shown.id,
                         play: songs.isEmpty ? nil : { graph.actions.play(songs) },
@@ -259,7 +250,7 @@ struct AlbumScreen: View {
                     ForEach(discs, id: \.key) { entry in
                         let disc = entry.key
                         let discSongs = entry.value
-                        if discs.count > 1 { SectionHeader("Disc \(disc)", icon: "opticaldisc") }
+                        if discs.count > 1 { SectionHeader("Disc \(disc)") }
                         SongRows(songs: discSongs, selection: selection, numbered: true, showArtwork: false, keyPrefix: "disc\(disc)") { index in
                             let target = songs.firstIndex(of: discSongs[index]) ?? 0
                             graph.actions.play(songs, target)
@@ -337,7 +328,6 @@ struct ArtistScreen: View {
                 let imageUrl = shown.coverArt == nil ? info?.largeImageUrl.flatMap { $0.hasPrefix("http") ? URL(string: $0) : nil } : nil
                 DetailScaffold(title: shown.name, selection: selection, songs: popular) {
                     DetailHeader(
-                        eyebrow: "Artist",
                         title: shown.name,
                         coverId: shown.coverArt,
                         circle: true,
@@ -350,15 +340,15 @@ struct ArtistScreen: View {
                             .foregroundStyle(c.ink3)
                     }
                     if !popular.isEmpty {
-                        SectionHeader("Popular", icon: "flame.fill")
+                        SectionHeader("Popular")
                         SongRows(songs: popular, selection: selection, keyPrefix: "top") { graph.actions.play(popular, $0) }
                     }
                     if !allAlbums.isEmpty {
-                        SectionHeader("Albums", icon: "square.stack.fill")
+                        SectionHeader("Albums")
                         Shelf(items: allAlbums) { AlbumCard(album: $0) }
                     }
                     if let similar = info?.similarArtist, !similar.isEmpty {
-                        SectionHeader("Similar artists", icon: "person.2.fill")
+                        SectionHeader("Similar artists")
                         Shelf(items: similar, cardWidth: 130) { ArtistCard(artist: $0) }
                     }
                     if let bio = info?.biography {
@@ -435,7 +425,6 @@ struct PlaylistScreen: View {
                 let editable = d.playlist.owner == nil || d.playlist.owner == username
                 DetailScaffold(title: d.playlist.name, selection: selection, songs: songs) {
                     DetailHeader(
-                        eyebrow: d.playlist.isPublic == true ? "Public playlist" : "Playlist",
                         title: d.playlist.name,
                         coverId: d.playlist.coverArt,
                         play: songs.isEmpty ? nil : { graph.actions.play(songs) },
@@ -444,6 +433,7 @@ struct PlaylistScreen: View {
                         VStack(spacing: 3) {
                             Text(
                                 [
+                                    d.playlist.isPublic == true ? "Public" : nil,
                                     d.playlist.owner.map { "by \($0)" },
                                     Format.count(songs.count, "track"),
                                     Format.duration(Int64(songs.reduce(0) { $0 + ($1.duration ?? 0) })),
@@ -551,7 +541,6 @@ struct GenreScreen: View {
         let graph = AppGraph.shared
         DetailScaffold(title: name, selection: selection, songs: songs) {
             DetailHeader(
-                eyebrow: "Genre",
                 title: name,
                 coverId: nil,
                 play: songs.isEmpty ? nil : { graph.actions.playWindow(songs, 0) },
@@ -562,11 +551,11 @@ struct GenreScreen: View {
                     .foregroundStyle(theme.colors.ink3)
             }
             if !albums.isEmpty {
-                SectionHeader("Albums", icon: "square.stack.fill")
+                SectionHeader("Albums")
                 Shelf(items: albums) { AlbumCard(album: $0) }
             }
             if !songs.isEmpty {
-                SectionHeader("Tracks", icon: "music.note")
+                SectionHeader("Tracks")
                 SongRows(songs: songs, selection: selection) { graph.actions.playWindow(songs, $0) }
             }
         } actions: {

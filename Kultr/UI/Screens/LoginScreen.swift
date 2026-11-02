@@ -76,9 +76,9 @@ struct LoginScreen: View {
                             }
                             HStack(spacing: 10) {
                                 if let onCancel {
-                                    WideGlassButton(title: "Cancel", icon: "xmark", prominent: false, action: onCancel)
+                                    WideButton(title: "Cancel", icon: "xmark", prominent: false, action: onCancel)
                                 }
-                                WideGlassButton(
+                                WideButton(
                                     title: busy ? "Connecting…" : "Connect",
                                     icon: busy ? "hourglass" : "arrow.right.circle.fill",
                                     prominent: true,

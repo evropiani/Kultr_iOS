@@ -40,19 +40,15 @@ struct Artwork: View {
         let url = imageUrl ?? artworkUrl(coverId, Int(size * 3))
         let shape = RoundedRectangle(cornerRadius: circle ? size / 2 : theme.radii.sm, style: .continuous)
         ZStack {
-            LinearGradient(
-                colors: [theme.colors.accent.opacity(0.55), theme.colors.accent.opacity(0.15)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            theme.colors.sand
             if let label {
                 Text(Format.initials(label))
                     .font(.system(size: min(48, max(10, size * 0.3)), weight: .bold))
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(theme.colors.accent)
             } else {
                 Image(systemName: icon)
                     .font(.system(size: size * 0.36, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(theme.colors.accent)
             }
             if let url {
                 RemoteImage(url: url, pixelSize: bucketFor(Int(size * 3)))
@@ -81,15 +77,11 @@ struct ArtworkFill: View {
             .aspectRatio(1, contentMode: .fit)
             .overlay {
                 ZStack {
-                    LinearGradient(
-                        colors: [theme.colors.accent.opacity(0.55), theme.colors.accent.opacity(0.12)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    theme.colors.sand
                     if let label {
                         Text(Format.initials(label))
                             .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.85))
+                            .foregroundStyle(theme.colors.accent)
                     }
                     if let url {
                         RemoteImage(url: url, pixelSize: bucketFor(pixels))

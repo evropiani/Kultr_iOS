@@ -108,19 +108,8 @@ struct NowPlayingScreen: View {
                 }
             }
             .padding(.top, 4)
-            HStack(spacing: 6) {
-                if let year = current.year { Tag("\(year)") }
-                if let genre = current.genre {
-                    Tag(genre) {
-                        close()
-                        graph.actions.openGenre(genre)
-                    }
-                }
-                if let suffix = current.suffix { Tag(suffix.uppercased()) }
-                if let bitRate = current.bitRate { Tag("\(bitRate) kbps") }
-                if let rating = current.userRating, rating > 0 { Tag("\(rating) ★") { graph.actions.rate(current) } }
-            }
-            .padding(.top, 10)
+            SongFacts(song: current, close: close)
+                .padding(.top, 8)
             let plan = graph.player.transition.fromSongId == current.id ? graph.player.transition.upcoming : nil
             PositionReader { position in
                 Scrubber(
@@ -191,6 +180,50 @@ private struct PlayerTopBar: View {
         .padding(.horizontal, 12)
         // Below the sheet's own grabber.
         .padding(.top, 14)
+    }
+}
+
+/** Year, genre, format and rating in one quiet line; the genre and the rating can be tapped. */
+private struct SongFacts: View {
+    @Environment(\.kultr) private var theme
+    let song: Song
+    let close: () -> Void
+
+    private struct Fact {
+        let text: String
+        var action: (() -> Void)?
+    }
+
+    private var facts: [Fact] {
+        let graph = AppGraph.shared
+        var out: [Fact] = []
+        if let year = song.year { out.append(Fact(text: String(year))) }
+        if let genre = song.genre {
+            out.append(Fact(text: genre, action: {
+                close()
+                graph.actions.openGenre(genre)
+            }))
+        }
+        if let suffix = song.suffix { out.append(Fact(text: suffix.uppercased())) }
+        if let bitRate = song.bitRate { out.append(Fact(text: "\(bitRate) kbps")) }
+        if let rating = song.userRating, rating > 0 { out.append(Fact(text: "\(rating) ★", action: { graph.actions.rate(song) })) }
+        return out
+    }
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(Array(facts.enumerated()), id: \.offset) { index, fact in
+                if index > 0 { Text("·") }
+                if let action = fact.action {
+                    Button(fact.text, action: action).buttonStyle(PressableStyle())
+                } else {
+                    Text(fact.text)
+                }
+            }
+        }
+        .font(.footnote.weight(.medium))
+        .foregroundStyle(theme.colors.ink3)
+        .lineLimit(1)
     }
 }
 
