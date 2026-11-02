@@ -3,13 +3,9 @@ import UIKit
 
 /**
  * The app once signed in: a tab per section, each with its own navigation
- * stack, the mini player floating above the tab bar, and the full-screen
- * player over everything.
- *
- * On iOS 26 the tab bar is the system's own liquid glass bar (with the lens
- * that follows your finger, the round search button beside it, and the mini
- * player as its accessory). Before iOS 26, Kultr draws a floating glass bar
- * that behaves the same way.
+ * stack, in the system's liquid glass tab bar (with the round search button
+ * beside it and the mini player as its accessory), and the full player as a
+ * sheet over everything.
  */
 struct MainUI: View {
     @Environment(\.kultr) private var theme
@@ -20,8 +16,6 @@ struct MainUI: View {
         let playerOpen = ui.playerOpen && graph.player.state.current != nil
         ZStack(alignment: .top) {
             SystemTabs()
-                .allowsHitTesting(!playerOpen)
-                .accessibilityHidden(playerOpen)
 
             // A new version: a note at the top until it is opened or dismissed.
             if let release = graph.updates.available, release.version != graph.updates.dismissed,
@@ -37,19 +31,7 @@ struct MainUI: View {
                 .zIndex(4)
             }
 
-            if let message = graph.messages.current {
-                ToastView(message: message)
-                    .padding(.top, 6)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .zIndex(5)
-                    .id(message.id)
-            }
-
-            if playerOpen {
-                NowPlayingScreen()
-                    .transition(.move(edge: .bottom))
-                    .zIndex(20)
-            }
+            ToastLayer().zIndex(5)
             #if DEBUG
             if ScreenshotState.shared.showLargeWidgets {
                 LargeWidgetPreviewScreen().zIndex(30)
@@ -70,26 +52,66 @@ struct MainUI: View {
             UpdateScreen(release: release)
                 .environment(\.kultr, theme)
         }
-        .sheet(isPresented: Binding(isPresent: $ui.addToPlaylist)) {
-            AddToPlaylistSheet(songs: ui.addToPlaylist ?? []) { ui.addToPlaylist = nil }
+        .modifier(Dialogs(active: !playerOpen))
+        // A sheet, so pulling it down is iOS's own gesture and runs at full frame rate.
+        .sheet(isPresented: Binding(get: { playerOpen }, set: { ui.playerOpen = $0 })) {
+            NowPlayingScreen()
+                .overlay(alignment: .top) { ToastLayer() }
+                .animation(theme.ease, value: graph.messages.current)
+                // While the player is up, dialogs open over it rather than behind it.
+                .modifier(Dialogs(active: true))
+                .presentationDragIndicator(.visible)
+                .presentationBackground { ArtworkBackdrop(coverId: graph.player.state.current?.artworkId) }
+                // Last, so the backdrop and the dialogs get the theme too.
                 .environment(\.kultr, theme)
-                .presentationDetents([.medium, .large])
-                .presentationBackground(.regularMaterial)
         }
-        .sheet(isPresented: Binding(isPresent: $ui.rate)) {
-            if let song = ui.rate {
-                RatingSheet(song: song) { ui.rate = nil }
+    }
+}
+
+/** The note at the top that says what just happened. */
+private struct ToastLayer: View {
+    var body: some View {
+        if let message = AppGraph.shared.messages.current {
+            ToastView(message: message)
+                .padding(.top, 6)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .id(message.id)
+        }
+    }
+}
+
+/**
+ * Add to playlist, rating and the sleep timer. A sheet can only open from
+ * the topmost screen, so these hang off the player while it is up and off
+ * the app otherwise; [active] says which one.
+ */
+private struct Dialogs: ViewModifier {
+    @Environment(\.kultr) private var theme
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        let ui = AppGraph.shared.ui
+        content
+            .sheet(isPresented: Binding(get: { active && ui.addToPlaylist != nil }, set: { if !$0 { ui.addToPlaylist = nil } })) {
+                AddToPlaylistSheet(songs: ui.addToPlaylist ?? []) { ui.addToPlaylist = nil }
                     .environment(\.kultr, theme)
-                    .presentationDetents([.height(240)])
+                    .presentationDetents([.medium, .large])
                     .presentationBackground(.regularMaterial)
             }
-        }
-        .sheet(isPresented: $ui.sleepTimer) {
-            SleepTimerSheet { ui.sleepTimer = false }
-                .environment(\.kultr, theme)
-                .presentationDetents([.medium, .large])
-                .presentationBackground(.regularMaterial)
-        }
+            .sheet(isPresented: Binding(get: { active && ui.rate != nil }, set: { if !$0 { ui.rate = nil } })) {
+                if let song = ui.rate {
+                    RatingSheet(song: song) { ui.rate = nil }
+                        .environment(\.kultr, theme)
+                        .presentationDetents([.height(240)])
+                        .presentationBackground(.regularMaterial)
+                }
+            }
+            .sheet(isPresented: Binding(get: { active && ui.sleepTimer }, set: { ui.sleepTimer = $0 })) {
+                SleepTimerSheet { ui.sleepTimer = false }
+                    .environment(\.kultr, theme)
+                    .presentationDetents([.medium, .large])
+                    .presentationBackground(.regularMaterial)
+            }
     }
 }
 
