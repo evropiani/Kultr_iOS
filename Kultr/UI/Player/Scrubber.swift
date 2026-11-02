@@ -16,8 +16,11 @@ struct Scrubber: View {
     var countDown = false
     var onToggleCountDown: () -> Void = {}
     var reduceMotion = false
+    /** The track, so the lens can show its beats once InjeKt knows them. */
+    var songId: String?
 
     @State private var dragFraction: Double?
+    @State private var grid: BeatGrid?
 
     var body: some View {
         let c = theme.colors
@@ -33,6 +36,18 @@ struct Scrubber: View {
                     }
                 }
                 .contentShape(Rectangle())
+                .overlay(alignment: .topLeading) {
+                    // The lens: while you drag, the time and the beats under your finger, magnified.
+                    if let dragFraction, durationMs > 0 {
+                        let lensWidth: CGFloat = 148
+                        ScrubLens(ms: Int64(dragFraction * Double(durationMs)), grid: grid, plan: plan)
+                            .frame(width: lensWidth)
+                            .offset(x: min(max(0, dragFraction * width - lensWidth / 2), max(0, width - lensWidth)), y: -84)
+                            .transition(.scale(scale: 0.6, anchor: .bottom).combined(with: .opacity))
+                            .allowsHitTesting(false)
+                    }
+                }
+                .animation(reduceMotion ? nil : .spring(response: 0.25, dampingFraction: 0.8), value: dragFraction == nil)
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
@@ -46,6 +61,7 @@ struct Scrubber: View {
                 )
             }
             .frame(height: 28)
+            .zIndex(1)
             HStack {
                 let shownMs = dragFraction.map { Int64($0 * Double(durationMs)) } ?? positionMs
                 Text(countDown && durationMs > 0 ? "-" + Format.timeMs(durationMs - shownMs) : Format.timeMs(shownMs))
@@ -58,6 +74,9 @@ struct Scrubber: View {
                     .foregroundStyle(c.ink3)
             }
             .padding(.horizontal, 2)
+        }
+        .task(id: "\(songId ?? ""):\(AppGraph.shared.analysis.lastAnalysed == songId)") {
+            grid = await songId.asyncFlatMap { await AppGraph.shared.analysis.cached($0) }.flatMap(BeatGrid.init)
         }
     }
 
@@ -141,5 +160,81 @@ struct Scrubber: View {
         }
         context.fill(circle(thumb), with: .color(c.accent))
         context.fill(circle(thumb * 0.35), with: .color(.white.opacity(0.9)))
+    }
+}
+
+/**
+ * The glass lens over the scrubber while it is dragged: the time, large, and
+ * eight seconds of the track around it with InjeKt's beats marked, the first
+ * beat of each bar taller and orange, and the planned mix shaded.
+ */
+private struct ScrubLens: View {
+    @Environment(\.kultr) private var theme
+    let ms: Int64
+    let grid: BeatGrid?
+    let plan: TransitionPlan?
+
+    private static let span = 8.0
+
+    var body: some View {
+        let c = theme.colors
+        VStack(spacing: 6) {
+            Text(Format.timeMs(ms))
+                .font(.title2.weight(.bold).monospacedDigit())
+                .foregroundStyle(c.ink)
+            Canvas { context, size in
+                let now = Double(ms) / 1000
+                let start = now - Self.span / 2
+                func x(_ seconds: Double) -> CGFloat { CGFloat((seconds - start) / Self.span) * size.width }
+                let mid = size.height / 2
+                if let plan, plan.duration > 0.3 {
+                    let from = x(plan.startAt), to = x(plan.startAt + plan.duration * plan.outgoingRate)
+                    if to > 0 && from < size.width {
+                        context.fill(Path(CGRect(x: max(0, from), y: 0, width: min(size.width, to) - max(0, from), height: size.height)), with: .color(c.accent.opacity(0.18)))
+                    }
+                }
+                context.fill(Path(CGRect(x: 0, y: mid - 0.5, width: size.width, height: 1)), with: .color(c.ink3.opacity(0.5)))
+                if let grid {
+                    let beat = grid.bar / 4
+                    var k = Int(((start - grid.offset) / beat).rounded(.up))
+                    while true {
+                        let time = grid.offset + Double(k) * beat
+                        if time > start + Self.span { break }
+                        if time >= 0 {
+                            let downbeat = ((k % 4) + 4) % 4 == 0
+                            let h: CGFloat = downbeat ? size.height : size.height * 0.45
+                            context.fill(
+                                Path(roundedRect: CGRect(x: x(time) - (downbeat ? 1 : 0.75), y: mid - h / 2, width: downbeat ? 2 : 1.5, height: h), cornerRadius: 1),
+                                with: .color(downbeat ? c.accent : c.ink3)
+                            )
+                        }
+                        k += 1
+                    }
+                } else {
+                    // No beats known yet: plain second marks.
+                    var second = start.rounded(.up)
+                    while second <= start + Self.span {
+                        if second >= 0 {
+                            context.fill(Path(CGRect(x: x(second) - 0.5, y: mid - 4, width: 1, height: 8)), with: .color(c.ink3))
+                        }
+                        second += 1
+                    }
+                }
+                // Where your finger is.
+                context.fill(Path(roundedRect: CGRect(x: size.width / 2 - 1.5, y: 0, width: 3, height: size.height), cornerRadius: 1.5), with: .color(c.ink))
+            }
+            .frame(height: 22)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .kultrGlass(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityHidden(true)
+    }
+}
+
+private extension Optional {
+    func asyncFlatMap<T>(_ transform: (Wrapped) async -> T?) async -> T? {
+        guard let value = self else { return nil }
+        return await transform(value)
     }
 }

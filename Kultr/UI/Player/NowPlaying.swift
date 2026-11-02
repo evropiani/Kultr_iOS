@@ -130,7 +130,8 @@ struct NowPlayingScreen: View {
                     plan: plan,
                     countDown: settings.timeRemaining,
                     onToggleCountDown: { graph.settings.update { $0.timeRemaining.toggle() } },
-                    reduceMotion: settings.reduceMotion
+                    reduceMotion: settings.reduceMotion,
+                    songId: current.isRadio ? nil : current.id
                 )
             }
             .padding(.top, 16)
