@@ -31,6 +31,7 @@ struct HomeScreen: View {
                                     Task { graph.actions.shuffle(await graph.library.randomSongs(200)) }
                                 }
                                 Pill("Start an InjeKt set", icon: "sparkles", accent: true) { graph.actions.startInjektSet() }
+                                Pill("Plan a set", icon: "waveform.path.ecg") { graph.actions.navigate(.planner(nil)) }
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 4)

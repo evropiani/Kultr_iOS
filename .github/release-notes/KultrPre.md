@@ -1,29 +1,27 @@
 **KultrPre is a test build.** It installs next to Kultr as a separate app called **Kultr Pre**, with its own bundle ID (`app.kultr.ios.pre`), App Group and data. Your Kultr install stays as it is. You'll need to sign in to your server again in Kultr Pre. The in-app update check and the Kultr source never offer test builds.
 
-## What's being tested: step 3, Crates, notes and tags, and the glass lens
+## What's being tested: step 4, the energy planner and the command bar
 
-Everything from 1.4.1 and 1.4.2 is still here. The What's new page opens once after updating.
+Everything from 1.4.1 to 1.4.3 is still here. The What's new page opens once after updating.
 
-- **Crates:** folders for albums, artists and tracks, in Library → Crates.
-  - **By hand:** hold an album, an artist or a track anywhere (or use ••• on its page, or select several tracks) and tap **Add to crate**. The list ticks the crates it's already in; tap a crate again to take it out.
-  - **By rules:** "New crate → Fill it by rules" uses the same rules as stations, plus two new ones: your tags, and when the music was added. It starts as "4 stars and up, added this year".
-  - A crate's page plays or shuffles everything in it. ••• renames it, changes its rules, makes a station of the same rules, or deletes it.
-  - **Keep as a playlist** keeps a playlist of the same name on your server with the same tracks, updated a moment after the crate changes. Other apps see it too. Deleting the crate leaves the playlist.
-- **Notes and tags:** album and artist pages have a "Your notes" section above the info text.
-  - **+ Tag** adds a tag of your own, and tapping a tag shows everything with it. Hold a tag to remove it.
-  - **Add a note** keeps a note of any length.
-  - Library → Tags lists every tag once you've used one. A tag's page can play everything with it, or make it a crate with one tap.
-  - Notes and tags are private: they stay on the phone, with your settings, and go into a settings backup (Settings → Backup and reset).
-- **Glass lens:** drag along the player's progress bar and a glass lens floats above your finger. It shows the time large, and eight seconds of the track around it with InjeKt's beats marked: the first beat of each bar is taller and orange, and a planned mix is shaded. Before InjeKt has analysed the track, it shows second marks instead.
-- **Stations, smaller fixes:** the dial has a faint edge in dark mode, and the Home shelf puts stations that have music first. A station with nothing to play yet says why ("Needs InjeKt analysis").
+- **Energy planner:** tap "Plan a set" on Home (or ••• on the Stations page).
+  - Draw the shape of the set with your finger, low for calm and high for peak, or start from a shape: Warm up and peak, Steady, Build, Wind down.
+  - Choose 30 minutes to 2 hours, and the whole library or one station's music.
+  - "Build the set" picks, for each moment, the track whose energy is closest to your line. It also has to mix well out of the one before (close tempo, a neighbouring key), can't be by the same artist and can't repeat. Dots on the drawing show where each track lands.
+  - Play it as it is, or save it as a playlist. It only uses tracks InjeKt has analysed; the page says how many are left.
+- **Command bar:** Search also does things. Type a command and an orange row appears above the results; tap it or press Return.
+  - Playing: "play Night Drive" (a station), "play" or "shuffle" and an artist or album, "shuffle all", "play" and a crate's name.
+  - Controls: "pause", "play", "next", "back", "mix now".
+  - Sleep timer: "sleep in 30 minutes", "stop in an hour", "sleep after this song".
+  - Pages: "open settings", "show my stations", "open recap", "open" and a crate.
+  - Planning: "plan an hour".
+- **In your own words:** with Apple Intelligence on, longer requests the usual phrasings don't cover get an "Ask Kultr to do it" row. Apple's model reads it on the iPhone itself, and nothing is sent anywhere. Without Apple Intelligence, the row doesn't appear.
 
 ## Please check
 
-- **Crates:** add an album, an artist and a few tracks to a crate from their menus, then open it from Library → Crates. Do the covers on the crate's card look right?
-- **Rules:** make a crate by rules and check that its tracks fit.
-- **Keep as a playlist:** switch it on for a crate and look for the playlist in Library → Playlists (pull to refresh), and in another Subsonic app if you use one.
-- **Notes and tags:** tag two albums the same, open the tag from the album page and from Library → Tags, and write a note.
-- **Lens:** does it sit above your finger without covering what you need, and do the beat marks line up with the music?
+- **Planner:** draw a shape, build a set, and look at whether the dots follow your line. Play it: do the mixes hold together?
+- **Command bar:** try the commands above, and some of your own. Tell me what you'd expect to work but doesn't.
+- **Apple Intelligence:** if your iPhone has it, try something like "put on something calm for an hour".
 
 ## Install
 

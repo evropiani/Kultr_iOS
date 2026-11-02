@@ -157,7 +157,7 @@ private struct SystemTabs: View {
                 // tab bar, growing out of the search button while the other tabs fold
                 // into one, and rides up above the keyboard while you type.
                 TabStack(tab: .search)
-                    .searchable(text: $ui.searchQuery, prompt: "Artists, albums, tracks")
+                    .searchable(text: $ui.searchQuery, prompt: "Search, or say “play Night Drive”")
                     .searchFocused($searchFocused)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
@@ -258,6 +258,7 @@ private struct RouteView: View {
         case .stations: StationsScreen()
         case .crate(let id): CrateScreen(id: id)
         case .tag(let tag): TagScreen(tag: tag)
+        case .planner(let minutes): PlannerScreen(minutes: minutes)
         case .downloads(let page): DownloadsScreen(initialPage: page)
         }
     }

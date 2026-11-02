@@ -72,6 +72,7 @@ enum Route: Hashable {
     case stations
     case crate(String)
     case tag(String)
+    case planner(Int?)
     case downloads(DownloadsPage)
 }
 
