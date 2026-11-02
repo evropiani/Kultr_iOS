@@ -43,7 +43,7 @@ struct HomeScreen: View {
                 .padding(.top, 2)
                 .padding(.bottom, 8)
 
-                if loaded && counts.albums > 0 {
+                if loaded && counts.albums > 0 && theme.settings.showHomeWidgets {
                     HomeWidgetsGrid()
                 }
 

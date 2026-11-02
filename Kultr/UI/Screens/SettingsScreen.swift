@@ -399,12 +399,59 @@ struct AppearanceSettings: View {
 
 private struct HomeSettings: View {
     @Environment(\.kultr) private var theme
+    @State private var addingWidget = false
 
     var body: some View {
         let s = theme.settings
         let on = resolveHomeTiles(s.homeTiles)
         let off = availableHomeTiles(s.homeTiles)
         List {
+            Section {
+                Toggle("Widgets on Home", isOn: setting(\.showHomeWidgets))
+                    .tint(theme.colors.accent)
+                if s.showHomeWidgets {
+                    ForEach(s.homeWidgets) { widget in
+                        HStack(spacing: 12) {
+                            Image(systemName: widget.kind.icon)
+                                .foregroundStyle(theme.colors.accent)
+                                .frame(width: 24)
+                            Text(homeWidgetTitle(widget))
+                                .lineLimit(1)
+                            Spacer(minLength: 8)
+                            Menu {
+                                Picker("Size", selection: Binding(
+                                    get: { widget.size },
+                                    set: { size in update { s in if let at = s.homeWidgets.firstIndex(where: { $0.id == widget.id }) { s.homeWidgets[at].size = size } } }
+                                )) {
+                                    ForEach(HomeWidget.Size.allCases, id: \.self) { Text($0.label).tag($0) }
+                                }
+                            } label: {
+                                Text(widget.size.label)
+                                    .foregroundStyle(theme.colors.accent)
+                            }
+                        }
+                    }
+                    .onMove { from, to in
+                        Haptics.select()
+                        update { $0.homeWidgets.move(fromOffsets: from, toOffset: to) }
+                    }
+                    .onDelete { offsets in
+                        update { $0.homeWidgets.remove(atOffsets: offsets) }
+                    }
+                    Button {
+                        addingWidget = true
+                    } label: {
+                        Label("Add a widget", systemImage: "plus.circle.fill")
+                    }
+                    if s.homeWidgets != DEFAULT_HOME_WIDGETS {
+                        Button("Back to the starting widgets") { update { $0.homeWidgets = DEFAULT_HOME_WIDGETS } }
+                    }
+                }
+            } header: {
+                Text("Widgets")
+            } footer: {
+                Text("Widgets sit at the top of Home: drag to move one, tap the red button to take it off, tap its size to change it. On Home itself, hold a widget for the same choices.")
+            }
             Section {
                 ForEach(on) { tile in
                     VStack(alignment: .leading, spacing: 2) {
@@ -452,7 +499,17 @@ private struct HomeSettings: View {
         }
         .environment(\.editMode, .constant(.active))
         .animation(theme.spring, value: s.homeTiles)
+        .animation(theme.spring, value: s.homeWidgets)
         .settingsPage("Home page")
+        .sheet(isPresented: $addingWidget) {
+            AddWidgetSheet { widget in
+                update { $0.homeWidgets.append(widget) }
+                addingWidget = false
+            } onCancel: {
+                addingWidget = false
+            }
+            .environment(\.kultr, theme)
+        }
     }
 }
 

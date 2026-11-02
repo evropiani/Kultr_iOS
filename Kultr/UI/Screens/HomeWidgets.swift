@@ -90,10 +90,39 @@ struct HomeWidgetsGrid: View {
                     .background(RoundedRectangle(cornerRadius: 16).fill(c.sand))
             }
         } else {
-            content.onLongPressGesture(minimumDuration: 0.5) {
-                Haptics.tap()
-                withAnimation(theme.ease) { editing = true }
-            }
+            // Each widget is a button, which keeps a plain long press from
+            // getting through; iOS's own menu always does, as on the home screen.
+            content
+                .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: theme.radii.lg, style: .continuous))
+                .contextMenu {
+                    Button { withAnimation(theme.ease) { editing = true } } label: {
+                        Label("Edit widgets", systemImage: "square.grid.2x2")
+                    }
+                    Menu {
+                        ForEach(HomeWidget.Size.allCases, id: \.self) { size in
+                            Button {
+                                withAnimation(theme.ease) { resize(widget.id, size) }
+                            } label: {
+                                if widget.size == size { Label(size.label, systemImage: "checkmark") } else { Text(size.label) }
+                            }
+                        }
+                    } label: {
+                        Label("Size", systemImage: "arrow.up.left.and.arrow.down.right")
+                    }
+                    Button { adding = true } label: { Label("Add a widget…", systemImage: "plus") }
+                    Divider()
+                    Button(role: .destructive) {
+                        withAnimation(theme.ease) { graph.settings.update { $0.homeWidgets.removeAll { $0.id == widget.id } } }
+                    } label: {
+                        Label("Remove widget", systemImage: "minus.circle")
+                    }
+                }
+        }
+    }
+
+    private func resize(_ id: String, _ size: HomeWidget.Size) {
+        AppGraph.shared.settings.update { s in
+            if let at = s.homeWidgets.firstIndex(where: { $0.id == id }) { s.homeWidgets[at].size = size }
         }
     }
 
@@ -476,8 +505,22 @@ private let SHORTCUTS = [
     "open downloads", "open recap", "open crates",
 ]
 
+/** A widget's name in a list: its kind, and for a station, crate or shortcut, which one. */
+@MainActor
+func homeWidgetTitle(_ widget: HomeWidget) -> String {
+    let graph = AppGraph.shared
+    switch widget.kind {
+    case .station: return "Station: " + (graph.stations.all.first { $0.id == widget.ref }?.name ?? "gone")
+    case .crate: return "Crate: " + (graph.crates.all.first { $0.id == widget.ref }?.name ?? "gone")
+    case .shortcut:
+        let words = widget.ref ?? ""
+        return CommandRunner.parse(words).map { CommandRunner.describe($0).text } ?? "Shortcut: “\(words)”"
+    default: return widget.kind.label
+    }
+}
+
 /** Which widget, how big, and for a station, crate or shortcut, which one. */
-private struct AddWidgetSheet: View {
+struct AddWidgetSheet: View {
     @Environment(\.kultr) private var theme
     let onAdd: (HomeWidget) -> Void
     let onCancel: () -> Void

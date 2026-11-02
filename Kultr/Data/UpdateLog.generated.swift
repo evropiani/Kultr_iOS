@@ -4,6 +4,30 @@
 let UPDATE_LOG_JSON = ####"""
 [
  {
+  "version": "2.0.1",
+  "date": "2026-11-02",
+  "sections": [
+   {
+    "title": "What's fixed",
+    "lines": [
+     {
+      "kind": "bullet",
+      "text": "**Holding a widget on Home does something now.** In 2.0.0 a widget took the touch itself (to open the player, start a station and so on), so holding one to edit never got through. Now holding a widget opens a menu, like on the iPhone's home screen. **Edit widgets** makes them wiggle: the minus takes one away, dragging one onto another moves it, and Add a widget offers the rest. **Size**, **Add a widget** and **Remove widget** work from the menu directly."
+     }
+    ]
+   },
+   {
+    "title": "What's new",
+    "lines": [
+     {
+      "kind": "bullet",
+      "text": "**Widgets in Settings.** Settings → Home page has a Widgets section at the top. Switch widgets off altogether, or add, remove, move and resize them there."
+     }
+    ]
+   }
+  ]
+ },
+ {
   "version": "2.0.0",
   "date": "2026-11-02",
   "sections": [

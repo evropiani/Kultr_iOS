@@ -13,6 +13,18 @@ struct WhatsNewItem: Identifiable {
  */
 enum WhatsNew {
     static let notes: [String: [WhatsNewItem]] = [
+        "2.0.1": [
+            WhatsNewItem(
+                icon: "square.grid.2x2.fill",
+                title: "Edit your widgets",
+                text: "Hold a widget on Home for a menu: Edit widgets, Size, Add a widget and Remove. In 2.0.0, holding one did nothing."
+            ),
+            WhatsNewItem(
+                icon: "switch.2",
+                title: "Widgets in Settings",
+                text: "Settings → Home page has a Widgets section: switch widgets off altogether, or add, remove, move and resize them."
+            ),
+        ],
         "2.0.0": [
             WhatsNewItem(
                 icon: "dial.medium.fill",

@@ -186,6 +186,8 @@ struct Settings: Codable, Hashable {
     var crates: [Crate] = []
     /** The widgets at the top of Home, in order. */
     var homeWidgets: [HomeWidget] = DEFAULT_HOME_WIDGETS
+    /** Whether Home shows them at all. */
+    var showHomeWidgets: Bool = true
     /** Clear glass instead of frosted, for every floating control. */
     var clearGlass: Bool = false
     /** The player's parts, top to bottom; the ones left out are hidden. */
@@ -207,7 +209,7 @@ struct Settings: Codable, Hashable {
         case autoSyncOnStart, autoSyncMinutes, syncPlaylistContents
         case showLyrics, homeTiles, favouriteRadios, hasSeenWelcome
         case sleepWindDown, stations
-        case annotations, crates, homeWidgets, clearGlass, playerBlocks, factsTemplate
+        case annotations, crates, homeWidgets, showHomeWidgets, clearGlass, playerBlocks, factsTemplate
     }
 
     /** Missing or unreadable values fall back to their defaults, one by one. */
@@ -281,6 +283,7 @@ struct Settings: Codable, Hashable {
         annotations = v(.annotations, d.annotations)
         crates = v(.crates, d.crates)
         homeWidgets = v(.homeWidgets, d.homeWidgets)
+        showHomeWidgets = v(.showHomeWidgets, d.showHomeWidgets)
         clearGlass = v(.clearGlass, d.clearGlass)
         playerBlocks = v(.playerBlocks, d.playerBlocks)
         factsTemplate = v(.factsTemplate, d.factsTemplate)
