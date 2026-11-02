@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 private let ACCENTS = ["#7c8cff", "#ff6b9a", "#ff9f43", "#ffd166", "#45d67a", "#2ec4b6", "#4cc9f0", "#b388ff", "#f5f5f7"]
@@ -207,6 +208,63 @@ private struct SettingSlider: View {
 
 // ----------------------------------------------------------- appearance --
 
+/** The icons Kultr can show on the home screen; Cream is the main one. */
+private enum AppIcon: String, CaseIterable, Identifiable {
+    case cream, ember, night, classic
+
+    var id: String { rawValue }
+    var label: String { rawValue.capitalized }
+    /** The icon set's name for iOS, nil for the main icon. */
+    var iconName: String? { self == .cream ? nil : "AppIcon-\(label)" }
+}
+
+/** The four icons side by side; tapping one puts it on the home screen. */
+private struct AppIconPicker: View {
+    @Environment(\.kultr) private var theme
+    @State private var current = UIApplication.shared.alternateIconName
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(AppIcon.allCases) { icon in
+                let selected = current == icon.iconName
+                Button { choose(icon) } label: {
+                    VStack(spacing: 6) {
+                        Image("IconPreview\(icon.label)")
+                            .resizable()
+                            .frame(width: 60, height: 60)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .strokeBorder(selected ? theme.colors.accent : Color.primary.opacity(0.12), lineWidth: selected ? 3 : 1)
+                            }
+                        Text(icon.label)
+                            .font(.caption)
+                            .foregroundStyle(selected ? .primary : .secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(icon.label) icon")
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+        .padding(.vertical, 6)
+    }
+
+    private func choose(_ icon: AppIcon) {
+        guard current != icon.iconName, UIApplication.shared.supportsAlternateIcons else { return }
+        Haptics.select()
+        Task {
+            do {
+                try await UIApplication.shared.setAlternateIconName(icon.iconName)
+                current = icon.iconName
+            } catch {
+                AppGraph.shared.messages.error("Could not change the icon: \(error.localizedDescription)")
+            }
+        }
+    }
+}
+
 private struct AppearanceSettings: View {
     @Environment(\.kultr) private var theme
 
@@ -214,6 +272,9 @@ private struct AppearanceSettings: View {
         let s = theme.settings
         let c = theme.colors
         Form {
+            Section("App icon") {
+                AppIconPicker()
+            }
             Section {
                 Picker("Theme", selection: setting(\.theme)) {
                     Text("System").tag(ThemeMode.system)
