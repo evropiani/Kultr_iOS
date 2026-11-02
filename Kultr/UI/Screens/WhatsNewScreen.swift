@@ -13,47 +13,26 @@ struct WhatsNewItem: Identifiable {
  */
 enum WhatsNew {
     static let notes: [String: [WhatsNewItem]] = [
-        // The release: the best of 1.4.1 to 1.4.5, for anyone coming from 1.4.0.
-        "1.5.0": [
+        "1.4.6": [
             WhatsNewItem(
-                icon: "dial.medium.fill",
-                title: "Stations",
-                text: "Endless mixes from your own library, the first shelf on Home. Turn the dial on the Stations page to choose, or make your own from tempo, energy, key, genre, years and your tags."
+                icon: "chevron.down.circle.fill",
+                title: "Pull the player down again",
+                text: "Pulling down closes the player again, wherever you start, the cover included. The cover's double-tap, hold and swipe-up are gone; swiping it sideways still skips."
             ),
             WhatsNewItem(
-                icon: "waveform.path.ecg",
-                title: "Energy planner",
-                text: "Draw how the next hour should feel, calm to peak, and Kultr builds a set that follows your line. “Plan a set” on Home."
+                icon: "forward.end.fill",
+                title: "Hold Next to mix",
+                text: "Hold the player's Next button and Kultr mixes into the next track over the whole crossfade instead of skipping. A tap still skips."
             ),
             WhatsNewItem(
-                icon: "text.magnifyingglass",
-                title: "Search does things",
-                text: "Type “play Night Drive”, “sleep in 30 minutes”, “next” or “plan an hour” and tap the orange row. With Apple Intelligence on, say it your own way."
+                icon: "clock.arrow.circlepath",
+                title: "Update log",
+                text: "Settings → About → Update log has what changed in every version, from 1.0.0 to now."
             ),
             WhatsNewItem(
-                icon: "shippingbox.fill",
-                title: "Crates, notes and tags",
-                text: "Folders of albums, artists and tracks, by hand or by rules, kept as playlists if you like. Album and artist pages take your own notes and tags."
-            ),
-            WhatsNewItem(
-                icon: "wand.and.stars",
-                title: "Kultr Studio",
-                text: "Settings → Kultr Studio: the whole look in one place, the player built your way, and styles to share as a link."
-            ),
-            WhatsNewItem(
-                icon: "square.grid.2x2.fill",
-                title: "Widgets on Home",
-                text: "Now playing, your week, the next mix, a station, a crate or a shortcut. Hold one to move or remove it."
-            ),
-            WhatsNewItem(
-                icon: "hand.tap.fill",
-                title: "A livelier player",
-                text: "Double-tap the cover to heart, hold it to mix, swipe up for the queue. The play button pulses on the beat, a glass lens follows your finger, and a Live Activity counts down to the next mix."
-            ),
-            WhatsNewItem(
-                icon: "calendar",
-                title: "Rediscover and your month",
-                text: "A Home shelf of loved albums you haven't played for a year, and a monthly recap in Listening."
+                icon: "minus.circle.fill",
+                title: "Less in the way",
+                text: "The Live Activity and the beat pulse on the play button are gone."
             ),
         ],
         "1.4.5": [

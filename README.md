@@ -72,11 +72,9 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   next mix, a station, a crate or a shortcut, in three sizes, plus the shelves
   you choose: Rediscover (loved albums you haven't played for a year), most
   played, recently added and more.
-- **In the player.** Double-tap the cover to heart, hold it to mix into the
-  next track, swipe up for the queue (each one can be changed); the play
-  button pulses on the beat; a glass lens magnifies the time and beats as you
-  scrub; a Live Activity counts down to the next mix on the Lock Screen and in
-  the Dynamic Island; a sleep timer that winds down with calmer music.
+- **In the player.** Hold Next to mix into the next track instead of
+  skipping; a glass lens magnifies the time and beats as you scrub; a sleep
+  timer that winds down with calmer music.
 - **Listening.** A monthly recap of what you played on this phone, and the
   session saved as a playlist in one tap.
 - **Offline.** Download albums, playlists, favourites or the whole library, at

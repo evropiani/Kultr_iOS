@@ -2,10 +2,8 @@ import ActivityKit
 import Foundation
 
 /**
- * The Live Activity on the Lock Screen and in the Dynamic Island: what is
- * playing, and when InjeKt mixes into what comes next. The app starts and
- * updates it; the widget extension draws it. Clocks run by themselves from
- * the dates in here, so it only changes when the music does.
+ * The Live Activity KultrPre 1.4.2 to 1.4.5 showed. It is gone; the type
+ * stays only so the app can end one those builds left running.
  */
 struct NowPlayingAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {

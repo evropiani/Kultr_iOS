@@ -72,6 +72,7 @@ enum ScreenshotDriver {
         case "whatsnew": graph.ui.whatsNew = true
         case "stations": actions.navigate(.stations)
         case "planner": actions.navigate(.planner(60))
+        case "updatelog": ScreenshotState.shared.showUpdateLog = true
         case "studio":
             actions.selectTab(.settings)
             try? await Task.sleep(nanoseconds: 500_000_000)
@@ -173,6 +174,7 @@ final class ScreenshotState {
     static let shared = ScreenshotState()
     var showWidgets = false
     var showLargeWidgets = false
+    var showUpdateLog = false
 }
 
 /** The large widget as an iPhone shows it, and the extra-large one as an iPad would, scaled to fit. */

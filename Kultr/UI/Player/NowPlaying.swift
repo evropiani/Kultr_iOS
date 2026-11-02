@@ -30,17 +30,10 @@ struct NowPlayingScreen: View {
         ZStack {
             if let song = state.current {
                 let current = live?.id == song.id ? live! : song
-                ScrollViewReader { scroller in
-                    ScrollView {
+                ScrollView {
                         VStack(spacing: 0) {
                             PlayerTopBar(song: current, onClose: close)
-                            header(current, state: state, settings: settings) { shown in
-                                // Swiping up the cover: open that panel and scroll it into view.
-                                withAnimation(theme.ease) {
-                                    tab = shown == .lyrics && !settings.showLyrics ? .queue : shown
-                                    scroller.scrollTo("panels", anchor: .top)
-                                }
-                            }
+                            header(current, state: state, settings: settings)
                             Picker("Show", selection: Binding(get: { tab }, set: { value in withAnimation(theme.ease) { tab = value } })) {
                                 ForEach(PlayerTab.allCases.filter { $0 != .lyrics || settings.showLyrics }, id: \.self) { entry in
                                     Text(entry.label).tag(entry)
@@ -50,7 +43,6 @@ struct NowPlayingScreen: View {
                             .padding(.horizontal, 20)
                             .padding(.top, 16)
                             .padding(.bottom, 12)
-                            .id("panels")
                             switch tab {
                             case .queue: QueueList(state: state)
                             case .lyrics: LyricsPanel(song: current)
@@ -58,7 +50,6 @@ struct NowPlayingScreen: View {
                             }
                         }
                         .padding(.bottom, 32)
-                    }
                 }
                 .task(id: "\(song.id):\(graph.library.version)") {
                     live = await graph.library.song(song.id)
@@ -83,13 +74,13 @@ struct NowPlayingScreen: View {
     }
 
     @ViewBuilder
-    private func header(_ current: Song, state: PlayerUiState, settings: Settings, show: @escaping (PlayerTab) -> Void) -> some View {
+    private func header(_ current: Song, state: PlayerUiState, settings: Settings) -> some View {
         // Kultr Studio decides which parts show, and in what order.
         VStack(spacing: 0) {
             ForEach(settings.playerBlocks, id: \.self) { block in
                 switch block {
                 case .artwork:
-                    SwipeArtwork(song: current, show: show)
+                    SwipeArtwork(song: current)
                         .padding(.top, 8)
                 case .title:
                     titleBlock(current)
@@ -295,55 +286,29 @@ private struct SongFacts: View {
 }
 
 /**
- * The big artwork. Swipe it sideways to skip; double-tap, hold and swipe up do
- * what Settings > Playback > The cover says (by default: heart the track, mix
- * into the next one, show the queue).
+ * The big artwork; swipe it sideways to skip. The swipe is simultaneous, so
+ * a pull down that starts on the cover still closes the player.
  */
 private struct SwipeArtwork: View {
     @Environment(\.kultr) private var theme
     let song: Song
-    /** Opens a panel under the player and scrolls to it. */
-    let show: (PlayerTab) -> Void
     @State private var drag: CGFloat = 0
-    /** The symbol that pops up over the cover after a gesture, briefly. */
-    @State private var flash: String?
-    @State private var flashId = 0
 
     var body: some View {
-        let settings = theme.settings
         ArtworkFill(coverId: song.artworkId, radius: theme.radii.xl, label: song.isRadio ? song.title : nil, pixels: 800)
-            .overlay {
-                if let flash {
-                    Image(systemName: flash)
-                        .font(.system(size: 88, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.35), radius: 12)
-                        .transition(.scale(scale: 0.4).combined(with: .opacity))
-                        .id(flashId)
-                }
-            }
             .shadow(color: .black.opacity(0.35), radius: 24, y: 10)
             .padding(.horizontal, 12)
             .offset(x: drag)
             .rotationEffect(.degrees(Double(drag) / 60))
-            .contentShape(Rectangle())
-            .onTapGesture(count: 2) { perform(settings.coverDoubleTap) }
-            .onLongPressGesture(minimumDuration: 0.45) { perform(settings.coverHold) }
-            .gesture(
+            .simultaneousGesture(
                 DragGesture(minimumDistance: 20)
                     .onChanged { value in
-                        if abs(value.translation.width) > abs(value.translation.height) { drag = value.translation.width }
+                        // Only clearly sideways: up and down belong to the sheet.
+                        if abs(value.translation.width) > abs(value.translation.height) * 1.5 { drag = value.translation.width }
                     }
-                    .onEnded { value in
+                    .onEnded { _ in
                         let player = AppGraph.shared.player
-                        let up = -value.translation.height
-                        if drag > 90 {
-                            player.previous()
-                        } else if drag < -90 {
-                            player.next()
-                        } else if up > 60, up > abs(value.translation.width) * 1.5 {
-                            perform(settings.coverSwipeUp)
-                        }
+                        if drag > 90 { player.previous() } else if drag < -90 { player.next() }
                         withAnimation(.spring()) { drag = 0 }
                     }
             )
@@ -352,64 +317,6 @@ private struct SwipeArtwork: View {
             .accessibilityLabel("Cover of \(song.album ?? song.title)")
             .accessibilityAction(named: "Next track") { AppGraph.shared.player.next() }
             .accessibilityAction(named: "Previous track") { AppGraph.shared.player.previous() }
-            .modifier(CoverAccessibility(actions: [settings.coverDoubleTap, settings.coverHold, settings.coverSwipeUp], perform: perform))
-    }
-
-    private func perform(_ action: CoverAction) {
-        let graph = AppGraph.shared
-        switch action {
-        case .none:
-            return
-        case .favourite:
-            guard !song.isRadio else { return }
-            let starred = graph.ui.isStarred(song)
-            graph.actions.setFavourite(song, !starred)
-            pop(starred ? "heart.slash.fill" : "heart.fill")
-        case .queue:
-            show(.queue)
-        case .lyrics:
-            show(.lyrics)
-        case .mixNow:
-            if graph.player.mixNow() {
-                Haptics.tap()
-                pop("arrow.triangle.merge")
-                graph.messages.show("Mixing into the next track")
-            } else {
-                graph.messages.show("Nothing to mix into: this is the last track")
-            }
-        case .playPause:
-            Haptics.tap()
-            let playing = graph.player.state.playWhenReady
-            graph.player.toggle()
-            pop(playing ? "pause.fill" : "play.fill")
-        case .addToPlaylist:
-            guard !song.isRadio else { return }
-            graph.actions.addToPlaylist([song])
-        }
-    }
-
-    private func pop(_ symbol: String) {
-        flashId += 1
-        let id = flashId
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { flash = symbol }
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 700_000_000)
-            if flashId == id { withAnimation(.easeOut(duration: 0.25)) { flash = nil } }
-        }
-    }
-}
-
-/** The cover's gestures as VoiceOver actions, without the ones switched off or doubled. */
-private struct CoverAccessibility: ViewModifier {
-    let actions: [CoverAction]
-    let perform: (CoverAction) -> Void
-
-    func body(content: Content) -> some View {
-        var seen = Set<CoverAction>()
-        let unique = actions.filter { $0 != .none && seen.insert($0).inserted }
-        return unique.reduce(AnyView(content)) { view, action in
-            AnyView(view.accessibilityAction(named: action.label) { perform(action) })
-        }
     }
 }
 
@@ -454,13 +361,12 @@ private struct Transport: View {
                         }
                     }
                     .frame(width: 84, height: 84)
-                    .modifier(BeatPulse(song: song, playing: state.playWhenReady && !state.buffering && !state.ended))
                     .contentShape(Circle())
                 }
                 .buttonStyle(PressScaleStyle())
                 .accessibilityLabel(state.playWhenReady ? "Pause" : "Play")
                 Spacer()
-                IconButton(icon: "forward.end.fill", size: 30, label: "Next") { player.next() }
+                NextButton()
                 Spacer()
                 ModeButton(
                     icon: state.repeatMode == .one ? "repeat.1" : "repeat",
@@ -492,52 +398,47 @@ private struct Transport: View {
 }
 
 /**
- * Beat pulse: the play button swells a little on each downbeat InjeKt found,
- * with a soft orange ring behind it, and (if switched on) the phone taps
- * along. Only while playing a track with a confident tempo, with the player
- * open and the app in front; never with Reduce motion.
+ * Next: tap to skip, hold to mix into the next track over the whole
+ * crossfade (at least 2 seconds) instead of cutting.
  */
-private struct BeatPulse: ViewModifier {
+private struct NextButton: View {
     @Environment(\.kultr) private var theme
-    @Environment(\.scenePhase) private var phase
-    let song: Song
-    let playing: Bool
-    @State private var grid: BeatGrid?
+    @State private var pressed = false
 
-    func body(content: Content) -> some View {
-        let settings = theme.settings
-        let visual = settings.beatPulse && !theme.reduceMotion
-        let live = playing && phase == .active && grid != nil
-        let graph = AppGraph.shared
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !(live && visual))) { _ in
-            let amount = live && visual ? (grid?.pulse(Double(graph.player.positionMs()) / 1000) ?? 0) : 0
-            content
-                .background {
-                    Circle()
-                        .fill(theme.colors.accent.opacity(0.22 * amount))
-                        .scaleEffect(0.82 + 0.18 * amount)
-                }
-                .scaleEffect(1 + 0.06 * amount)
-        }
-        .task(id: "\(song.id):\(graph.analysis.lastAnalysed == song.id)") {
-            grid = song.isRadio ? nil : (await graph.analysis.cached(song.id)).flatMap(BeatGrid.init)
-        }
-        .task(id: "\(live):\(settings.beatHaptics):\(song.id)") {
-            guard live, settings.beatHaptics, let grid else { return }
-            let tap = UIImpactFeedbackGenerator(style: .soft)
-            tap.prepare()
-            while !Task.isCancelled {
-                let wait = grid.untilDownbeat(Double(graph.player.positionMs()) / 1000)
-                try? await Task.sleep(nanoseconds: UInt64(max(0.05, wait) * 1_000_000_000))
-                if Task.isCancelled { break }
-                // A seek can land anywhere; only tap when this really is a downbeat.
-                let since = grid.sinceDownbeat(Double(graph.player.positionMs()) / 1000)
-                if since >= 0 && (since < 0.08 || grid.bar - since < 0.08) {
-                    tap.impactOccurred(intensity: 0.7)
-                }
-                try? await Task.sleep(nanoseconds: 120_000_000)
-                tap.prepare()
+    var body: some View {
+        let player = AppGraph.shared.player
+        // Drawn like the Previous button beside it.
+        Image(systemName: "forward.end.fill")
+            .font(.system(size: 30, weight: .semibold))
+            .foregroundStyle(theme.colors.ink)
+            .frame(width: 54, height: 54)
+            .contentShape(Rectangle())
+            .opacity(pressed ? 0.6 : 1)
+            .animation(theme.spring, value: pressed)
+            .onTapGesture {
+                Haptics.tap()
+                player.next()
             }
+            .onLongPressGesture(minimumDuration: 0.45) {
+                mix()
+            } onPressingChanged: { pressing in
+                pressed = pressing
+            }
+            .accessibilityElement()
+            .accessibilityLabel("Next")
+            .accessibilityHint("Hold to mix into the next track")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { player.next() }
+            .accessibilityAction(named: "Mix into the next track") { mix() }
+    }
+
+    private func mix() {
+        let graph = AppGraph.shared
+        if graph.player.mixNow() {
+            Haptics.success()
+            graph.messages.show("Mixing into the next track")
+        } else {
+            graph.messages.show("Nothing to mix into: this is the last track")
         }
     }
 }

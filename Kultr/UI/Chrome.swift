@@ -37,6 +37,8 @@ struct MainUI: View {
                 LargeWidgetPreviewScreen().zIndex(30)
             } else if ScreenshotState.shared.showWidgets {
                 WidgetPreviewScreen().zIndex(30)
+            } else if ScreenshotState.shared.showUpdateLog {
+                UpdateLogSheet {}.background(theme.colors.background).zIndex(30)
             }
             #endif
         }
