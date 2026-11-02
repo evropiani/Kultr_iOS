@@ -450,6 +450,8 @@ struct MixStationCard: View {
 struct StationDraft: Identifiable {
     var station: Station
     let isNew: Bool
+    /** What is being edited, for the title: a station, or a crate's rules. */
+    var noun = "station"
     var id: String { station.id }
 }
 
@@ -461,19 +463,21 @@ private let STATION_ICONS = [
 
 private let CAMELOT_KEYS: [String] = (1...12).flatMap { ["\($0)A", "\($0)B"] }
 
-/** Every rule of a station, with how many tracks fit as you change them. */
-private struct StationEditor: View {
+/** Every rule of a station (or a crate), with how many tracks fit as you change them. */
+struct StationEditor: View {
     @Environment(\.kultr) private var theme
     @State private var station: Station
     @State private var count: Int?
     @State private var genres: [String] = []
     let isNew: Bool
+    let noun: String
     let onSave: (Station) -> Void
     let onCancel: () -> Void
 
     init(draft: StationDraft, onSave: @escaping (Station) -> Void, onCancel: @escaping () -> Void) {
         _station = State(initialValue: draft.station)
         isNew = draft.isNew
+        noun = draft.noun
         self.onSave = onSave
         self.onCancel = onCancel
     }
@@ -544,7 +548,7 @@ private struct StationEditor: View {
                 }
                 Section("Genres") {
                     NavigationLink {
-                        GenrePicker(all: genres, chosen: Binding(get: { station.genres ?? [] }, set: { station.genres = $0.isEmpty ? nil : $0 }))
+                        ChoicePicker(title: "Genres", empty: "No genres in your library yet.", all: genres, chosen: Binding(get: { station.genres ?? [] }, set: { station.genres = $0.isEmpty ? nil : $0 }))
                             .environment(\.kultr, theme)
                     } label: {
                         HStack {
@@ -555,6 +559,31 @@ private struct StationEditor: View {
                                 .lineLimit(1)
                         }
                     }
+                }
+                Section {
+                    let tags = tagCounts(AppGraph.shared.settings.current.annotations).map(\.tag)
+                    NavigationLink {
+                        ChoicePicker(title: "Tags", empty: "No tags yet. Give an album or an artist a tag on its page.", all: tags, chosen: Binding(get: { station.tags ?? [] }, set: { station.tags = $0.isEmpty ? nil : $0 }))
+                            .environment(\.kultr, theme)
+                    } label: {
+                        HStack {
+                            Text("Tags")
+                            Spacer()
+                            Text((station.tags ?? []).isEmpty ? "Any" : (station.tags ?? []).joined(separator: ", "))
+                                .foregroundStyle(c.ink3)
+                                .lineLimit(1)
+                        }
+                    }
+                    Picker("Added", selection: Binding(get: { station.addedDays ?? 0 }, set: { station.addedDays = $0 == 0 ? nil : $0 })) {
+                        Text("Any time").tag(0)
+                        Text("In the last 30 days").tag(30)
+                        Text("In the last 90 days").tag(90)
+                        Text("This year").tag(365)
+                    }
+                } header: {
+                    Text("Your tags, and when added")
+                } footer: {
+                    Text("Tags are the ones you give albums and artists on their pages.")
                 }
                 Section {
                     BoundsEditor(label: "Years", bounds: $station.years, range: 1950...Double(Calendar.current.component(.year, from: Date())), step: 1, initial: Bounds(2000, 2009)) { String(Int($0)) }
@@ -574,7 +603,7 @@ private struct StationEditor: View {
             }
             .scrollContentBackground(.hidden)
             .background(c.background)
-            .navigationTitle(isNew ? "New station" : "Edit station")
+            .navigationTitle(isNew ? "New \(noun)" : "Edit \(noun)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
@@ -634,8 +663,11 @@ private struct BoundsEditor: View {
     }
 }
 
-private struct GenrePicker: View {
+/** Pick any number from a list, with a filter field: genres, tags. */
+private struct ChoicePicker: View {
     @Environment(\.kultr) private var theme
+    let title: String
+    let empty: String
     let all: [String]
     @Binding var chosen: [String]
     @State private var filter = ""
@@ -644,7 +676,7 @@ private struct GenrePicker: View {
         let shown = filter.isEmpty ? all : all.filter { $0.localizedCaseInsensitiveContains(filter) }
         List {
             if all.isEmpty {
-                Text("No genres in your library yet.").foregroundStyle(theme.colors.ink3)
+                Text(empty).foregroundStyle(theme.colors.ink3)
             }
             ForEach(shown, id: \.self) { genre in
                 let on = chosen.contains(genre)
@@ -660,8 +692,8 @@ private struct GenrePicker: View {
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
-        .searchable(text: $filter, prompt: "Filter genres")
-        .navigationTitle("Genres")
+        .searchable(text: $filter, prompt: "Filter \(title.lowercased())")
+        .navigationTitle(title)
         .toolbar {
             if !chosen.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) { Button("Clear") { chosen = [] } }

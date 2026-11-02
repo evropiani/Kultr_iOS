@@ -364,6 +364,52 @@ final class LibraryRepository {
         }
     }
 
+    /**
+     * Makes playlist [id] hold exactly [songs] (at most 5,000), or a new
+     * playlist called [name] when there is no such playlist any more. The
+     * songs go up 200 at a time, so no request gets too long.
+     */
+    func fillPlaylist(_ id: String?, name: String, _ songs: [Song]) async -> (id: String?, error: String?) {
+        let ids = Array(songs.filter { !$0.isRadio }.map(\.id).prefix(5000))
+        var playlistId = id
+        let error = await attempt {
+            if local {
+                guard let db else { return }
+                if let id, db.playlist(id) != nil {
+                    try editLocalPlaylist(id) { _ in ids }
+                } else {
+                    let now = nowIso()
+                    var playlist = Playlist(id: Self.localPlaylistPrefix + UUID().uuidString, name: name)
+                    playlist.created = now
+                    playlist.changed = now
+                    playlist.isPublic = false
+                    try saveLocalPlaylist(db, playlist, position: (db.playlists().map { $0.position }.max() ?? -1) + 1, ids: ids)
+                    playlistId = playlist.id
+                }
+                return
+            }
+            let c = try client()
+            let chunks = ids.chunked(200)
+            let first = chunks.first ?? []
+            var exists = false
+            if let id { exists = (try? await c.getPlaylist(id)) != nil }
+            if let id, exists {
+                try await c.replacePlaylist(id, songIds: first)
+                if let current = db?.playlist(id)?.playlist, current.name != name {
+                    try await c.updatePlaylist(id, name: name)
+                }
+            } else {
+                playlistId = try await c.createPlaylist(name: name, songIds: first)?.id
+            }
+            guard let target = playlistId else { return }
+            for chunk in chunks.dropFirst() {
+                try await c.updatePlaylist(target, songIdToAdd: chunk)
+            }
+            try await refreshPlaylistNow(target)
+        }
+        return (playlistId, error)
+    }
+
     func addToPlaylist(_ playlistId: String, _ songs: [Song]) async -> String? {
         await attempt {
             if local {

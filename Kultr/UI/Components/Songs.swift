@@ -54,6 +54,7 @@ struct SongMenuItems: View {
         Button { actions.enqueue([song]) } label: { Label("Add to queue", systemImage: "music.note.list") }
         if !song.isRadio {
             Button { actions.addToPlaylist([song]) } label: { Label("Add to playlist…", systemImage: "text.badge.plus") }
+            Button { actions.addToCrate(.songs([song])) } label: { Label("Add to crate…", systemImage: "shippingbox") }
             if AppGraph.shared.ui.isStarred(song) {
                 Button { actions.setFavourite(song, false) } label: { Label("Remove from favourites", systemImage: "heart") }
             } else {
@@ -308,6 +309,7 @@ struct SelectionBar: View {
                 Menu {
                     Button("Select all") { selection.selectAll(songs) }
                     Button { actions.addToPlaylist(picked); selection.clear() } label: { Label("Add to playlist…", systemImage: "text.badge.plus") }
+                    Button { actions.addToCrate(.songs(picked)); selection.clear() } label: { Label("Add to crate…", systemImage: "shippingbox") }
                     Button { actions.setFavourite(picked, true); selection.clear() } label: { Label("Add to favourites", systemImage: "heart.fill") }
                     Button { actions.setFavourite(picked, false); selection.clear() } label: { Label("Remove from favourites", systemImage: "heart") }
                     if !AppGraph.shared.isLocal {

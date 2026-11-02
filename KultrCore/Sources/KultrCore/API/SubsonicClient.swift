@@ -488,6 +488,11 @@ final class SubsonicClient: @unchecked Sendable {
         try await perform("createPlaylist", [("name", name), ("songId", songIds)], path: ["playlist"], as: Playlist.self)
     }
 
+    /** Replaces every song in a playlist (Subsonic's createPlaylist, given an id). */
+    func replacePlaylist(_ playlistId: String, songIds: [String]) async throws {
+        try await call("createPlaylist", [("playlistId", playlistId), ("songId", songIds)])
+    }
+
     func updatePlaylist(
         _ playlistId: String,
         name: String? = nil,

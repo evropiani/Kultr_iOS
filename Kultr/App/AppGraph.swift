@@ -24,9 +24,10 @@ final class AppGraph {
     private(set) lazy var player = PlayerController(graph: self)
     private(set) lazy var actions = AppActions(graph: self)
     private(set) lazy var stations = StationLibrary(graph: self)
+    private(set) lazy var crates = CrateLibrary(graph: self)
 
     private init() {
-        _ = (library, scrobbles, sync, offline, analysis, player, actions, stations)
+        _ = (library, scrobbles, sync, offline, analysis, player, actions, stations, crates)
 
         library.activate(auth.active?.id)
         auth.observeActive { [unowned self] profile in

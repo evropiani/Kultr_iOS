@@ -4,13 +4,15 @@ import SwiftUI
 
 /** The sections of the Library, in the order its list shows them. */
 enum LibraryTab: String, CaseIterable, Hashable {
-    case playlists, artists, albums, songs, genres, favourites, downloads, radio
+    case playlists, crates, artists, albums, songs, genres, tags, favourites, downloads, radio
 
     var label: String { rawValue.capitalized }
 
     var icon: String {
         switch self {
         case .playlists: return "music.note.list"
+        case .crates: return "shippingbox"
+        case .tags: return "tag"
         case .artists: return "music.mic"
         case .albums: return "square.stack"
         case .songs: return "music.note"
@@ -26,7 +28,13 @@ extension LibraryTab {
     /** The pages of the Library: without radio and downloads for the music on the phone. */
     @MainActor
     static var shown: [LibraryTab] {
-        AppGraph.shared.isLocal ? allCases.filter { $0 != .radio && $0 != .downloads } : allCases
+        let graph = AppGraph.shared
+        // Tags only once you have given something one.
+        let tagged = graph.settings.current.annotations.values.contains { !$0.tags.isEmpty }
+        return allCases.filter { tab in
+            if tab == .tags && !tagged { return false }
+            return !graph.isLocal || (tab != .radio && tab != .downloads)
+        }
     }
 }
 
@@ -62,6 +70,8 @@ enum Route: Hashable {
     case stats
     case recap
     case stations
+    case crate(String)
+    case tag(String)
     case downloads(DownloadsPage)
 }
 
@@ -128,6 +138,8 @@ final class AppUI {
     var addToPlaylist: [Song]?
     var rate: Song?
     var sleepTimer = false
+    /** What is being put in a crate, while the crate list is open. */
+    var addToCrate: CrateItem?
     /** The new version being looked at, on the update page. */
     var update: AppRelease?
 
@@ -201,6 +213,13 @@ final class AppActions {
     func openPlaylist(_ id: String) { navigate(.playlist(id)) }
     func openGenre(_ name: String) { navigate(.genre(name)) }
     func openLibrary(_ tab: LibraryTab) { navigate(.library(tab)) }
+    func openCrate(_ id: String) { navigate(.crate(id)) }
+    func openTag(_ tag: String) { navigate(.tag(tag)) }
+
+    func addToCrate(_ item: CrateItem) {
+        if case .songs(let songs) = item, songs.isEmpty { return }
+        ui.addToCrate = item
+    }
     func openDownloads(_ page: DownloadsPage = .now) { navigate(.downloads(page)) }
 
     // ------------------------------------------------------------ playing --
