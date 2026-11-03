@@ -25,7 +25,7 @@ struct UpdateScreen: View {
                             .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Kultr \(release.version)").font(.system(size: 24, weight: .bold)).foregroundStyle(c.ink)
-                            Text("You have \(appVersion)\(published.map { " · released \($0)" } ?? "")")
+                            Text(published.map { String(localized: "You have \(appVersion) · released \($0)") } ?? String(localized: "You have \(appVersion)"))
                                 .font(.system(size: 14))
                                 .foregroundStyle(c.ink2)
                         }

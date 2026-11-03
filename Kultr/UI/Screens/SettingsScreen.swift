@@ -58,7 +58,7 @@ struct SettingsScreen: View {
                                 .frame(width: 54, height: 54)
                                 .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(active.label).font(.system(size: 19, weight: .semibold))
+                                Text(active.label.loc).font(.system(size: 19, weight: .semibold))
                                 Text(active.isLocal ? "Folders on this iPhone, no server" : "\(active.username) · \(hostLabel(active.serverUrl))")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
@@ -90,10 +90,28 @@ struct SettingsScreen: View {
                 link("Backup and reset", "externaldrive.fill") { BackupSettings() }
             }
             Section {
+                // iOS keeps each app's language in its own Settings page; this opens it.
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                } label: {
+                    HStack {
+                        SettingsIcon(title: "Language", icon: "globe")
+                        Spacer()
+                        Text(languageName).foregroundStyle(.secondary)
+                        Image(systemName: "arrow.up.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                    }
+                }
+                .foregroundStyle(Color.primary)
                 link("About", "info.circle.fill") { AboutSection() }
             }
         }
         .settingsPage("Settings", inline: false)
+    }
+
+    /** The language Kultr is showing, in that language: "Deutsch", "English". */
+    private var languageName: String {
+        let code = Bundle.main.preferredLocalizations.first ?? "en"
+        return Locale(identifier: code).localizedString(forLanguageCode: code)?.capitalized ?? code
     }
 
     private func link<Destination: View>(_ title: String, _ icon: String, @ViewBuilder destination: @escaping () -> Destination) -> some View {
@@ -853,7 +871,7 @@ private struct ServerSettings: View {
                             .foregroundStyle(isActive ? c.accent : .secondary)
                             .frame(width: 26)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(profile.label)
+                            Text(profile.label.loc)
                                 .font(.body.weight(isActive ? .semibold : .regular))
                                 .lineLimit(1)
                             Text(profile.isLocal ? "Folders on this iPhone, no server".loc : [profile.username.isEmpty ? "not signed in".loc : profile.username, profile.serverUrl].joined(separator: " · "))

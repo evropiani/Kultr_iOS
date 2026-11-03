@@ -12,6 +12,17 @@
         }
       }
     },
+    "%@ a play": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ pro Wiedergabe"
+          }
+        }
+      }
+    },
     "%@ album": {
       "extractionState": "manual",
       "localizations": {
@@ -111,6 +122,17 @@
         }
       }
     },
+    "%@ downloaded · %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ geladen · %@"
+          }
+        }
+      }
+    },
     "%@ downloads": {
       "extractionState": "manual",
       "localizations": {
@@ -184,6 +206,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ Ordner"
+          }
+        }
+      }
+    },
+    "%@ from this phone waiting to be sent.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ von diesem Telefon warten aufs Senden."
           }
         }
       }
@@ -331,6 +364,17 @@
         }
       }
     },
+    "%@ on your server": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ auf deinem Server"
+          }
+        }
+      }
+    },
     "%@ play": {
       "extractionState": "manual",
       "localizations": {
@@ -386,6 +430,17 @@
         }
       }
     },
+    "%@ so far: %@, %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ bisher: %@, %@"
+          }
+        }
+      }
+    },
     "%@ track": {
       "extractionState": "manual",
       "localizations": {
@@ -430,6 +485,39 @@
         }
       }
     },
+    "%@ was %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im %@ waren es %@."
+          }
+        }
+      }
+    },
+    "%@ you had never played on this phone": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, die du auf diesem Telefon noch nie gespielt hattest"
+          }
+        }
+      }
+    },
+    "%@ · %@ · checked %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@ · geprüft %@"
+          }
+        }
+      }
+    },
     "%@. Tracks that fit, mixed by InjeKt, for as long as you like.": {
       "extractionState": "manual",
       "localizations": {
@@ -459,6 +547,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "ab %@★"
+          }
+        }
+      }
+    },
+    "%lld albums added, %lld changed, %lld removed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Alben hinzugefügt, %lld geändert, %lld entfernt."
+          }
+        }
+      }
+    },
+    "%lld albums could not be read: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Alben konnten nicht gelesen werden: %@"
           }
         }
       }
@@ -496,6 +606,17 @@
         }
       }
     },
+    "%lld files in iCloud are still downloading to this iPhone. Scan again in a little while.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Dateien in iCloud werden noch auf dieses iPhone geladen. Scanne in Kürze erneut."
+          }
+        }
+      }
+    },
     "%lld kbps": {
       "extractionState": "manual",
       "localizations": {
@@ -503,6 +624,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld kbit/s"
+          }
+        }
+      }
+    },
+    "%lld minutes": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Minuten"
           }
         }
       }
@@ -529,6 +661,28 @@
         }
       }
     },
+    "%lld songs": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Titel"
+          }
+        }
+      }
+    },
+    "%lld stars": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Sterne"
+          }
+        }
+      }
+    },
     "%lld to go": {
       "extractionState": "manual",
       "localizations": {
@@ -536,6 +690,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "noch %lld"
+          }
+        }
+      }
+    },
+    "%lld tracks": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Titel"
+          }
+        }
+      }
+    },
+    "%lld tracks analysed · %lld to go": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Titel analysiert · noch %lld"
+          }
+        }
+      }
+    },
+    "%lld tracks play next": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Titel kommen als Nächstes"
           }
         }
       }
@@ -573,6 +760,17 @@
         }
       }
     },
+    "1 file in iCloud is still downloading to this iPhone. Scan again in a little while.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 Datei in iCloud wird noch auf dieses iPhone geladen. Scanne in Kürze erneut."
+          }
+        }
+      }
+    },
     "1 GB": {
       "extractionState": "manual",
       "localizations": {
@@ -584,6 +782,17 @@
         }
       }
     },
+    "1 hour": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 Stunde"
+          }
+        }
+      }
+    },
     "1 is a quiet acoustic track, 10 a loud club track. Needs InjeKt's analysis.": {
       "extractionState": "manual",
       "localizations": {
@@ -591,6 +800,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "1 ist ein leiser Akustiktitel, 10 ein lauter Clubtitel. Braucht die InjeKt-Analyse."
+          }
+        }
+      }
+    },
+    "1 song": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 Titel"
           }
         }
       }
@@ -617,6 +837,17 @@
         }
       }
     },
+    "2 hours": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 Stunden"
+          }
+        }
+      }
+    },
     "2019 · Electronic · FLAC": {
       "extractionState": "manual",
       "localizations": {
@@ -635,6 +866,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "256 MB"
+          }
+        }
+      }
+    },
+    "30 min": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 Min."
           }
         }
       }
@@ -690,6 +932,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "8 GB"
+          }
+        }
+      }
+    },
+    "90 min": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "90 Min."
           }
         }
       }
@@ -925,6 +1178,17 @@
         }
       }
     },
+    "A sync is already running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Es läuft bereits eine Synchronisierung."
+          }
+        }
+      }
+    },
     "A word of your own, like “gym” or “rainy day”.": {
       "extractionState": "manual",
       "localizations": {
@@ -1035,6 +1299,17 @@
         }
       }
     },
+    "Add %@ to…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ hinzufügen zu…"
+          }
+        }
+      }
+    },
     "Add a note": {
       "extractionState": "manual",
       "localizations": {
@@ -1108,6 +1383,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Weiteren Ordner hinzufügen"
+          }
+        }
+      }
+    },
+    "Add songs in Kultr with Play next or Add to queue.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Füge in Kultr Titel mit „Als Nächstes spielen“ oder „Zur Warteliste hinzufügen“ hinzu."
+          }
+        }
+      }
+    },
+    "Add the Kultr widget to your Home Screen or Lock Screen: what's playing, with play, pause and skip. Control Center and headphones work too.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Füge das Kultr-Widget zu deinem Home- oder Sperrbildschirm hinzu: was gerade läuft, mit Play, Pause und Weiter. Kontrollzentrum und Kopfhörer funktionieren auch."
           }
         }
       }
@@ -1189,6 +1486,17 @@
         }
       }
     },
+    "Added %@ to “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ zu „%@“ hinzugefügt"
+          }
+        }
+      }
+    },
     "Added %lld to favourites": {
       "extractionState": "manual",
       "localizations": {
@@ -1196,6 +1504,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld zu Favoriten hinzugefügt"
+          }
+        }
+      }
+    },
+    "Added %lld tracks to the queue": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Titel zur Warteliste hinzugefügt"
           }
         }
       }
@@ -1233,6 +1552,17 @@
         }
       }
     },
+    "Added to “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu „%@“ hinzugefügt"
+          }
+        }
+      }
+    },
     "Added “%@” to favourites": {
       "extractionState": "manual",
       "localizations": {
@@ -1244,6 +1574,17 @@
         }
       }
     },
+    "Added “%@” to the queue": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ zur Warteliste hinzugefügt"
+          }
+        }
+      }
+    },
     "Addresses only — never usernames or passwords.": {
       "extractionState": "manual",
       "localizations": {
@@ -1251,6 +1592,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nur Adressen – nie Benutzernamen oder Passwörter."
+          }
+        }
+      }
+    },
+    "Advanced options": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erweiterte Optionen"
+          }
+        }
+      }
+    },
+    "Album": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Album"
           }
         }
       }
@@ -1267,6 +1630,17 @@
       }
     },
     "Albums": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alben"
+          }
+        }
+      }
+    },
+    "albums": {
       "extractionState": "manual",
       "localizations": {
         "de": {
@@ -1343,6 +1717,17 @@
         }
       }
     },
+    "Also new since you last updated": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Außerdem neu seit deinem letzten Update"
+          }
+        }
+      }
+    },
     "Ama Okoro — Night Ferries": {
       "extractionState": "manual",
       "localizations": {
@@ -1361,6 +1746,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Im Voraus analysieren"
+          }
+        }
+      }
+    },
+    "Analyse missing": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fehlende analysieren"
           }
         }
       }
@@ -1405,6 +1801,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Analysiere %lld von %lld…"
+          }
+        }
+      }
+    },
+    "Analysing tracks in the background.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Titel werden im Hintergrund analysiert."
+          }
+        }
+      }
+    },
+    "Analysing “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analysiere „%@“"
           }
         }
       }
@@ -1574,6 +1992,17 @@
         }
       }
     },
+    "Artist": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Künstler"
+          }
+        }
+      }
+    },
     "Artist not found": {
       "extractionState": "manual",
       "localizations": {
@@ -1586,6 +2015,17 @@
       }
     },
     "Artists": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Künstler"
+          }
+        }
+      }
+    },
+    "artists": {
       "extractionState": "manual",
       "localizations": {
         "de": {
@@ -1629,6 +2069,28 @@
         }
       }
     },
+    "Ask Kultr to do it": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr darum bitten"
+          }
+        }
+      }
+    },
+    "At the end of this track": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Am Ende dieses Titels"
+          }
+        }
+      }
+    },
     "Audio": {
       "extractionState": "manual",
       "localizations": {
@@ -1636,6 +2098,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Audio"
+          }
+        }
+      }
+    },
+    "Back": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zurück"
           }
         }
       }
@@ -1838,6 +2311,50 @@
         }
       }
     },
+    "Build": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steigern"
+          }
+        }
+      }
+    },
+    "Build it again": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu bauen"
+          }
+        }
+      }
+    },
+    "Build the set": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set bauen"
+          }
+        }
+      }
+    },
+    "Building…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird gebaut…"
+          }
+        }
+      }
+    },
     "Buttons": {
       "extractionState": "manual",
       "localizations": {
@@ -1856,6 +2373,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "von %@"
+          }
+        }
+      }
+    },
+    "Calm": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ruhig"
           }
         }
       }
@@ -1926,6 +2454,50 @@
         }
       }
     },
+    "Check in the background": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im Hintergrund prüfen"
+          }
+        }
+      }
+    },
+    "Check the spelling, or try fewer words.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prüf die Schreibweise oder versuch es mit weniger Wörtern."
+          }
+        }
+      }
+    },
+    "Check the spelling, or try part of a name.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prüf die Schreibweise oder versuch einen Teil des Namens."
+          }
+        }
+      }
+    },
+    "Check when Kultr starts": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beim Start von Kultr prüfen"
+          }
+        }
+      }
+    },
     "Choose a folder": {
       "extractionState": "manual",
       "localizations": {
@@ -1933,6 +2505,83 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ordner auswählen"
+          }
+        }
+      }
+    },
+    "Choose a month": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monat wählen"
+          }
+        }
+      }
+    },
+    "Choose the folders your music is in, and Kultr reads them.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle die Ordner, in denen deine Musik liegt, und Kultr liest sie ein."
+          }
+        }
+      }
+    },
+    "Choose the folders your music is in, in Files. No server, no account: Kultr plays your files, with their covers, albums and artists.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle in „Dateien“ die Ordner, in denen deine Musik liegt. Kein Server, kein Konto: Kultr spielt deine Dateien mit ihren Covern, Alben und Künstlern."
+          }
+        }
+      }
+    },
+    "Choose the folders your music is in. Kultr reads them and builds a library of your albums, artists and covers.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle die Ordner, in denen deine Musik liegt. Kultr liest sie und baut daraus eine Mediathek mit deinen Alben, Künstlern und Covern."
+          }
+        }
+      }
+    },
+    "Choose the shelves on your Home page, colours taken from your artwork, light or dark. It's all in Settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle die Regale deiner Startseite, Farben aus deinen Covern, hell oder dunkel. Alles in den Einstellungen."
+          }
+        }
+      }
+    },
+    "Choose what appears here, and in what order, in Settings → Home page.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Was hier erscheint und in welcher Reihenfolge, wählst du unter Einstellungen → Startseite."
+          }
+        }
+      }
+    },
+    "Choose your music folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle deine Musikordner"
           }
         }
       }
@@ -2014,6 +2663,28 @@
         }
       }
     },
+    "Clear this phone's history": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verlauf dieses Telefons löschen"
+          }
+        }
+      }
+    },
+    "Clear this phone's history?": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verlauf dieses Telefons löschen?"
+          }
+        }
+      }
+    },
     "Clear up next": {
       "extractionState": "manual",
       "localizations": {
@@ -2021,6 +2692,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "„Als Nächstes“ leeren"
+          }
+        }
+      }
+    },
+    "Close": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schließen"
           }
         }
       }
@@ -2080,6 +2762,17 @@
         }
       }
     },
+    "Commands in German": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Befehle auf Deutsch"
+          }
+        }
+      }
+    },
     "Compact rows": {
       "extractionState": "manual",
       "localizations": {
@@ -2102,6 +2795,50 @@
         }
       }
     },
+    "Connect": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinden"
+          }
+        }
+      }
+    },
+    "Connect to your Navidrome server. Kultr mirrors your library on this phone, crossfades properly and mixes like a DJ.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinde dich mit deinem Navidrome-Server. Kultr spiegelt deine Mediathek auf diesem Telefon, blendet sauber über und mischt wie ein DJ."
+          }
+        }
+      }
+    },
+    "Connected to %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbunden mit %@"
+          }
+        }
+      }
+    },
+    "Connecting…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verbinde…"
+          }
+        }
+      }
+    },
     "Contacting your server…": {
       "extractionState": "manual",
       "localizations": {
@@ -2109,6 +2846,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Server wird kontaktiert…"
+          }
+        }
+      }
+    },
+    "Continue": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter"
           }
         }
       }
@@ -2190,6 +2938,17 @@
         }
       }
     },
+    "Couldn't load the stations": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Sender konnten nicht geladen werden"
+          }
+        }
+      }
+    },
     "Count time down": {
       "extractionState": "manual",
       "localizations": {
@@ -2197,6 +2956,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Restzeit anzeigen"
+          }
+        }
+      }
+    },
+    "Counted on your server, so every device sees the same.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf deinem Server gezählt, damit jedes Gerät dasselbe sieht."
           }
         }
       }
@@ -2307,6 +3077,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Erstellen"
+          }
+        }
+      }
+    },
+    "Create playlist": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist erstellen"
+          }
+        }
+      }
+    },
+    "Created “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ erstellt"
           }
         }
       }
@@ -2476,6 +3268,28 @@
         }
       }
     },
+    "Dismiss": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schließen"
+          }
+        }
+      }
+    },
+    "Does it now": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Macht es jetzt"
+          }
+        }
+      }
+    },
     "Does: %@": {
       "extractionState": "manual",
       "localizations": {
@@ -2520,6 +3334,17 @@
         }
       }
     },
+    "Download albums, playlists or your whole library, and they play without a connection. Plays made offline reach your server later.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lade Alben, Playlists oder deine ganze Mediathek, dann spielen sie auch ohne Verbindung. Offline Gespieltes erreicht deinen Server später."
+          }
+        }
+      }
+    },
     "Download everything": {
       "extractionState": "manual",
       "localizations": {
@@ -2538,6 +3363,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Favoriten laden"
+          }
+        }
+      }
+    },
+    "Download Kultr.ipa there and install it the way you installed Kultr, with the same Apple ID. Your library, downloads and settings stay.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lade dort Kultr.ipa und installiere es so, wie du Kultr installiert hast, mit derselben Apple-ID. Mediathek, Downloads und Einstellungen bleiben."
           }
         }
       }
@@ -2707,6 +3543,17 @@
         }
       }
     },
+    "Draw the shape of the set with your finger: low is calm, high is peak.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeichne den Verlauf des Sets mit dem Finger: unten ist ruhig, oben ist Höhepunkt."
+          }
+        }
+      }
+    },
     "Duplicate…": {
       "extractionState": "manual",
       "localizations": {
@@ -2741,6 +3588,17 @@
       }
     },
     "Edit widgets": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets bearbeiten"
+          }
+        }
+      }
+    },
+    "Edit your widgets": {
       "extractionState": "manual",
       "localizations": {
         "de": {
@@ -2894,6 +3752,28 @@
         }
       }
     },
+    "Energy %lld of 10": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Energie %lld von 10"
+          }
+        }
+      }
+    },
+    "Energy over the set": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Energie über das Set"
+          }
+        }
+      }
+    },
     "Energy planner": {
       "extractionState": "manual",
       "localizations": {
@@ -2901,6 +3781,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Energieplaner"
+          }
+        }
+      }
+    },
+    "Enter your server’s address.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib die Adresse deines Servers ein."
+          }
+        }
+      }
+    },
+    "Enter your username.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gib deinen Benutzernamen ein."
           }
         }
       }
@@ -2960,6 +3862,17 @@
         }
       }
     },
+    "Everything is up to date.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles ist aktuell."
+          }
+        }
+      }
+    },
     "Everything matches.": {
       "extractionState": "manual",
       "localizations": {
@@ -2989,6 +3902,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Alles mit dem Tag „%@“"
+          }
+        }
+      }
+    },
+    "Everything was already up to date.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles war bereits aktuell."
           }
         }
       }
@@ -3033,6 +3957,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fehlgeschlagen"
+          }
+        }
+      }
+    },
+    "Favourite": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorit"
           }
         }
       }
@@ -3235,6 +4170,39 @@
         }
       }
     },
+    "Find anything, or say what to do": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finde alles oder sag, was zu tun ist"
+          }
+        }
+      }
+    },
+    "Finding covers…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cover werden gesucht…"
+          }
+        }
+      }
+    },
+    "First listens": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zum ersten Mal gehört"
+          }
+        }
+      }
+    },
     "Flat": {
       "extractionState": "manual",
       "localizations": {
@@ -3301,6 +4269,39 @@
         }
       }
     },
+    "Found %lld tracks in %lld albums.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Titel in %lld Alben gefunden."
+          }
+        }
+      }
+    },
+    "Found %lld tracks…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Titel gefunden…"
+          }
+        }
+      }
+    },
+    "From": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus"
+          }
+        }
+      }
+    },
     "From %@": {
       "extractionState": "manual",
       "localizations": {
@@ -3330,6 +4331,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "aus dem Tag"
+          }
+        }
+      }
+    },
+    "Full resync": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles neu synchronisieren"
           }
         }
       }
@@ -3367,6 +4379,28 @@
         }
       }
     },
+    "genres": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genres"
+          }
+        }
+      }
+    },
+    "Genres come from the tags in your music.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genres stammen aus den Tags deiner Musik."
+          }
+        }
+      }
+    },
     "Get in touch": {
       "extractionState": "manual",
       "localizations": {
@@ -3374,6 +4408,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kontakt"
+          }
+        }
+      }
+    },
+    "Get started": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los geht’s"
+          }
+        }
+      }
+    },
+    "GitHub answered with HTTP %lld.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub hat mit HTTP %lld geantwortet."
+          }
+        }
+      }
+    },
+    "Glass you can slide": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glas zum Wischen"
           }
         }
       }
@@ -3407,6 +4474,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zum Künstler"
+          }
+        }
+      }
+    },
+    "Goes back to the previous track in Kultr.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geht in Kultr zum vorherigen Titel zurück."
           }
         }
       }
@@ -3488,6 +4566,28 @@
         }
       }
     },
+    "Hide advanced options": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erweiterte Optionen ausblenden"
+          }
+        }
+      }
+    },
+    "Hide password": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passwort ausblenden"
+          }
+        }
+      }
+    },
     "Hold a row and drag it to move it. Switch a part off to hide it.": {
       "extractionState": "manual",
       "localizations": {
@@ -3495,6 +4595,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Halte eine Zeile gedrückt und zieh sie, um sie zu verschieben. Schalte einen Teil aus, um ihn auszublenden."
+          }
+        }
+      }
+    },
+    "Hold a widget on Home for a menu: Edit widgets, Size, Add a widget and Remove. In 2.0.0, holding one did nothing.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halte ein Widget auf der Startseite gedrückt, um ein Menü zu öffnen: Widgets bearbeiten, Größe, Widget hinzufügen und Entfernen. In 2.0.0 passierte beim Halten nichts."
           }
         }
       }
@@ -3609,6 +4720,17 @@
         }
       }
     },
+    "In the last 15 minutes, Karousel plays its calmest picks first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In den letzten 15 Minuten spielt Karousel die ruhigsten Titel zuerst."
+          }
+        }
+      }
+    },
     "In the last 30 days": {
       "extractionState": "manual",
       "localizations": {
@@ -3653,6 +4775,28 @@
         }
       }
     },
+    "InjeKt analysis": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "InjeKt-Analyse"
+          }
+        }
+      }
+    },
+    "InjeKt analysis finished (%lld tracks).": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "InjeKt-Analyse fertig (%lld Titel)."
+          }
+        }
+      }
+    },
     "InjeKt is off, so tracks are handed over with a plain crossfade.": {
       "extractionState": "manual",
       "localizations": {
@@ -3660,6 +4804,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "InjeKt ist aus, daher wird einfach übergeblendet."
+          }
+        }
+      }
+    },
+    "InjeKt measures each track's tempo, key and structure, then blends one into the next on the beat. Prefer it simple? Crossfade, gapless or a clean cut, in Settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "InjeKt misst Tempo, Tonart und Aufbau jedes Titels und blendet dann einen im Takt in den nächsten über. Lieber einfach? Überblenden, lückenlos oder ein sauberer Schnitt – in den Einstellungen."
+          }
+        }
+      }
+    },
+    "InjeKt measures tempo, key, energy and structure to plan beat-matched transitions. It analyses tracks just before they are needed anyway; doing it up front means every transition is planned from the first play. Each track is streamed once at a low bitrate. Keep Kultr open while it runs.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "InjeKt misst Tempo, Tonart, Energie und Aufbau, um taktgenaue Übergänge zu planen. Titel werden ohnehin kurz vor ihrem Einsatz analysiert; wer das vorab erledigt, hat jeden Übergang schon beim ersten Abspielen geplant. Jeder Titel wird dafür einmal mit niedriger Bitrate gestreamt. Lass Kultr währenddessen offen."
           }
         }
       }
@@ -3708,6 +4874,17 @@
         }
       }
     },
+    "Installed Kultr with Sideloadly, AltServer or Impactor rather than %@? Install the new version the same way, with the same Apple ID. Your library, downloads and settings stay.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr mit Sideloadly, AltServer oder Impactor statt mit %@ installiert? Installiere die neue Version genauso, mit derselben Apple-ID. Mediathek, Downloads und Einstellungen bleiben."
+          }
+        }
+      }
+    },
     "Internet radio": {
       "extractionState": "manual",
       "localizations": {
@@ -3715,6 +4892,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Internetradio"
+          }
+        }
+      }
+    },
+    "Internet radio stations are set up on your server. In Navidrome, open Radios and add a stream; it shows up here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internetradiosender richtest du auf deinem Server ein. Öffne in Navidrome „Radios“ und füge einen Stream hinzu – er erscheint dann hier."
           }
         }
       }
@@ -3895,6 +5083,17 @@
         }
       }
     },
+    "Keeping it fresh": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktuell halten"
+          }
+        }
+      }
+    },
     "Key": {
       "extractionState": "manual",
       "localizations": {
@@ -3939,6 +5138,39 @@
         }
       }
     },
+    "Kultr %@ is out": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr %@ ist da"
+          }
+        }
+      }
+    },
+    "Kultr can no longer open “%@”. Choose it again in Settings → Music on this iPhone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr kann „%@“ nicht mehr öffnen. Wähle den Ordner erneut unter Einstellungen → Musik auf diesem iPhone."
+          }
+        }
+      }
+    },
+    "Kultr didn't understand that one. Try “play” and an artist, or “sleep in 30 minutes”.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das hat Kultr nicht verstanden. Versuch „spiele“ und einen Künstler oder „schlaf in 30 Minuten“."
+          }
+        }
+      }
+    },
     "Kultr doesn't know how to do “%@” any more.": {
       "extractionState": "manual",
       "localizations": {
@@ -3961,6 +5193,50 @@
         }
       }
     },
+    "Kultr in German": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr spricht Deutsch"
+          }
+        }
+      }
+    },
+    "Kultr keeps a copy of your library on this phone, so browsing is instant and works without a connection. It is a one-time job — after that, only changes are fetched.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr behält eine Kopie deiner Mediathek auf diesem Telefon, damit das Stöbern sofort und auch ohne Verbindung geht. Das ist eine einmalige Sache – danach werden nur noch Änderungen geladen."
+          }
+        }
+      }
+    },
+    "Kultr keeps a copy of your library on this phone. Sync it once, and after that only changes are fetched.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr behält eine Kopie deiner Mediathek auf diesem Telefon. Synchronisiere sie einmal, danach werden nur noch Änderungen geladen."
+          }
+        }
+      }
+    },
+    "Kultr looked through %@ and found nothing it can play yet. Add another folder, or scan again after copying music in.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr hat %@ durchsucht und noch nichts Abspielbares gefunden. Füge einen weiteren Ordner hinzu oder scanne erneut, nachdem du Musik hineinkopiert hast."
+          }
+        }
+      }
+    },
     "Kultr looks by itself twice a day, too": {
       "extractionState": "manual",
       "localizations": {
@@ -3968,6 +5244,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kultr sieht auch selbst zweimal am Tag nach"
+          }
+        }
+      }
+    },
+    "Kultr makes a recap from what you play on this phone. Play a few tracks and this month's shows up here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr macht einen Rückblick aus dem, was du auf diesem Telefon spielst. Spiel ein paar Titel, dann erscheint hier der Rückblick für diesen Monat."
           }
         }
       }
@@ -3994,6 +5281,17 @@
         }
       }
     },
+    "Kultr was not given access to that folder.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr hat keinen Zugriff auf diesen Ordner bekommen."
+          }
+        }
+      }
+    },
     "Kultr's own line": {
       "extractionState": "manual",
       "localizations": {
@@ -4001,6 +5299,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kultrs eigene Zeile"
+          }
+        }
+      }
+    },
+    "KultrPre": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KultrPre"
+          }
+        }
+      }
+    },
+    "Language": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sprache"
           }
         }
       }
@@ -4027,6 +5347,17 @@
         }
       }
     },
+    "Last checked %@ · last full sync %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt geprüft %@ · letzte vollständige Synchronisierung %@"
+          }
+        }
+      }
+    },
     "Late Night": {
       "extractionState": "manual",
       "localizations": {
@@ -4034,6 +5365,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Später Abend"
+          }
+        }
+      }
+    },
+    "Length": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Länge"
           }
         }
       }
@@ -4056,6 +5398,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mediathekdaten gelöscht."
+          }
+        }
+      }
+    },
+    "Library synced: %lld tracks in %lld albums.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mediathek synchronisiert: %lld Titel in %lld Alben."
           }
         }
       }
@@ -4126,6 +5479,17 @@
         }
       }
     },
+    "Loading": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird geladen"
+          }
+        }
+      }
+    },
     "Looking for lyrics…": {
       "extractionState": "manual",
       "localizations": {
@@ -4133,6 +5497,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Suche nach dem Songtext…"
+          }
+        }
+      }
+    },
+    "Looking through your folders…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Ordner werden durchsucht…"
           }
         }
       }
@@ -4181,6 +5556,17 @@
         }
       }
     },
+    "Made from what you played on this phone. Plays on other devices count on your server, but not here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstellt aus dem, was du auf diesem Telefon gespielt hast. Wiedergaben auf anderen Geräten zählen auf deinem Server, aber nicht hier."
+          }
+        }
+      }
+    },
     "Make a copy to edit…": {
       "extractionState": "manual",
       "localizations": {
@@ -4210,6 +5596,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zur Station machen"
+          }
+        }
+      }
+    },
+    "Make it yours": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mach es zu deinem"
           }
         }
       }
@@ -4280,6 +5677,17 @@
         }
       }
     },
+    "Mixes like a DJ": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mischt wie ein DJ"
+          }
+        }
+      }
+    },
     "Mixing into the next track": {
       "extractionState": "manual",
       "localizations": {
@@ -4287,6 +5695,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mische in den nächsten Titel"
+          }
+        }
+      }
+    },
+    "Month": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monat"
+          }
+        }
+      }
+    },
+    "Monthly recap": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monatsrückblick"
           }
         }
       }
@@ -4309,6 +5739,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mehr zu %@"
+          }
+        }
+      }
+    },
+    "Most played": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meistgespielt"
           }
         }
       }
@@ -4357,6 +5798,17 @@
         }
       }
     },
+    "Music on this phone": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Musik auf diesem Telefon"
+          }
+        }
+      }
+    },
     "My style": {
       "extractionState": "manual",
       "localizations": {
@@ -4375,6 +5827,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Name"
+          }
+        }
+      }
+    },
+    "Name for this server (optional)": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name für diesen Server (optional)"
           }
         }
       }
@@ -4467,6 +5930,17 @@
         }
       }
     },
+    "New playlist": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neue Playlist"
+          }
+        }
+      }
+    },
     "New station": {
       "extractionState": "manual",
       "localizations": {
@@ -4555,6 +6029,39 @@
         }
       }
     },
+    "No %@ match “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine %@ passen zu „%@“"
+          }
+        }
+      }
+    },
+    "No albums yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Alben"
+          }
+        }
+      }
+    },
+    "No artists yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Künstler"
+          }
+        }
+      }
+    },
     "No crates match “%@”": {
       "extractionState": "manual",
       "localizations": {
@@ -4599,6 +6106,17 @@
         }
       }
     },
+    "No favourites yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Favoriten"
+          }
+        }
+      }
+    },
     "No genres in your library yet.": {
       "extractionState": "manual",
       "localizations": {
@@ -4610,6 +6128,17 @@
         }
       }
     },
+    "No genres yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Genres"
+          }
+        }
+      }
+    },
     "No lyrics for this track.": {
       "extractionState": "manual",
       "localizations": {
@@ -4617,6 +6146,61 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kein Songtext für diesen Titel."
+          }
+        }
+      }
+    },
+    "No months to look back on yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Monate für einen Rückblick"
+          }
+        }
+      }
+    },
+    "No music found yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Musik gefunden"
+          }
+        }
+      }
+    },
+    "No playlists yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Playlists"
+          }
+        }
+      }
+    },
+    "No playlists yet — name one above to create it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Playlists – gib oben einen Namen ein, um eine zu erstellen."
+          }
+        }
+      }
+    },
+    "No radio stations": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Radiosender"
           }
         }
       }
@@ -4709,6 +6293,28 @@
         }
       }
     },
+    "Not connected": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht verbunden"
+          }
+        }
+      }
+    },
+    "Not enough analysed tracks for a set yet. InjeKt has to analyse a few more first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch nicht genug analysierte Titel für ein Set. InjeKt muss erst noch ein paar analysieren."
+          }
+        }
+      }
+    },
     "Not found.": {
       "extractionState": "manual",
       "localizations": {
@@ -4731,6 +6337,17 @@
         }
       }
     },
+    "Not playing": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Läuft nicht"
+          }
+        }
+      }
+    },
     "not signed in": {
       "extractionState": "manual",
       "localizations": {
@@ -4742,6 +6359,39 @@
         }
       }
     },
+    "Not signed in.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht angemeldet."
+          }
+        }
+      }
+    },
+    "Nothing after this song": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach diesem Titel nichts mehr"
+          }
+        }
+      }
+    },
+    "Nothing fits that shape yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu diesem Verlauf passt noch nichts."
+          }
+        }
+      }
+    },
     "Nothing fits “%@” yet. It needs InjeKt's analysis: open Sync and tap Analyse missing.": {
       "extractionState": "manual",
       "localizations": {
@@ -4749,6 +6399,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Noch passt nichts zu „%@“. Dafür braucht es die InjeKt-Analyse: Öffne „Synchronisieren“ und tippe auf „Fehlende analysieren“."
+          }
+        }
+      }
+    },
+    "Nothing here yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hier ist noch nichts"
           }
         }
       }
@@ -4841,6 +6502,28 @@
         }
       }
     },
+    "Nothing matches “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nichts passt zu „%@“"
+          }
+        }
+      }
+    },
+    "Nothing on the home page yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch nichts auf der Startseite"
+          }
+        }
+      }
+    },
     "Nothing on this phone yet": {
       "extractionState": "manual",
       "localizations": {
@@ -4848,6 +6531,61 @@
           "stringUnit": {
             "state": "translated",
             "value": "Noch nichts auf diesem Telefon"
+          }
+        }
+      }
+    },
+    "Nothing played the month before.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im Monat davor lief nichts."
+          }
+        }
+      }
+    },
+    "Nothing played this month yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diesen Monat noch nichts gespielt"
+          }
+        }
+      }
+    },
+    "Nothing played yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch nichts gespielt"
+          }
+        }
+      }
+    },
+    "Nothing playing": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gerade läuft nichts"
+          }
+        }
+      }
+    },
+    "Nothing queued": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nichts eingereiht"
           }
         }
       }
@@ -4940,6 +6678,17 @@
         }
       }
     },
+    "Now Playing": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Läuft gerade"
+          }
+        }
+      }
+    },
     "Now playing": {
       "extractionState": "manual",
       "localizations": {
@@ -4947,6 +6696,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Läuft gerade"
+          }
+        }
+      }
+    },
+    "Now playing: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Läuft gerade: %@"
           }
         }
       }
@@ -4984,6 +6744,28 @@
         }
       }
     },
+    "Off.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus."
+          }
+        }
+      }
+    },
+    "Offline": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
+          }
+        }
+      }
+    },
     "Offline and cache": {
       "extractionState": "manual",
       "localizations": {
@@ -5017,6 +6799,17 @@
         }
       }
     },
+    "On average": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im Schnitt"
+          }
+        }
+      }
+    },
     "On mobile data": {
       "extractionState": "manual",
       "localizations": {
@@ -5028,6 +6821,17 @@
         }
       }
     },
+    "On my Navidrome server": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf meinem Navidrome-Server"
+          }
+        }
+      }
+    },
     "On the home page": {
       "extractionState": "manual",
       "localizations": {
@@ -5035,6 +6839,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Auf der Startseite"
+          }
+        }
+      }
+    },
+    "On this iPhone": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf diesem iPhone"
           }
         }
       }
@@ -5057,6 +6872,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Im WLAN"
+          }
+        }
+      }
+    },
+    "On your Home Screen": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf deinem Home-Bildschirm"
           }
         }
       }
@@ -5105,6 +6931,17 @@
         }
       }
     },
+    "Only for servers or proxies that reject token authentication. Use HTTPS.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur für Server oder Proxys, die die Token-Anmeldung ablehnen. Verwende HTTPS."
+          }
+        }
+      }
+    },
     "Only tracks never played": {
       "extractionState": "manual",
       "localizations": {
@@ -5112,6 +6949,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nur nie gespielte Titel"
+          }
+        }
+      }
+    },
+    "Only tracks you had played before": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur Titel, die du schon gespielt hattest"
           }
         }
       }
@@ -5182,6 +7030,17 @@
         }
       }
     },
+    "Open Sync": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisieren öffnen"
+          }
+        }
+      }
+    },
     "Open the crate": {
       "extractionState": "manual",
       "localizations": {
@@ -5204,6 +7063,17 @@
         }
       }
     },
+    "Open the release page": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Release-Seite öffnen"
+          }
+        }
+      }
+    },
     "Opens Downloads": {
       "extractionState": "manual",
       "localizations": {
@@ -5211,6 +7081,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Öffnet die Downloads"
+          }
+        }
+      }
+    },
+    "Or go back to": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oder zurück zu"
+          }
+        }
+      }
+    },
+    "Or pick a saved server": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oder wähle einen gespeicherten Server"
           }
         }
       }
@@ -5292,6 +7184,17 @@
         }
       }
     },
+    "Password": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passwort"
+          }
+        }
+      }
+    },
     "Pause": {
       "extractionState": "manual",
       "localizations": {
@@ -5303,6 +7206,17 @@
         }
       }
     },
+    "Paused": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pausiert"
+          }
+        }
+      }
+    },
     "paused": {
       "extractionState": "manual",
       "localizations": {
@@ -5310,6 +7224,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "pausiert"
+          }
+        }
+      }
+    },
+    "Peak": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Höhepunkt"
           }
         }
       }
@@ -5354,6 +7279,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pro Titel. Liegen Titel weiter auseinander, wird stattdessen übergeblendet."
+          }
+        }
+      }
+    },
+    "Pick the folders your music is in: on this iPhone, in iCloud Drive or on a drive you plug in. Kultr gets access to those folders and nothing else, and finds new music in them on its own.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle die Ordner, in denen deine Musik liegt: auf diesem iPhone, in iCloud Drive oder auf einem angeschlossenen Laufwerk. Kultr bekommt Zugriff auf diese Ordner und sonst nichts und findet neue Musik darin von selbst."
+          }
+        }
+      }
+    },
+    "Place in the queue": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Platz in der Warteliste"
+          }
+        }
+      }
+    },
+    "Plain password": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einfaches Passwort"
           }
         }
       }
@@ -5424,6 +7382,17 @@
         }
       }
     },
+    "Play from the queue": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus der Warteliste spielen"
+          }
+        }
+      }
+    },
     "Play music on this iPhone": {
       "extractionState": "manual",
       "localizations": {
@@ -5457,6 +7426,39 @@
         }
       }
     },
+    "Play on another device": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf einem anderen Gerät abspielen"
+          }
+        }
+      }
+    },
+    "Play or pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiedergabe oder Pause"
+          }
+        }
+      }
+    },
+    "Play something and it shows up here — along with what you play on your server from other devices.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiel etwas, und es erscheint hier – zusammen mit dem, was du auf anderen Geräten über deinen Server spielst."
+          }
+        }
+      }
+    },
     "Play the crate %@": {
       "extractionState": "manual",
       "localizations": {
@@ -5479,6 +7481,17 @@
         }
       }
     },
+    "Play the set": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set abspielen"
+          }
+        }
+      }
+    },
     "Play the station %@": {
       "extractionState": "manual",
       "localizations": {
@@ -5486,6 +7499,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Station %@ abspielen"
+          }
+        }
+      }
+    },
+    "Play this month's top tracks": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Top-Titel dieses Monats spielen"
           }
         }
       }
@@ -5523,6 +7547,17 @@
         }
       }
     },
+    "Played recently": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt gespielt"
+          }
+        }
+      }
+    },
     "Played the most": {
       "extractionState": "manual",
       "localizations": {
@@ -5552,6 +7587,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fortschrittsanzeige"
+          }
+        }
+      }
+    },
+    "Playing your set: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Set läuft: %@"
           }
         }
       }
@@ -5600,6 +7646,17 @@
         }
       }
     },
+    "playlists": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists"
+          }
+        }
+      }
+    },
     "Playlists on repeat": {
       "extractionState": "manual",
       "localizations": {
@@ -5618,6 +7675,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deine eigenen Playlists, neueste zuerst."
+          }
+        }
+      }
+    },
+    "Plays a song that is waiting in Kultr's queue.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spielt einen Titel, der in Kultrs Warteliste wartet."
+          }
+        }
+      }
+    },
+    "Plays or pauses Kultr.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Startet oder pausiert Kultr."
           }
         }
       }
@@ -5732,6 +7811,17 @@
         }
       }
     },
+    "Pulls in only what changed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Holt nur, was sich geändert hat."
+          }
+        }
+      }
+    },
     "Pulse": {
       "extractionState": "manual",
       "localizations": {
@@ -5794,6 +7884,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sortiert nach den Wiedergaben ihrer Titel."
+          }
+        }
+      }
+    },
+    "Rate “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ bewerten"
           }
         }
       }
@@ -5864,6 +7965,28 @@
         }
       }
     },
+    "Read from %@ on this iPhone: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gelesen aus %@ auf diesem iPhone: %@"
+          }
+        }
+      }
+    },
+    "Read on this iPhone by Apple Intelligence; nothing is sent anywhere.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Von Apple Intelligence auf diesem iPhone gelesen – nichts wird irgendwohin gesendet."
+          }
+        }
+      }
+    },
     "Reading albums…": {
       "extractionState": "manual",
       "localizations": {
@@ -5930,6 +8053,17 @@
         }
       }
     },
+    "Reading tags… %lld of %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tags werden gelesen… %lld von %lld"
+          }
+        }
+      }
+    },
     "Reading tracks…": {
       "extractionState": "manual",
       "localizations": {
@@ -5948,6 +8082,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Titel werden gelesen… %@ aus %@/%@ Alben"
+          }
+        }
+      }
+    },
+    "Reading your music…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Musik wird gelesen…"
+          }
+        }
+      }
+    },
+    "Reading…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird gelesen…"
+          }
+        }
+      }
+    },
+    "Reads every playlist's tracks, so they open instantly and offline.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liest die Titel jeder Playlist, damit sie sofort und auch offline aufgehen."
           }
         }
       }
@@ -5992,6 +8159,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bewegung reduzieren"
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisieren"
+          }
+        }
+      }
+    },
+    "Refreshing": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird aktualisiert"
+          }
+        }
+      }
+    },
+    "Refreshing…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird aktualisiert…"
           }
         }
       }
@@ -6205,6 +8405,17 @@
         }
       }
     },
+    "Repeat": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiederholen"
+          }
+        }
+      }
+    },
     "Repeat off": {
       "extractionState": "manual",
       "localizations": {
@@ -6392,6 +8603,28 @@
         }
       }
     },
+    "Save the set": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set sichern"
+          }
+        }
+      }
+    },
+    "Saved “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ gesichert"
+          }
+        }
+      }
+    },
     "Saved “%@”: %@": {
       "extractionState": "manual",
       "localizations": {
@@ -6399,6 +8632,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "„%@“ gesichert: %@"
+          }
+        }
+      }
+    },
+    "Saving your library…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Mediathek wird gesichert…"
+          }
+        }
+      }
+    },
+    "Scan again": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erneut scannen"
+          }
+        }
+      }
+    },
+    "Scan for changes": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach Änderungen scannen"
+          }
+        }
+      }
+    },
+    "Scan my folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meine Ordner scannen"
           }
         }
       }
@@ -6436,6 +8713,72 @@
         }
       }
     },
+    "Search failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suche fehlgeschlagen"
+          }
+        }
+      }
+    },
+    "Search on the server instead": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stattdessen auf dem Server suchen"
+          }
+        }
+      }
+    },
+    "Search understands German too: “spiele Nachtfahrt”, “zufällig” and an artist, “schlaf in 30 Minuten”, “weiter”, “öffne Einstellungen” or “plane eine Stunde”.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Suche versteht auch Deutsch: „spiele Nachtfahrt“, „zufällig“ und ein Künstler, „schlaf in 30 Minuten“, „weiter“, „öffne Einstellungen“ oder „plane eine Stunde“."
+          }
+        }
+      }
+    },
+    "Search, or say “play Night Drive”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suchen oder sag „spiele Nachtfahrt“"
+          }
+        }
+      }
+    },
+    "Searching your server (the library is not synced yet)": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suche auf deinem Server (die Mediathek ist noch nicht synchronisiert)"
+          }
+        }
+      }
+    },
+    "See what's new": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neuigkeiten ansehen"
+          }
+        }
+      }
+    },
     "Select": {
       "extractionState": "manual",
       "localizations": {
@@ -6465,6 +8808,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wiedergaben an Navidrome senden"
+          }
+        }
+      }
+    },
+    "Server address": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveradresse"
           }
         }
       }
@@ -6513,6 +8867,17 @@
         }
       }
     },
+    "Server unreachable: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server nicht erreichbar: %@"
+          }
+        }
+      }
+    },
     "Servers": {
       "extractionState": "manual",
       "localizations": {
@@ -6531,6 +8896,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Session, %@"
+          }
+        }
+      }
+    },
+    "Set, %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set, %@"
           }
         }
       }
@@ -6564,6 +8940,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Einstellungen importiert"
+          }
+        }
+      }
+    },
+    "Settings → Home page has a Widgets section: switch widgets off altogether, or add, remove, move and resize them.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unter Einstellungen → Startseite gibt es einen Bereich für Widgets: Schalte sie ganz aus oder füge sie hinzu, entferne, verschiebe und ändere ihre Größe."
           }
         }
       }
@@ -6689,6 +9076,17 @@
         }
       }
     },
+    "Show password": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passwort einblenden"
+          }
+        }
+      }
+    },
     "Show the lyrics tab": {
       "extractionState": "manual",
       "localizations": {
@@ -6700,6 +9098,17 @@
         }
       }
     },
+    "Shows all of them": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeigt alle"
+          }
+        }
+      }
+    },
     "Shuffle": {
       "extractionState": "manual",
       "localizations": {
@@ -6707,6 +9116,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zufällig"
+          }
+        }
+      }
+    },
+    "Shuffle %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ zufällig"
+          }
+        }
+      }
+    },
+    "Shuffle all": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles zufällig"
           }
         }
       }
@@ -6744,6 +9175,17 @@
         }
       }
     },
+    "Shuffle or Karousel": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zufällig oder Karousel"
+          }
+        }
+      }
+    },
     "Shuffle your whole library": {
       "extractionState": "manual",
       "localizations": {
@@ -6773,6 +9215,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Anmelden"
+          }
+        }
+      }
+    },
+    "Sign in again: the saved password could not be read.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melde dich erneut an: Das gespeicherte Passwort konnte nicht gelesen werden."
+          }
+        }
+      }
+    },
+    "Sign in, and Kultr keeps a copy of your library on this iPhone, so browsing is instant and works offline. Plays are counted on your server.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melde dich an, und Kultr behält eine Kopie deiner Mediathek auf diesem iPhone – so geht das Stöbern sofort und auch offline. Wiedergaben werden auf deinem Server gezählt."
           }
         }
       }
@@ -6843,6 +9307,17 @@
         }
       }
     },
+    "Skips to the next track in Kultr.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Springt in Kultr zum nächsten Titel."
+          }
+        }
+      }
+    },
     "Sleep timer": {
       "extractionState": "manual",
       "localizations": {
@@ -6850,6 +9325,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Schlaftimer"
+          }
+        }
+      }
+    },
+    "Sleep timer finished. Good night.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schlaftimer abgelaufen. Gute Nacht."
           }
         }
       }
@@ -6931,6 +9417,17 @@
         }
       }
     },
+    "So far this month.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bisher in diesem Monat."
+          }
+        }
+      }
+    },
     "Soft": {
       "extractionState": "manual",
       "localizations": {
@@ -6960,6 +9457,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mal was anderes"
+          }
+        }
+      }
+    },
+    "Song": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Titel"
           }
         }
       }
@@ -7030,6 +9538,17 @@
         }
       }
     },
+    "Start listening": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetzt hören"
+          }
+        }
+      }
+    },
     "Start the next track at the tempo of the one playing and line up their bars. It keeps that tempo, so no track ever changes speed while it plays.": {
       "extractionState": "manual",
       "localizations": {
@@ -7048,6 +9567,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Beginnt bei %@ · dauert %@ s"
+          }
+        }
+      }
+    },
+    "Starts at %lld, peaks at %lld, ends at %lld, out of 10": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginnt bei %lld, Höhepunkt bei %lld, endet bei %lld, von 10"
           }
         }
       }
@@ -7114,6 +9644,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stationen"
+          }
+        }
+      }
+    },
+    "Steady": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gleichmäßig"
           }
         }
       }
@@ -7202,6 +9743,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stoppt nach diesem Titel."
+          }
+        }
+      }
+    },
+    "Stopping at the end of this track.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stoppt am Ende dieses Titels."
+          }
+        }
+      }
+    },
+    "Stopping in %lld min.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stoppt in %lld Min."
           }
         }
       }
@@ -7338,6 +9901,28 @@
         }
       }
     },
+    "Switches Kultr between no repeat, repeating the queue and repeating the song.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schaltet Kultr zwischen nicht wiederholen, Warteliste wiederholen und Titel wiederholen um."
+          }
+        }
+      }
+    },
+    "Switches Kultr between shuffle, Karousel (music like what's playing, once the queue runs out) and neither.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schaltet Kultr zwischen Zufällig, Karousel (Musik wie die, die gerade läuft, sobald die Warteliste zu Ende ist) und keinem von beiden um."
+          }
+        }
+      }
+    },
     "Switches Kultr to this library. Your servers stay in Settings → Servers, one tap away.": {
       "extractionState": "manual",
       "localizations": {
@@ -7345,6 +9930,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wechselt Kultr zu dieser Mediathek. Deine Server bleiben unter Einstellungen → Server, nur einen Tipp entfernt."
+          }
+        }
+      }
+    },
+    "Sync": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisieren"
           }
         }
       }
@@ -7360,6 +9956,50 @@
         }
       }
     },
+    "Sync cancelled.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisierung abgebrochen."
+          }
+        }
+      }
+    },
+    "Sync failed: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisierung fehlgeschlagen: %@"
+          }
+        }
+      }
+    },
+    "Sync my library": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mediathek synchronisieren"
+          }
+        }
+      }
+    },
+    "Sync playlist contents": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inhalt der Playlists synchronisieren"
+          }
+        }
+      }
+    },
     "Sync your library first.": {
       "extractionState": "manual",
       "localizations": {
@@ -7367,6 +10007,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Synchronisiere zuerst deine Mediathek."
+          }
+        }
+      }
+    },
+    "Syncing your library…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Mediathek wird synchronisiert…"
+          }
+        }
+      }
+    },
+    "Syncing…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird synchronisiert…"
           }
         }
       }
@@ -7448,6 +10110,61 @@
         }
       }
     },
+    "Take it offline": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline mitnehmen"
+          }
+        }
+      }
+    },
+    "Taken out of “%@”": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus „%@“ genommen"
+          }
+        }
+      }
+    },
+    "Tap New playlist, or choose Add to playlist in any track's ••• menu. Playlists on your server show up here too.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippe auf „Neue Playlist“ oder wähle im •••-Menü eines Titels „Zur Playlist hinzufügen“. Playlists auf deinem Server erscheinen auch hier."
+          }
+        }
+      }
+    },
+    "Tap play to pick up where you left off": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippe auf Play, um dort weiterzumachen, wo du aufgehört hast"
+          }
+        }
+      }
+    },
+    "Tap the heart on a track, an album or an artist. What you heart shows up here, and on your server.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippe bei einem Titel, Album oder Künstler auf das Herz. Was du mit einem Herz markierst, erscheint hier und auf deinem Server."
+          }
+        }
+      }
+    },
     "Tap to choose another": {
       "extractionState": "manual",
       "localizations": {
@@ -7455,6 +10172,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tippen, um eine andere zu wählen"
+          }
+        }
+      }
+    },
+    "Tap to open Kultr": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippen, um Kultr zu öffnen"
+          }
+        }
+      }
+    },
+    "Tap, or press Return": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippen oder Return drücken"
           }
         }
       }
@@ -7514,6 +10253,17 @@
         }
       }
     },
+    "The chart starts again from nothing. Play counts on your server are not touched, and plays not sent yet are kept until they are.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Diagramm beginnt wieder bei null. Die Wiedergaben auf deinem Server bleiben unberührt, und noch nicht gesendete werden behalten, bis sie gesendet sind."
+          }
+        }
+      }
+    },
     "The current and next track are always analysed when a track starts. This also measures the one after, so skipping ahead lands on a transition that is ready too.": {
       "extractionState": "manual",
       "localizations": {
@@ -7521,6 +10271,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Der aktuelle und der nächste Titel werden immer analysiert, wenn ein Titel beginnt. Damit wird auch der übernächste vermessen, sodass auch beim Weiterspringen ein fertiger Übergang wartet."
+          }
+        }
+      }
+    },
+    "The download did not finish.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Download wurde nicht fertig."
           }
         }
       }
@@ -7558,6 +10319,17 @@
         }
       }
     },
+    "The Files picker could not be opened.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Dateiauswahl konnte nicht geöffnet werden."
+          }
+        }
+      }
+    },
     "The info line": {
       "extractionState": "manual",
       "localizations": {
@@ -7580,6 +10352,17 @@
         }
       }
     },
+    "The last two weeks on this phone": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die letzten zwei Wochen auf diesem Telefon"
+          }
+        }
+      }
+    },
     "The library on this phone has never been synced.": {
       "extractionState": "manual",
       "localizations": {
@@ -7587,6 +10370,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Die Mediathek auf diesem Telefon wurde noch nie synchronisiert."
+          }
+        }
+      }
+    },
+    "The month in numbers": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Monat in Zahlen"
           }
         }
       }
@@ -7679,6 +10473,17 @@
         }
       }
     },
+    "The queue starts again from the top.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Warteliste beginnt wieder von vorn."
+          }
+        }
+      }
+    },
     "The server did not answer within %@ s.": {
       "extractionState": "manual",
       "localizations": {
@@ -7697,6 +10502,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dem Server fehlt ein nötiger Parameter."
+          }
+        }
+      }
+    },
+    "The server refused the download.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server hat den Download abgelehnt."
+          }
+        }
+      }
+    },
+    "The server refused to stream this track (HTTP %lld).": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Server hat das Streamen dieses Titels abgelehnt (HTTP %lld)."
           }
         }
       }
@@ -7866,6 +10693,17 @@
         }
       }
     },
+    "This one": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese"
+          }
+        }
+      }
+    },
     "This phone is not connected to the internet.": {
       "extractionState": "manual",
       "localizations": {
@@ -7895,6 +10733,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Dieser Titel"
+          }
+        }
+      }
+    },
+    "This track is no longer on the server.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Titel ist nicht mehr auf dem Server."
           }
         }
       }
@@ -7932,6 +10781,17 @@
         }
       }
     },
+    "Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Titel"
+          }
+        }
+      }
+    },
     "Title and artist": {
       "extractionState": "manual",
       "localizations": {
@@ -7965,7 +10825,84 @@
         }
       }
     },
+    "Top albums": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top-Alben"
+          }
+        }
+      }
+    },
+    "Top artists": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top-Künstler"
+          }
+        }
+      }
+    },
+    "Top tracks": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top-Titel"
+          }
+        }
+      }
+    },
+    "Touch and hold": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gedrückt halten"
+          }
+        }
+      }
+    },
+    "Touch and hold a track, an album or an artist to play it next, queue it, favourite it or add it to a playlist. Swipe a track to play it next or queue it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halte einen Titel, ein Album oder einen Künstler gedrückt, um es als Nächstes zu spielen, einzureihen, zu den Favoriten oder zu einer Playlist hinzuzufügen. Wisch über einen Titel, um ihn als Nächstes zu spielen oder einzureihen."
+          }
+        }
+      }
+    },
+    "Touch the tab bar and slide your finger along it. Swipe sideways through your library, and pull the player down to close it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Berühre die Tableiste und fahr mit dem Finger daran entlang. Wisch seitwärts durch deine Mediathek und zieh den Player nach unten, um ihn zu schließen."
+          }
+        }
+      }
+    },
     "Tracks": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Titel"
+          }
+        }
+      }
+    },
+    "tracks": {
       "extractionState": "manual",
       "localizations": {
         "de": {
@@ -8075,6 +11012,17 @@
         }
       }
     },
+    "Turn off": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausschalten"
+          }
+        }
+      }
+    },
     "Two decks play at once for the length of the fade.": {
       "extractionState": "manual",
       "localizations": {
@@ -8082,6 +11030,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Während der Blende spielen zwei Decks gleichzeitig."
+          }
+        }
+      }
+    },
+    "Type at least two letters. Or try “play Night Drive”, “shuffle” and an artist, “sleep in 30 minutes”, “next” or “plan an hour”.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippe mindestens zwei Buchstaben. Oder versuch „spiele Nachtfahrt“, „zufällig“ und einen Künstler, „schlaf in 30 Minuten“, „weiter“ oder „plane eine Stunde“."
+          }
+        }
+      }
+    },
+    "Unfavourite": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Favoriten entfernen"
+          }
+        }
+      }
+    },
+    "Unknown artist": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unbekannter Künstler"
           }
         }
       }
@@ -8108,6 +11089,17 @@
         }
       }
     },
+    "UP NEXT": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ALS NÄCHSTES"
+          }
+        }
+      }
+    },
     "Up next": {
       "extractionState": "manual",
       "localizations": {
@@ -8130,6 +11122,17 @@
         }
       }
     },
+    "Update": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update"
+          }
+        }
+      }
+    },
     "Update log": {
       "extractionState": "manual",
       "localizations": {
@@ -8148,6 +11151,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Playlist jetzt aktualisieren"
+          }
+        }
+      }
+    },
+    "Update with %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mit %@ aktualisieren"
+          }
+        }
+      }
+    },
+    "Updated: %lld new, %lld changed, %lld removed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisiert: %lld neu, %lld geändert, %lld entfernt."
           }
         }
       }
@@ -8218,6 +11243,17 @@
         }
       }
     },
+    "Username": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Benutzername"
+          }
+        }
+      }
+    },
     "Usually %@": {
       "extractionState": "manual",
       "localizations": {
@@ -8240,6 +11276,17 @@
         }
       }
     },
+    "Version %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        }
+      }
+    },
     "Version %@ (%@)": {
       "extractionState": "manual",
       "localizations": {
@@ -8247,6 +11294,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Version %@ (%@)"
+          }
+        }
+      }
+    },
+    "Version %@, and everything since %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@ und alles seit %@"
           }
         }
       }
@@ -8306,6 +11364,17 @@
         }
       }
     },
+    "Warm up and peak": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aufwärmen und Höhepunkt"
+          }
+        }
+      }
+    },
     "Wave": {
       "extractionState": "manual",
       "localizations": {
@@ -8324,6 +11393,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Website"
+          }
+        }
+      }
+    },
+    "Welcome to Kultr": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Willkommen bei Kultr"
           }
         }
       }
@@ -8350,6 +11430,17 @@
         }
       }
     },
+    "What Kultr is playing, with play, pause and skip; the large sizes also show what's up next.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Was Kultr gerade spielt, mit Play, Pause und Weiter. Die großen Größen zeigen auch, was als Nächstes kommt."
+          }
+        }
+      }
+    },
     "What played, and what stopped it. If the music stops by itself, share this with the developer.": {
       "extractionState": "manual",
       "localizations": {
@@ -8372,6 +11463,28 @@
         }
       }
     },
+    "What's new in Kultr": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu in Kultr"
+          }
+        }
+      }
+    },
+    "When iOS lets Kultr run, about every %lld minutes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn iOS Kultr laufen lässt, etwa alle %lld Minuten."
+          }
+        }
+      }
+    },
     "When keys clash, filter out of the old track instead of blending.": {
       "extractionState": "manual",
       "localizations": {
@@ -8390,6 +11503,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Wenn die Warteliste zu Ende ist, kommt weiter Musik wie die, die gerade lief: ähnliche Titel, ähnliche Künstler und deine eigenen Favoriten. Diese Titel stehen unter einer eigenen Überschrift in „Als Nächstes“. Zweimal auf die Zufallstaste tippen schaltet Karousel ebenfalls ein."
+          }
+        }
+      }
+    },
+    "Where is your music?": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wo ist deine Musik?"
           }
         }
       }
@@ -8438,6 +11562,17 @@
         }
       }
     },
+    "Widgets in Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widgets in den Einstellungen"
+          }
+        }
+      }
+    },
     "Widgets on Home": {
       "extractionState": "manual",
       "localizations": {
@@ -8471,6 +11606,17 @@
         }
       }
     },
+    "Wind down": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausklingen"
+          }
+        }
+      }
+    },
     "Wind down before the sleep timer": {
       "extractionState": "manual",
       "localizations": {
@@ -8493,6 +11639,17 @@
         }
       }
     },
+    "With your iPhone set to German, or Deutsch chosen for Kultr in the iPhone's Settings → Apps → Kultr → Language, the whole app is in German. Settings → Language takes you there.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ist dein iPhone auf Deutsch eingestellt oder für Kultr in den iPhone-Einstellungen unter Apps → Kultr → Sprache „Deutsch“ gewählt, ist die ganze App auf Deutsch. Einstellungen → Sprache bringt dich dorthin."
+          }
+        }
+      }
+    },
     "Worked out by adding up the play counts of each artist’s tracks.": {
       "extractionState": "manual",
       "localizations": {
@@ -8500,6 +11657,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Errechnet aus den Wiedergaben aller Titel eines Künstlers."
+          }
+        }
+      }
+    },
+    "Working it out…": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird überlegt…"
           }
         }
       }
@@ -8526,6 +11694,17 @@
         }
       }
     },
+    "Year": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jahr"
+          }
+        }
+      }
+    },
     "Years": {
       "extractionState": "manual",
       "localizations": {
@@ -8533,6 +11712,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Jahre"
+          }
+        }
+      }
+    },
+    "You are not connected to a server.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du bist mit keinem Server verbunden."
+          }
+        }
+      }
+    },
+    "You can add the other one later, in Settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das andere kannst du später in den Einstellungen hinzufügen."
+          }
+        }
+      }
+    },
+    "You have %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du hast %@"
+          }
+        }
+      }
+    },
+    "You have %@ · released %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du hast %@ · erschienen %@"
           }
         }
       }
@@ -8592,6 +11815,39 @@
         }
       }
     },
+    "Your library is not synced yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Mediathek ist noch nicht synchronisiert"
+          }
+        }
+      }
+    },
+    "Your library on this phone": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Mediathek auf diesem Telefon"
+          }
+        }
+      }
+    },
+    "Your longest day": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein längster Tag"
+          }
+        }
+      }
+    },
     "Your most-played tracks, by the play count on the server.": {
       "extractionState": "manual",
       "localizations": {
@@ -8599,6 +11855,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deine meistgespielten Titel, nach den Wiedergaben auf dem Server."
+          }
+        }
+      }
+    },
+    "Your music, mixed the way a DJ would mix it. From your own Navidrome server, or straight from this iPhone.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Musik, gemischt wie von einem DJ. Von deinem eigenen Navidrome-Server oder direkt von diesem iPhone."
           }
         }
       }
@@ -8621,6 +11888,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Deine eigenen Stationen und Änderungen verschwinden; Aufwärmen, Nachtfahrt, Höhepunkt, Voller Fokus, Runterkommen, Ungehörte Perlen und Favoriten kommen zurück."
+          }
+        }
+      }
+    },
+    "Your password stays on this phone, sealed in the iOS Keychain, and is only ever sent to your own server.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Passwort bleibt auf diesem Telefon, sicher im iOS-Schlüsselbund, und wird nur an deinen eigenen Server gesendet."
+          }
+        }
+      }
+    },
+    "Your server counts plays per track, not each play, so this chart comes from this phone's own history.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Server zählt Wiedergaben pro Titel, nicht jede einzelne. Darum stammt dieses Diagramm aus dem eigenen Verlauf dieses Telefons."
           }
         }
       }
@@ -8691,6 +11980,28 @@
         }
       }
     },
+    "“%@” could not be synced as a playlist: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ konnte nicht als Playlist synchronisiert werden: %@"
+          }
+        }
+      }
+    },
+    "“%@” has no tracks here yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ hat hier noch keine Titel."
+          }
+        }
+      }
+    },
     "“%@” is a station too now": {
       "extractionState": "manual",
       "localizations": {
@@ -8713,6 +12024,17 @@
         }
       }
     },
+    "“%@” is not a valid address.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ ist keine gültige Adresse."
+          }
+        }
+      }
+    },
     "“%@” is not a valid server address.": {
       "extractionState": "manual",
       "localizations": {
@@ -8720,6 +12042,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "„%@“ ist keine gültige Serveradresse."
+          }
+        }
+      }
+    },
+    "“%@” plays next": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@“ kommt als Nächstes"
           }
         }
       }

@@ -312,11 +312,11 @@ final class OfflineManager {
         if song == nil { song = try? await client.getSong(row.songId) }
         defer { active[row.songId] = nil }
         do {
-            guard let song else { throw NetworkError(message: "This track is no longer on the server.") }
+            guard let song else { throw NetworkError(message: "This track is no longer on the server.".loc) }
             let transcode = settings.offlineBitrate > 0
             let format = playableFormat(settings.preferredFormat)
             guard let url = transcode ? client.streamUrl(song.id, maxBitRate: settings.offlineBitrate, format: format) : client.downloadUrl(song.id) else {
-                throw NetworkError(message: "Not signed in.")
+                throw NetworkError(message: "Not signed in.".loc)
             }
             let suffix = transcode ? format : ((song.suffix ?? "").isEmpty ? "audio" : song.suffix!)
             let safeId = song.id.replacingOccurrences(of: "[^A-Za-z0-9._-]", with: "_", options: .regularExpression)

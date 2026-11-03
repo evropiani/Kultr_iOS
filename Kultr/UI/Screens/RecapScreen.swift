@@ -49,7 +49,7 @@ struct RecapScreen: View {
                 .frame(maxHeight: .infinity)
             }
         }
-        .navigationTitle(month.map { Self.monthTitle.string(from: $0) } ?? "Monthly recap")
+        .navigationTitle(month.map { Self.monthTitle.string(from: $0) } ?? "Monthly recap".loc)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             if months.count > 1 {
@@ -130,11 +130,11 @@ struct RecapScreen: View {
                 Fact(
                     label: "First listens",
                     value: recap.firstListens == 0
-                        ? "Only tracks you had played before"
-                        : "\(Format.count(recap.firstListens, "track")) you had never played on this phone"
+                        ? "Only tracks you had played before".loc
+                        : String(localized: "\(Format.count(recap.firstListens, "track")) you had never played on this phone")
                 )
                 if recap.plays > 0 {
-                    Fact(label: "On average", value: "\(Format.duration(recap.seconds / Int64(recap.plays))) a play")
+                    Fact(label: "On average", value: String(localized: "\(Format.duration(recap.seconds / Int64(recap.plays))) a play"))
                 }
             }
             .padding(.horizontal, 16)
@@ -149,9 +149,9 @@ struct RecapScreen: View {
 
     private func comparison(_ recap: MonthRecap, thisMonth: Bool) -> String {
         let previous = Calendar.current.date(byAdding: .month, value: -1, to: recap.month).map { Self.monthName.string(from: $0) } ?? ""
-        guard recap.previousSeconds > 0 else { return thisMonth ? "So far this month." : "Nothing played the month before." }
-        let before = "\(previous) was \(Format.duration(recap.previousSeconds))."
-        return thisMonth ? "So far this month. \(before)" : before
+        guard recap.previousSeconds > 0 else { return (thisMonth ? "So far this month." : "Nothing played the month before.").loc }
+        let before = String(localized: "\(previous) was \(Format.duration(recap.previousSeconds)).")
+        return thisMonth ? "So far this month.".loc + " " + before : before
     }
 
     private func load() async {
@@ -178,7 +178,7 @@ private struct Fact: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label)
+            Text(label.loc)
                 .font(KFont.bodySmall)
                 .foregroundStyle(theme.colors.ink3)
             Text(value)
@@ -242,7 +242,7 @@ struct PlayBars: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
-                            Text(row.name ?? "Unknown artist").foregroundStyle(c.ink).lineLimit(1)
+                            Text(row.name ?? "Unknown artist".loc).foregroundStyle(c.ink).lineLimit(1)
                             Spacer()
                             Text(Format.count(Int(row.plays), "play"))
                                 .font(KFont.bodySmall.monospacedDigit())

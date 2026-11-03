@@ -283,7 +283,7 @@ final class StreamingResource: NSObject, AVAssetResourceLoaderDelegate, URLSessi
         if dataTask === mainTask {
             headersSeen = true
             if refused {
-                failure = NetworkError(message: "The server refused to stream this track (HTTP \(status)).")
+                failure = NetworkError(message: String(localized: "The server refused to stream this track (HTTP \(status))."))
                 completionHandler(.cancel)
                 serve()
                 return

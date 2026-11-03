@@ -17,8 +17,8 @@ struct HomeScreen: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(
                         sync.running
-                            ? (sync.progress?.message ?? "Syncing…")
-                            : "\(Format.count(counts.songs, "track")) · \(Format.count(counts.albums, "album")) · checked \(Format.relative(syncState.lastCheck))"
+                            ? (sync.progress?.message ?? "Syncing…".loc)
+                            : String(localized: "\(Format.count(counts.songs, "track")) · \(Format.count(counts.albums, "album")) · checked \(Format.relative(syncState.lastCheck))")
                     )
                     .font(KFont.bodySmall)
                     .foregroundStyle(c.ink3)
@@ -201,7 +201,7 @@ private struct HomeShelf: View {
                 }
             } label: {
                 HStack(spacing: 4) {
-                    Text(tile.title)
+                    Text(tile.title.loc)
                         .font(.title3.bold())
                         .foregroundStyle(theme.colors.ink)
                         .lineLimit(1)

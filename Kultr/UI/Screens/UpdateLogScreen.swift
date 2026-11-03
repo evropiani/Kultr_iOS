@@ -41,7 +41,7 @@ struct UpdateLogEntry: Decodable, Identifiable {
             let (version, items) = pair
             // A test build newer than every release; the released versions have their notes.
             guard !known.contains(version), Versions.isNewer(version, than: newest) else { return nil }
-            let lines = items.map { Line(kind: "bullet", text: "**\($0.title).** \($0.text)") }
+            let lines = items.map { Line(kind: "bullet", text: "**\($0.title.loc).** \($0.text.loc)") }
             return UpdateLogEntry(version: version, date: "", sections: [Section(title: "", lines: lines)], testBuild: true)
         }
         return (released + tests).sorted { Versions.isNewer($0.version, than: $1.version) }

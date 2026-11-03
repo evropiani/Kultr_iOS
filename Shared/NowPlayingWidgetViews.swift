@@ -86,7 +86,7 @@ private struct MediumFace: View {
 
     private var eyebrow: String {
         guard let snapshot else { return "KULTR" }
-        return snapshot.isPlaying ? "NOW PLAYING" : "PAUSED"
+        return (snapshot.isPlaying ? "Now playing" : "Paused").loc.uppercased()
     }
 }
 
@@ -171,10 +171,10 @@ private struct RectangularFace: View {
             Label(snapshot?.isPlaying == true ? "Now playing" : "Kultr", systemImage: snapshot?.isPlaying == true ? "waveform" : "music.note")
                 .font(.system(size: 12, weight: .semibold))
                 .widgetAccentable()
-            Text(snapshot?.title ?? "Nothing playing")
+            Text(snapshot?.title ?? "Nothing playing".loc)
                 .font(.system(size: 15, weight: .bold))
                 .lineLimit(1)
-            Text(snapshot?.artist ?? "Tap to open Kultr")
+            Text(snapshot?.artist ?? "Tap to open Kultr".loc)
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -225,7 +225,7 @@ private struct StateEyebrow: View {
 
     private var text: String {
         guard let snapshot else { return "KULTR" }
-        return snapshot.isPlaying ? "NOW PLAYING" : "PAUSED"
+        return (snapshot.isPlaying ? "Now playing" : "Paused").loc.uppercased()
     }
 }
 
@@ -414,7 +414,7 @@ private struct UpNextList: View {
     /** How many songs wait in all. */
     private var waitingLabel: String? {
         guard let total = snapshot?.upNextCount, total > 0 else { return nil }
-        return total == 1 ? "1 song" : "\(total) songs"
+        return total == 1 ? "1 song".loc : String(localized: "\(total) songs")
     }
 }
 
@@ -451,7 +451,7 @@ private struct Titles: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(snapshot?.title ?? "Nothing playing")
+            Text(snapshot?.title ?? "Nothing playing".loc)
                 .font(.system(size: titleSize, weight: .semibold))
                 .lineLimit(lines)
             Text(subtitle)
@@ -462,7 +462,7 @@ private struct Titles: View {
     }
 
     private var subtitle: String {
-        guard let snapshot else { return "Tap play to pick up where you left off" }
+        guard let snapshot else { return "Tap play to pick up where you left off".loc }
         return snapshot.artist.isEmpty ? snapshot.album : snapshot.artist
     }
 }

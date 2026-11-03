@@ -38,7 +38,7 @@ struct SyncScreen: View {
                                         .font(KFont.bodySmall)
                                         .foregroundStyle(c.success)
                                     if !s.errors.isEmpty {
-                                        Text(local ? s.errors.prefix(3).joined(separator: " ") : "\(s.errors.count) albums could not be read: \(s.errors.prefix(3).joined(separator: "; "))")
+                                        Text(local ? s.errors.prefix(3).joined(separator: " ") : String(localized: "\(s.errors.count) albums could not be read: \(s.errors.prefix(3).joined(separator: "; "))"))
                                             .font(KFont.bodySmall)
                                             .foregroundStyle(c.warning)
                                     }

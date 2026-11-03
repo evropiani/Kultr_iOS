@@ -16,7 +16,7 @@ struct SearchResults: Hashable {
 }
 
 struct NotConnectedError: LocalizedError {
-    var errorDescription: String? { "You are not connected to a server." }
+    var errorDescription: String? { "You are not connected to a server.".loc }
 }
 
 /**

@@ -13,6 +13,18 @@ struct WhatsNewItem: Identifiable {
  */
 enum WhatsNew {
     static let notes: [String: [WhatsNewItem]] = [
+        "2.1.0": [
+            WhatsNewItem(
+                icon: "globe",
+                title: "Kultr in German",
+                text: "With your iPhone set to German, or Deutsch chosen for Kultr in the iPhone's Settings → Apps → Kultr → Language, the whole app is in German. Settings → Language takes you there."
+            ),
+            WhatsNewItem(
+                icon: "text.magnifyingglass",
+                title: "Commands in German",
+                text: "Search understands German too: “spiele Nachtfahrt”, “zufällig” and an artist, “schlaf in 30 Minuten”, “weiter”, “öffne Einstellungen” or “plane eine Stunde”."
+            ),
+        ],
         "2.0.1": [
             WhatsNewItem(
                 icon: "square.grid.2x2.fill",
@@ -193,10 +205,10 @@ struct WhatsNewScreen: View {
                                 .foregroundStyle(c.accent)
                                 .frame(width: 36)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(item.title)
+                                Text(item.title.loc)
                                     .font(.headline)
                                     .foregroundStyle(c.ink)
-                                Text(item.text)
+                                Text(item.text.loc)
                                     .font(.subheadline)
                                     .foregroundStyle(c.ink2)
                                     .fixedSize(horizontal: false, vertical: true)

@@ -55,10 +55,10 @@ final class SyncManager {
      */
     @discardableResult
     func runNow(_ mode: SyncMode, quiet: Bool = false) async -> String? {
-        guard let db = graph.library.db else { return "Not signed in." }
+        guard let db = graph.library.db else { return "Not signed in.".loc }
         let local = graph.isLocal
         let client = graph.auth.client
-        if !local && client == nil { return "Not signed in." }
+        if !local && client == nil { return "Not signed in.".loc }
         if running { return nil }
         running = true
         error = nil
@@ -82,7 +82,7 @@ final class SyncManager {
                 )
             }
         } else {
-            return "Not signed in."
+            return "Not signed in.".loc
         }
         do {
             let summary = try await withTaskCancellationHandler {

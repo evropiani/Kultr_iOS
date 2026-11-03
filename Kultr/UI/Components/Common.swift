@@ -310,7 +310,7 @@ struct NoMatches: View {
     var body: some View {
         EmptyState(
             icon: "line.3.horizontal.decrease.circle",
-            title: String(localized: "No \(what) match “\(query)”"),
+            title: String(localized: "No \(what.loc) match “\(query)”"),
             message: "Check the spelling, or try part of a name."
         )
         .padding(.top, 24)

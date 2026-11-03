@@ -62,7 +62,7 @@ struct AddToPlaylistSheet: View {
     @State private var busy = false
 
     private var label: String {
-        songs.count == 1 ? "“\(songs[0].title)”" : "\(songs.count) tracks"
+        songs.count == 1 ? "“\(songs[0].title)”" : String(localized: "\(songs.count) tracks")
     }
 
     var body: some View {
@@ -122,12 +122,12 @@ struct AddToPlaylistSheet: View {
     private func create() {
         busy = true
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        Task { finish(await AppGraph.shared.library.createPlaylist(trimmed, songs), "Created “\(trimmed)”") }
+        Task { finish(await AppGraph.shared.library.createPlaylist(trimmed, songs), String(localized: "Created “\(trimmed)”")) }
     }
 
     private func add(to playlist: Playlist) {
         busy = true
-        Task { finish(await AppGraph.shared.library.addToPlaylist(playlist.id, songs), "Added \(label) to “\(playlist.name)”") }
+        Task { finish(await AppGraph.shared.library.addToPlaylist(playlist.id, songs), String(localized: "Added \(label) to “\(playlist.name)”")) }
     }
 }
 
@@ -187,7 +187,7 @@ struct SleepTimerSheet: View {
                     .padding(.bottom, 8)
                 }
                 ForEach([5, 15, 30, 45, 60, 90], id: \.self) { minutes in
-                    option("\(minutes) minutes") {
+                    option(String(localized: "\(minutes) minutes")) {
                         player.setSleepTimer(minutes: minutes)
                         messages.show(String(localized: "Sleep timer: \(minutes) minutes."))
                     }
