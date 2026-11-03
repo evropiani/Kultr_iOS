@@ -11,7 +11,11 @@ import FoundationModels
  */
 @MainActor
 enum CommandRunner {
-    static var stationNames: [String] { AppGraph.shared.stations.all.map(\.name) }
+    /** The names stations answer to: each one's own, and the starting ones' in the iPhone's language. */
+    static var stationNames: [String] {
+        var seen = Set<String>()
+        return AppGraph.shared.stations.all.flatMap { [$0.name, $0.title] }.filter { seen.insert($0.lowercased()).inserted }
+    }
     static var crateNames: [String] { AppGraph.shared.crates.all.map(\.name) }
 
     static func parse(_ text: String) -> KultrCommand? {
@@ -21,21 +25,21 @@ enum CommandRunner {
     /** What the command will do, for the row above the search results. */
     static func describe(_ command: KultrCommand) -> (icon: String, text: String) {
         switch command {
-        case .play(let what): return ("play.fill", "Play “\(what)”")
-        case .shuffle(let what): return ("shuffle", "Shuffle “\(what)”")
-        case .shuffleAll: return ("shuffle", "Shuffle your whole library")
-        case .station(let name): return ("dial.medium.fill", "Play the station \(name)")
-        case .sleep(let minutes): return ("moon.fill", "Sleep timer: \(minutes) min")
-        case .sleepAfterTrack: return ("moon.fill", "Stop after this track")
-        case .pause: return ("pause.fill", "Pause")
-        case .resume: return ("play.fill", "Play")
-        case .next: return ("forward.end.fill", "Next track")
-        case .previous: return ("backward.end.fill", "Previous track")
-        case .mixNow: return ("arrow.triangle.merge", "Mix into the next track")
-        case .plan(let minutes): return ("waveform.path.ecg", minutes.map { "Plan a set of \($0) min" } ?? "Plan a set")
-        case .open(let place): return ("arrow.up.forward.app", "Open \(label(place))")
-        case .crate(let name): return ("shippingbox.fill", "Open the crate \(name)")
-        case .playCrate(let name): return ("shippingbox.fill", "Play the crate \(name)")
+        case .play(let what): return ("play.fill", String(localized: "Play “\(what)”"))
+        case .shuffle(let what): return ("shuffle", String(localized: "Shuffle “\(what)”"))
+        case .shuffleAll: return ("shuffle", "Shuffle your whole library".loc)
+        case .station(let name): return ("dial.medium.fill", String(localized: "Play the station \(name.loc)"))
+        case .sleep(let minutes): return ("moon.fill", String(localized: "Sleep timer: \(minutes) min"))
+        case .sleepAfterTrack: return ("moon.fill", "Stop after this track".loc)
+        case .pause: return ("pause.fill", "Pause".loc)
+        case .resume: return ("play.fill", "Play".loc)
+        case .next: return ("forward.end.fill", "Next track".loc)
+        case .previous: return ("backward.end.fill", "Previous track".loc)
+        case .mixNow: return ("arrow.triangle.merge", "Mix into the next track".loc)
+        case .plan(let minutes): return ("waveform.path.ecg", minutes.map { String(localized: "Plan a set of \($0) min") } ?? "Plan a set".loc)
+        case .open(let place): return ("arrow.up.forward.app", String(localized: "Open \(label(place).loc)"))
+        case .crate(let name): return ("shippingbox.fill", String(localized: "Open the crate \(name)"))
+        case .playCrate(let name): return ("shippingbox.fill", String(localized: "Play the crate \(name)"))
         }
     }
 
@@ -62,21 +66,22 @@ enum CommandRunner {
         case .play(let what), .shuffle(let what):
             let songs = await music(for: what)
             guard !songs.isEmpty else {
-                graph.messages.show("Nothing in your library matches “\(what)”.")
+                graph.messages.show(String(localized: "Nothing in your library matches “\(what)”."))
                 return
             }
             if case .shuffle = command { actions.shuffle(songs) } else { actions.play(songs) }
         case .shuffleAll:
             actions.shuffle(await graph.library.randomSongs(200))
         case .station(let name):
-            guard let station = graph.stations.all.first(where: { $0.name.lowercased() == name.lowercased() }) else {
-                graph.messages.show("There's no station called “\(name)”. Stations has the list.")
+            let wanted = name.lowercased()
+            guard let station = graph.stations.all.first(where: { $0.name.lowercased() == wanted || $0.title.lowercased() == wanted }) else {
+                graph.messages.show(String(localized: "There's no station called “\(name)”. Stations has the list."))
                 return
             }
             await player.playStation(station)
         case .sleep(let minutes):
             player.setSleepTimer(minutes: minutes)
-            graph.messages.show("Sleep timer: \(minutes) minutes.")
+            graph.messages.show(String(localized: "Sleep timer: \(minutes) minutes."))
         case .sleepAfterTrack:
             player.sleepAtEndOfTrack()
             graph.messages.show("Stopping after this track.")
@@ -105,7 +110,7 @@ enum CommandRunner {
         case .playCrate(let name):
             guard let crate = graph.crates.all.first(where: { $0.name.lowercased() == name.lowercased() }) else { return }
             let songs = await graph.crates.songs(crate)
-            if songs.isEmpty { graph.messages.show("“\(crate.name)” is empty.") } else { actions.play(songs) }
+            if songs.isEmpty { graph.messages.show(String(localized: "“\(crate.name)” is empty.")) } else { actions.play(songs) }
         }
     }
 

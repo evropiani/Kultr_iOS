@@ -36,7 +36,7 @@ struct NowPlayingScreen: View {
                             header(current, state: state, settings: settings)
                             Picker("Show", selection: Binding(get: { tab }, set: { value in withAnimation(theme.ease) { tab = value } })) {
                                 ForEach(PlayerTab.allCases.filter { $0 != .lyrics || settings.showLyrics }, id: \.self) { entry in
-                                    Text(entry.label).tag(entry)
+                                    Text(entry.label.loc).tag(entry)
                                 }
                             }
                             .pickerStyle(.segmented)
@@ -233,7 +233,7 @@ private struct SongFacts: View {
             }))
         }
         if let suffix = song.suffix { out.append(Fact(text: suffix.uppercased())) }
-        if let bitRate = song.bitRate { out.append(Fact(text: "\(bitRate) kbps")) }
+        if let bitRate = song.bitRate { out.append(Fact(text: String(localized: "\(bitRate) kbps"))) }
         if let rating = song.userRating, rating > 0 { out.append(Fact(text: "\(rating) ★", action: { graph.actions.rate(song) })) }
         return out
     }
@@ -467,7 +467,7 @@ private struct ModeButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(PressableStyle())
-        .accessibilityLabel(label)
+        .accessibilityLabel(label.loc)
     }
 }
 
@@ -535,8 +535,8 @@ private struct QueueList: View {
             if let station {
                 KarouselHeading(
                     icon: station.icon,
-                    title: station.name,
-                    text: "\(station.summary). Tracks that fit, mixed by InjeKt, for as long as you like.",
+                    title: station.title,
+                    text: String(localized: "\(station.summary). Tracks that fit, mixed by InjeKt, for as long as you like."),
                     onEnd: {
                         AppGraph.shared.player.endStation()
                         AppGraph.shared.messages.show("Station ended")
@@ -563,7 +563,7 @@ private struct QueueList: View {
     }
 
     private func save(_ songs: [Song]) {
-        name = "Session, \(Self.stamp.string(from: Date()))"
+        name = String(localized: "Session, \(Self.stamp.string(from: Date()))")
         saving = songs
     }
 
@@ -576,7 +576,7 @@ private struct QueueList: View {
             if let error = await graph.library.createPlaylist(title, songs) {
                 graph.messages.error(error)
             } else {
-                graph.messages.show("Saved “\(title)”: \(Format.count(songs.count, "track"))", .success)
+                graph.messages.show(String(localized: "Saved “\(title)”: \(Format.count(songs.count, "track"))"), .success)
             }
         }
     }
@@ -598,10 +598,10 @@ private struct KarouselHeading: View {
                 .frame(width: 30, height: 30)
                 .background(Circle().fill(c.accent.opacity(0.24)))
             VStack(alignment: .leading, spacing: 1) {
-                Text(title)
+                Text(title.loc)
                     .font(KFont.titleSmall.weight(.semibold))
                     .foregroundStyle(c.ink)
-                Text(text)
+                Text(text.loc)
                     .font(KFont.bodySmall)
                     .foregroundStyle(c.ink3)
             }
@@ -755,8 +755,8 @@ private struct InjektPanel: View {
                             Text(plan.label).font(KFont.titleMedium).foregroundStyle(c.accent)
                             Text(plan.reason).font(KFont.bodyMedium).foregroundStyle(c.ink2)
                             Text(
-                                "Starts at \(Format.time(plan.startAt)) · lasts \(String(format: "%.1f", plan.duration))s" +
-                                    (plan.inStartOffset > 1 ? " · next track enters at \(Format.time(plan.inStartOffset))" : "")
+                                String(localized: "Starts at \(Format.time(plan.startAt)) · lasts \(String(format: "%.1f", plan.duration)) s") +
+                                    (plan.inStartOffset > 1 ? " · " + String(localized: "next track enters at \(Format.time(plan.inStartOffset))") : "")
                             )
                             .font(KFont.bodySmall)
                             .foregroundStyle(c.ink3)
@@ -814,7 +814,7 @@ private struct AnalysisCard: View {
                 }
                 if let analysis {
                     HStack(spacing: 8) {
-                        stat("Tempo", String(format: "%.1f", analysis.bpm), analysis.bpmSource == .tag ? "from tag" : "\(Int((analysis.bpmConfidence * 100).rounded()))% sure")
+                        stat("Tempo", String(format: "%.1f", analysis.bpm), analysis.bpmSource == .tag ? "from tag".loc : "\(Int((analysis.bpmConfidence * 100).rounded())) % " + "sure".loc)
                         stat("Key", analysis.keyName, analysis.camelot)
                         stat("Energy", "\(Int((analysis.energy * 100).rounded()))", "of 100")
                     }
@@ -832,9 +832,9 @@ private struct AnalysisCard: View {
         let c = theme.colors
         let shape = RoundedRectangle(cornerRadius: theme.radii.sm, style: .continuous)
         return VStack(alignment: .leading, spacing: 2) {
-            Text(label.uppercased()).font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(c.ink3)
+            Text(label.loc.uppercased()).font(.system(size: 10, weight: .bold)).tracking(1).foregroundStyle(c.ink3)
             Text(value).font(.system(size: 20, weight: .bold)).foregroundStyle(c.ink).lineLimit(1).minimumScaleFactor(0.7)
-            Text(note).font(.system(size: 11)).foregroundStyle(c.ink3).lineLimit(1)
+            Text(note.loc).font(.system(size: 11)).foregroundStyle(c.ink3).lineLimit(1)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)

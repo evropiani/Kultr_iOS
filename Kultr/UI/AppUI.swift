@@ -6,7 +6,7 @@ import SwiftUI
 enum LibraryTab: String, CaseIterable, Hashable {
     case playlists, crates, artists, albums, songs, genres, tags, favourites, downloads, radio
 
-    var label: String { rawValue.capitalized }
+    var label: String { rawValue.capitalized.loc }
 
     var icon: String {
         switch self {
@@ -41,14 +41,14 @@ extension LibraryTab {
 enum DownloadsPage: String, CaseIterable, Hashable {
     case now, offline
 
-    var label: String { self == .now ? "Downloading" : "On this phone" }
+    var label: String { (self == .now ? "Downloading" : "On this phone").loc }
 }
 
 /** The tabs. Search is last: iOS 26 shows it as its own round button beside the bar. */
 enum MainTab: String, CaseIterable, Hashable {
     case home, library, settings, search
 
-    var label: String { rawValue.capitalized }
+    var label: String { rawValue.capitalized.loc }
 
     var icon: String {
         switch self {
@@ -115,13 +115,33 @@ final class AppUI {
 
     private static let whatsNewKey = "ui.whatsNewSeen"
 
-    /** What's new: open on the first start after an update that has notes. */
+    /** The version that ran before this one, read before this launch writes over it. */
+    private static let previousVersion: String? = {
+        let previous = UserDefaults.standard.string(forKey: "ui.lastVersion")
+        UserDefaults.standard.set(appVersion, forKey: "ui.lastVersion")
+        return previous
+    }()
+
+    /**
+     * The version whose news this person has seen: as recorded, or the last
+     * one that ran, or, for an update from a version that recorded neither,
+     * 1.4.0 (or 1.3.9 when their settings date from before 1.4.0's look).
+     */
+    var whatsNewSeen: String? {
+        if let seen = UserDefaults.standard.string(forKey: Self.whatsNewKey) { return seen }
+        if let previous = Self.previousVersion, previous != appVersion { return previous }
+        guard welcomed else { return nil }
+        return UserDefaults.standard.bool(forKey: "ui.cameFromBeforeCream") ? "1.3.9" : "1.4.0"
+    }
+
+    /** What's new: open on the first start after an update, with everything since the version last seen. */
     var whatsNew = false
 
     func checkWhatsNew() {
-        let seen = UserDefaults.standard.string(forKey: Self.whatsNewKey)
+        _ = Self.previousVersion
+        let seen = whatsNewSeen
         guard welcomed, seen != appVersion else { return }
-        if WhatsNew.items(for: appVersion).isEmpty {
+        if WhatsNew.pages(since: seen).isEmpty {
             UserDefaults.standard.set(appVersion, forKey: Self.whatsNewKey)
         } else {
             whatsNew = true
@@ -287,20 +307,20 @@ final class AppActions {
             songs.map { $0.id },
             starred,
             { await self.graph.library.setStarred(songs, starred) },
-            success: starred ? "Added \(songs.count) to favourites" : "Removed \(songs.count) from favourites"
+            success: starred ? String(localized: "Added \(songs.count) to favourites") : String(localized: "Removed \(songs.count) from favourites")
         )
     }
 
     func setAlbumFavourite(_ album: Album, _ starred: Bool) {
-        star([album.id], starred, { await self.graph.library.setAlbumStarred(album, starred) }, success: starred ? "Added “\(album.name)” to favourites" : nil)
+        star([album.id], starred, { await self.graph.library.setAlbumStarred(album, starred) }, success: starred ? String(localized: "Added “\(album.name)” to favourites") : nil)
     }
 
     func setArtistFavourite(_ artist: Artist, _ starred: Bool) {
-        star([artist.id], starred, { await self.graph.library.setArtistStarred(artist, starred) }, success: starred ? "Added “\(artist.name)” to favourites" : nil)
+        star([artist.id], starred, { await self.graph.library.setArtistStarred(artist, starred) }, success: starred ? String(localized: "Added “\(artist.name)” to favourites") : nil)
     }
 
     func setRating(_ song: Song, _ rating: Int) {
-        Task { report(await graph.library.setRating(song, rating), rating > 0 ? "Rated \(rating) ★" : "Rating cleared") }
+        Task { report(await graph.library.setRating(song, rating), rating > 0 ? String(localized: "Rated \(rating) ★") : "Rating cleared") }
     }
 
     func download(_ songs: [Song], _ label: String? = nil) {
@@ -310,7 +330,7 @@ final class AppActions {
     func removeDownloads(_ songs: [Song]) {
         Task {
             let removed = await graph.offline.remove(songs.map { $0.id })
-            messages.show(removed > 0 ? "Removed \(removed) download\(removed == 1 ? "" : "s")." : "Nothing to remove.")
+            messages.show(removed > 0 ? String(localized: "Removed \(Format.count(removed, "download")).") : "Nothing to remove.")
         }
     }
 

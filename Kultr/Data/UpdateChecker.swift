@@ -115,7 +115,7 @@ final class UpdateChecker {
         request.setValue("Kultr-iOS/\(appVersion)", forHTTPHeaderField: "User-Agent")
         let (data, response) = try await URLSession.shared.data(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw NetworkError(message: "GitHub answered with HTTP \(http.statusCode).")
+            throw NetworkError(message: String(localized: "GitHub answered with HTTP \(http.statusCode)."))
         }
         let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
         let version = Versions.fromTag(release.tag_name)

@@ -73,7 +73,7 @@ final class CrateLibrary {
             for song in songs where crate.contains(song: song.id) == wasIn { crate.toggle(song: song.id) }
         }
         save(crate)
-        graph.messages.show(wasIn ? "Taken out of “\(crate.name)”" : "Added to “\(crate.name)”")
+        graph.messages.show(wasIn ? String(localized: "Taken out of “\(crate.name)”") : String(localized: "Added to “\(crate.name)”"))
     }
 
     /** Every track in [crate]: its albums, its artists' tracks and its own tracks, or what fits its rules. */
@@ -122,7 +122,7 @@ final class CrateLibrary {
                 if let at = s.crates.firstIndex(where: { $0.id == crateId }) { s.crates[at] = fresh }
             }
         }
-        if let error = result.error { graph.messages.error("“\(crate.name)” could not be synced as a playlist: \(error)") }
+        if let error = result.error { graph.messages.error(String(localized: "“\(crate.name)” could not be synced as a playlist: \(error)")) }
         return result.error
     }
 

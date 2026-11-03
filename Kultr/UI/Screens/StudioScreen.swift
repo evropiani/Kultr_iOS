@@ -77,7 +77,7 @@ struct StudioScreen: View {
                 Toggle("Compact rows", isOn: studio(\.compactRows)).tint(c.accent)
                 Toggle("Clear glass", isOn: studio(\.clearGlass)).tint(c.accent)
                 Picker("Playhead", selection: studio(\.playhead)) {
-                    ForEach(PlayheadStyle.allCases, id: \.self) { Text($0.label).tag($0) }
+                    ForEach(PlayheadStyle.allCases, id: \.self) { Text($0.label.loc).tag($0) }
                 }
             }
 
@@ -86,7 +86,7 @@ struct StudioScreen: View {
                     let on = s.playerBlocks.contains(block)
                     HStack {
                         Image(systemName: "line.3.horizontal").foregroundStyle(c.ink4)
-                        Toggle(block.label, isOn: Binding(get: { on }, set: { show in
+                        Toggle(block.label.loc, isOn: Binding(get: { on }, set: { show in
                             graph.settings.update { settings in
                                 if show {
                                     if !settings.playerBlocks.contains(block) { settings.playerBlocks.append(block) }
@@ -138,7 +138,7 @@ struct StudioScreen: View {
                 HStack {
                     Text("Looks like").foregroundStyle(c.ink3)
                     Spacer()
-                    Text(s.factsTemplate.isEmpty ? "2019 · Electronic · FLAC" : renderTemplate(s.factsTemplate, Dictionary(uniqueKeysWithValues: TEMPLATE_FIELDS.map { ($0.name, $0.example) })))
+                    Text(s.factsTemplate.isEmpty ? "2019 · Electronic · FLAC".loc : renderTemplate(s.factsTemplate, Dictionary(uniqueKeysWithValues: TEMPLATE_FIELDS.map { ($0.name, $0.example) })))
                         .foregroundStyle(c.ink)
                         .lineLimit(1)
                 }
@@ -264,7 +264,7 @@ private struct PresetCard: View {
                 .frame(width: 104, height: 96)
                 .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(chosen ? c.accent : c.ink4, lineWidth: chosen ? 3 : 1))
                 HStack(spacing: 4) {
-                    Text(style.name).font(KFont.labelLarge).foregroundStyle(c.ink)
+                    Text(style.name.loc).font(KFont.labelLarge).foregroundStyle(c.ink)
                     if chosen { Image(systemName: "checkmark").font(.caption.bold()).foregroundStyle(c.accent) }
                 }
             }
@@ -297,7 +297,7 @@ private struct StudioPreview: View {
                         Text("Ama Okoro — Night Ferries").font(.subheadline).foregroundStyle(c.ink2)
                     }
                 case .facts:
-                    Text(s.factsTemplate.isEmpty ? "2019 · Electronic · FLAC" : renderTemplate(s.factsTemplate, values))
+                    Text(s.factsTemplate.isEmpty ? "2019 · Electronic · FLAC".loc : renderTemplate(s.factsTemplate, values))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(c.ink3)
                 case .progress:
@@ -356,7 +356,7 @@ struct StylePreviewSheet: View {
             Spacer(minLength: 0)
             WideButton(title: "Use this style", icon: "paintpalette.fill", prominent: true) {
                 graph.settings.replace(style.applied(to: graph.settings.current))
-                graph.messages.show("Now using “\(style.name)”", .success)
+                graph.messages.show(String(localized: "Now using “\(style.name)”"), .success)
                 onDone()
             }
             .padding(.horizontal, 16)

@@ -24,9 +24,9 @@ enum Format {
         guard let seconds, seconds > 0 else { return "—" }
         let hours = seconds / 3600
         let minutes = Int((Double(seconds % 3600) / 60).rounded())
-        if hours > 0 { return "\(hours) hr \(minutes) min" }
-        if minutes > 0 { return "\(minutes) min" }
-        return "\(seconds) sec"
+        if hours > 0 { return Words.t("%@ hr %@ min", String(hours), String(minutes)) }
+        if minutes > 0 { return Words.t("%@ min", String(minutes)) }
+        return Words.t("%@ sec", String(seconds))
     }
 
     static func bytes(_ bytes: Int64?) -> String {
@@ -48,7 +48,8 @@ enum Format {
     static func count(_ value: Int?, _ singular: String, _ plural: String? = nil) -> String {
         let n = value ?? 0
         let text = integerFormatter.string(from: NSNumber(value: n)) ?? String(n)
-        return "\(text) \(n == 1 ? singular : (plural ?? singular + "s"))"
+        // "%@ tracks" is looked up as a whole, so a language can put its own word around the number.
+        return Words.t("%@ " + (n == 1 ? singular : (plural ?? singular + "s")), text)
     }
 
     static func number(_ value: Int) -> String {
@@ -83,14 +84,14 @@ enum Format {
     }()
 
     static func relative(_ timestamp: Int64?, now: Int64 = Format.nowMs()) -> String {
-        guard let timestamp, timestamp > 0 else { return "never" }
+        guard let timestamp, timestamp > 0 else { return Words.t("never") }
         let minutes = Int64((Double(now - timestamp) / 60_000).rounded())
-        if minutes < 1 { return "just now" }
-        if minutes < 60 { return "\(minutes) min ago" }
+        if minutes < 1 { return Words.t("just now") }
+        if minutes < 60 { return Words.t("%@ min ago", String(minutes)) }
         let hours = Int64((Double(minutes) / 60).rounded())
-        if hours < 24 { return "\(hours) hr ago" }
+        if hours < 24 { return Words.t("%@ hr ago", String(hours)) }
         let days = Int64((Double(hours) / 24).rounded())
-        if days < 30 { return "\(days) day\(days == 1 ? "" : "s") ago" }
+        if days < 30 { return Words.t(days == 1 ? "%@ day ago" : "%@ days ago", String(days)) }
         return dateFormatter.string(from: Date(timeIntervalSince1970: Double(timestamp) / 1000))
     }
 
@@ -116,9 +117,9 @@ enum Format {
     }
 
     static func greeting(_ hour: Int) -> String {
-        if hour < 5 { return "Still up?" }
-        if hour < 12 { return "Good morning" }
-        if hour < 18 { return "Good afternoon" }
-        return "Good evening"
+        if hour < 5 { return Words.t("Still up?") }
+        if hour < 12 { return Words.t("Good morning") }
+        if hour < 18 { return Words.t("Good afternoon") }
+        return Words.t("Good evening")
     }
 }

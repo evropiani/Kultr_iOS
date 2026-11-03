@@ -249,7 +249,7 @@ struct AlbumScreen: View {
                     ForEach(discs, id: \.key) { entry in
                         let disc = entry.key
                         let discSongs = entry.value
-                        if discs.count > 1 { SectionHeader("Disc \(disc)") }
+                        if discs.count > 1 { SectionHeader(String(localized: "Disc \(disc)")) }
                         SongRows(songs: discSongs, selection: selection, numbered: true, showArtwork: false, keyPrefix: "disc\(disc)") { index in
                             let target = songs.firstIndex(of: discSongs[index]) ?? 0
                             graph.actions.play(songs, target)
@@ -438,8 +438,8 @@ struct PlaylistScreen: View {
                         VStack(spacing: 3) {
                             Text(
                                 [
-                                    d.playlist.isPublic == true ? "Public" : nil,
-                                    d.playlist.owner.map { "by \($0)" },
+                                    d.playlist.isPublic == true ? "Public".loc : nil,
+                                    d.playlist.owner.map { String(localized: "by \($0)") },
                                     Format.count(songs.count, "track"),
                                     Format.duration(Int64(songs.reduce(0) { $0 + ($1.duration ?? 0) })),
                                 ].compactMap { $0 }.joined(separator: " · ")

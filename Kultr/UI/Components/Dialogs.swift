@@ -9,7 +9,7 @@ struct SheetScaffold<Content: View, Buttons: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(title)
+            Text(title.loc)
                 .font(KFont.headlineSmall.weight(.semibold))
                 .foregroundStyle(theme.colors.ink)
                 .lineLimit(2)
@@ -42,7 +42,7 @@ struct TextButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(text)
+            Text(text.loc)
                 .font(KFont.labelLarge)
                 .foregroundStyle((color ?? theme.colors.accent).opacity(enabled ? 1 : 0.4))
                 .padding(.vertical, 8)
@@ -62,12 +62,12 @@ struct AddToPlaylistSheet: View {
     @State private var busy = false
 
     private var label: String {
-        songs.count == 1 ? "“\(songs[0].title)”" : "\(songs.count) tracks"
+        songs.count == 1 ? "“\(songs[0].title)”" : String(localized: "\(songs.count) tracks")
     }
 
     var body: some View {
         let library = AppGraph.shared.library
-        SheetScaffold(title: "Add \(label) to…") {
+        SheetScaffold(title: String(localized: "Add \(label) to…")) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     TextField("New playlist", text: $name)
@@ -122,12 +122,12 @@ struct AddToPlaylistSheet: View {
     private func create() {
         busy = true
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        Task { finish(await AppGraph.shared.library.createPlaylist(trimmed, songs), "Created “\(trimmed)”") }
+        Task { finish(await AppGraph.shared.library.createPlaylist(trimmed, songs), String(localized: "Created “\(trimmed)”")) }
     }
 
     private func add(to playlist: Playlist) {
         busy = true
-        Task { finish(await AppGraph.shared.library.addToPlaylist(playlist.id, songs), "Added \(label) to “\(playlist.name)”") }
+        Task { finish(await AppGraph.shared.library.addToPlaylist(playlist.id, songs), String(localized: "Added \(label) to “\(playlist.name)”")) }
     }
 }
 
@@ -138,7 +138,7 @@ struct RatingSheet: View {
     @State private var rating = 0
 
     var body: some View {
-        SheetScaffold(title: "Rate “\(song.title)”") {
+        SheetScaffold(title: String(localized: "Rate “\(song.title)”")) {
             HStack(spacing: 4) {
                 Spacer()
                 ForEach(1...5, id: \.self) { star in
@@ -187,9 +187,9 @@ struct SleepTimerSheet: View {
                     .padding(.bottom, 8)
                 }
                 ForEach([5, 15, 30, 45, 60, 90], id: \.self) { minutes in
-                    option("\(minutes) minutes") {
+                    option(String(localized: "\(minutes) minutes")) {
                         player.setSleepTimer(minutes: minutes)
-                        messages.show("Sleep timer: \(minutes) minutes.")
+                        messages.show(String(localized: "Sleep timer: \(minutes) minutes."))
                     }
                 }
                 option("At the end of this track") {
@@ -229,7 +229,7 @@ struct SleepTimerSheet: View {
             action()
             onDismiss()
         } label: {
-            Text(text)
+            Text(text.loc)
                 .font(KFont.bodyLarge)
                 .foregroundStyle(theme.colors.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)

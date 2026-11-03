@@ -61,7 +61,7 @@ struct GlassIconButton: View {
         }
         .buttonStyle(PressScaleStyle())
         .kultrGlass(Circle(), tint: prominent ? c.accent : nil, interactive: true)
-        .accessibilityLabel(label)
+        .accessibilityLabel(label.loc)
     }
 }
 
@@ -81,7 +81,7 @@ struct WideButton: View {
             Haptics.tap()
             action()
         } label: {
-            Label(title, systemImage: icon)
+            Label(title.loc, systemImage: icon)
                 .font(.headline)
                 .foregroundStyle(prominent ? c.onAccent : c.accent)
                 .frame(maxWidth: .infinity)

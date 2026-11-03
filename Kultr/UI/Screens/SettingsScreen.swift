@@ -58,7 +58,7 @@ struct SettingsScreen: View {
                                 .frame(width: 54, height: 54)
                                 .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(active.label).font(.system(size: 19, weight: .semibold))
+                                Text(active.label.loc).font(.system(size: 19, weight: .semibold))
                                 Text(active.isLocal ? "Folders on this iPhone, no server" : "\(active.username) · \(hostLabel(active.serverUrl))")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
@@ -90,10 +90,28 @@ struct SettingsScreen: View {
                 link("Backup and reset", "externaldrive.fill") { BackupSettings() }
             }
             Section {
+                // iOS keeps each app's language in its own Settings page; this opens it.
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                } label: {
+                    HStack {
+                        SettingsIcon(title: "Language", icon: "globe")
+                        Spacer()
+                        Text(languageName).foregroundStyle(.secondary)
+                        Image(systemName: "arrow.up.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                    }
+                }
+                .foregroundStyle(Color.primary)
                 link("About", "info.circle.fill") { AboutSection() }
             }
         }
         .settingsPage("Settings", inline: false)
+    }
+
+    /** The language Kultr is showing, in that language: "Deutsch", "English". */
+    private var languageName: String {
+        let code = Bundle.main.preferredLocalizations.first ?? "en"
+        return Locale(identifier: code).localizedString(forLanguageCode: code)?.capitalized ?? code
     }
 
     private func link<Destination: View>(_ title: String, _ icon: String, @ViewBuilder destination: @escaping () -> Destination) -> some View {
@@ -111,7 +129,7 @@ private struct SettingsIcon: View {
 
     var body: some View {
         Label {
-            Text(title)
+            Text(title.loc)
         } icon: {
             Image(systemName: icon)
                 .foregroundStyle(theme.colors.accent)
@@ -124,7 +142,7 @@ private extension View {
     /** A settings list over Kultr's background, tinted with the accent. */
     func settingsPage(_ title: String, inline: Bool = true) -> some View {
         self
-            .navigationTitle(title)
+            .navigationTitle(title.loc)
             .navigationBarTitleDisplayMode(inline ? .inline : .automatic)
             .scrollContentBackground(.hidden)
             .kultrScreen()
@@ -148,9 +166,9 @@ private struct SettingToggle: View {
     var body: some View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(label)
+                Text(label.loc)
                 if let hint {
-                    Text(hint)
+                    Text(hint.loc)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -177,7 +195,7 @@ private struct SettingSlider: View {
         let shown = local ?? value
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(label)
+                Text(label.loc)
                 Spacer()
                 Text(format(shown))
                     .font(.body.monospacedDigit().weight(.semibold))
@@ -198,7 +216,7 @@ private struct SettingSlider: View {
                 }
             )
             if let hint {
-                Text(hint).font(.footnote).foregroundStyle(.secondary)
+                Text(hint.loc).font(.footnote).foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 2)
@@ -258,7 +276,7 @@ private struct AppIconPicker: View {
                 try await UIApplication.shared.setAlternateIconName(icon.iconName)
                 current = icon.iconName
             } catch {
-                AppGraph.shared.messages.error("Could not change the icon: \(error.localizedDescription)")
+                AppGraph.shared.messages.error(String(localized: "Could not change the icon: \(error.localizedDescription)"))
             }
         }
     }
@@ -370,7 +388,7 @@ struct AppearanceSettings: View {
             }
             Section {
                 Picker("Playhead", selection: setting(\.playhead)) {
-                    ForEach(PlayheadStyle.allCases, id: \.self) { Text($0.label).tag($0) }
+                    ForEach(PlayheadStyle.allCases, id: \.self) { Text($0.label.loc).tag($0) }
                 }
                 SettingToggle(
                     "Count time down",
@@ -381,7 +399,7 @@ struct AppearanceSettings: View {
             } header: {
                 Text("Player")
             } footer: {
-                Text(s.playhead.note)
+                Text(s.playhead.note.loc)
             }
             Section {
                 SettingToggle(
@@ -399,6 +417,7 @@ struct AppearanceSettings: View {
 
 private struct HomeSettings: View {
     @Environment(\.kultr) private var theme
+    @State private var addingWidget = false
 
     var body: some View {
         let s = theme.settings
@@ -406,10 +425,56 @@ private struct HomeSettings: View {
         let off = availableHomeTiles(s.homeTiles)
         List {
             Section {
+                Toggle("Widgets on Home", isOn: setting(\.showHomeWidgets))
+                    .tint(theme.colors.accent)
+                if s.showHomeWidgets {
+                    ForEach(s.homeWidgets) { widget in
+                        HStack(spacing: 12) {
+                            Image(systemName: widget.kind.icon)
+                                .foregroundStyle(theme.colors.accent)
+                                .frame(width: 24)
+                            Text(homeWidgetTitle(widget))
+                                .lineLimit(1)
+                            Spacer(minLength: 8)
+                            Menu {
+                                Picker("Size", selection: Binding(
+                                    get: { widget.size },
+                                    set: { size in update { s in if let at = s.homeWidgets.firstIndex(where: { $0.id == widget.id }) { s.homeWidgets[at].size = size } } }
+                                )) {
+                                    ForEach(HomeWidget.Size.allCases, id: \.self) { Text($0.label.loc).tag($0) }
+                                }
+                            } label: {
+                                Text(widget.size.label.loc)
+                                    .foregroundStyle(theme.colors.accent)
+                            }
+                        }
+                    }
+                    .onMove { from, to in
+                        Haptics.select()
+                        update { $0.homeWidgets.move(fromOffsets: from, toOffset: to) }
+                    }
+                    .onDelete { offsets in
+                        update { $0.homeWidgets.remove(atOffsets: offsets) }
+                    }
+                    Button {
+                        addingWidget = true
+                    } label: {
+                        Label("Add a widget", systemImage: "plus.circle.fill")
+                    }
+                    if s.homeWidgets != DEFAULT_HOME_WIDGETS {
+                        Button("Back to the starting widgets") { update { $0.homeWidgets = DEFAULT_HOME_WIDGETS } }
+                    }
+                }
+            } header: {
+                Text("Widgets")
+            } footer: {
+                Text("Widgets sit at the top of Home: drag to move one, tap the red button to take it off, tap its size to change it. On Home itself, hold a widget for the same choices.")
+            }
+            Section {
                 ForEach(on) { tile in
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(tile.title)
-                        Text(tile.note).font(.footnote).foregroundStyle(.secondary)
+                        Text(tile.title.loc)
+                        Text(tile.note.loc).font(.footnote).foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 2)
                 }
@@ -441,8 +506,8 @@ private struct HomeSettings: View {
                                     .font(.system(size: 20))
                                     .foregroundStyle(.green)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(tile.title).foregroundStyle(Color.primary)
-                                    Text(tile.note).font(.footnote).foregroundStyle(.secondary)
+                                    Text(tile.title.loc).foregroundStyle(Color.primary)
+                                    Text(tile.note.loc).font(.footnote).foregroundStyle(.secondary)
                                 }
                             }
                         }
@@ -452,7 +517,17 @@ private struct HomeSettings: View {
         }
         .environment(\.editMode, .constant(.active))
         .animation(theme.spring, value: s.homeTiles)
+        .animation(theme.spring, value: s.homeWidgets)
         .settingsPage("Home page")
+        .sheet(isPresented: $addingWidget) {
+            AddWidgetSheet { widget in
+                update { $0.homeWidgets.append(widget) }
+                addingWidget = false
+            } onCancel: {
+                addingWidget = false
+            }
+            .environment(\.kultr, theme)
+        }
     }
 }
 
@@ -475,7 +550,7 @@ private struct PlaybackSettings: View {
                 }
                 .disabled(!s.crossfadeEnabled)
                 Picker("Fade shape", selection: setting(\.crossfadeCurve)) {
-                    ForEach(CrossfadeCurve.allCases, id: \.self) { Text($0.label).tag($0) }
+                    ForEach(CrossfadeCurve.allCases, id: \.self) { Text($0.label.loc).tag($0) }
                 }
                 .disabled(!s.crossfadeEnabled)
                 SettingToggle(
@@ -598,7 +673,7 @@ private struct AudioSettings: View {
         Form {
             Section("Volume") {
                 Picker("Volume levelling", selection: setting(\.replayGainMode)) {
-                    ForEach(ReplayGainMode.allCases, id: \.self) { Text($0.label).tag($0) }
+                    ForEach(ReplayGainMode.allCases, id: \.self) { Text($0.label.loc).tag($0) }
                 }
                 SettingSlider(label: "ReplayGain pre-amp", value: s.replayGainPreamp, range: -12...12, format: signed) { v in
                     update { $0.replayGainPreamp = v.rounded() }
@@ -643,8 +718,8 @@ private struct EqualiserSettings: View {
                     get: { s.eqPreset },
                     set: { name in AppGraph.shared.settings.replace(AppGraph.shared.settings.current.withEqPreset(name)) }
                 )) {
-                    ForEach(EQ_PRESET_LIST.map { $0.name }, id: \.self) { Text($0).tag($0) }
-                    if EQ_PRESETS[s.eqPreset] == nil { Text(s.eqPreset).tag(s.eqPreset) }
+                    ForEach(EQ_PRESET_LIST.map { $0.name }, id: \.self) { Text($0.loc).tag($0) }
+                    if EQ_PRESETS[s.eqPreset] == nil { Text(s.eqPreset.loc).tag(s.eqPreset) }
                 }
                 .disabled(!s.eqEnabled)
             }
@@ -796,10 +871,10 @@ private struct ServerSettings: View {
                             .foregroundStyle(isActive ? c.accent : .secondary)
                             .frame(width: 26)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(profile.label)
+                            Text(profile.label.loc)
                                 .font(.body.weight(isActive ? .semibold : .regular))
                                 .lineLimit(1)
-                            Text(profile.isLocal ? "Folders on this iPhone, no server" : [profile.username.isEmpty ? "not signed in" : profile.username, profile.serverUrl].joined(separator: " · "))
+                            Text(profile.isLocal ? "Folders on this iPhone, no server".loc : [profile.username.isEmpty ? "not signed in".loc : profile.username, profile.serverUrl].joined(separator: " · "))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(2)
@@ -1045,7 +1120,7 @@ private struct BackupSettings: View {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try Data(text.utf8).write(to: file, options: .atomic)
         } catch {
-            graph.messages.error("Could not write the file: \(error.localizedDescription)")
+            graph.messages.error(String(localized: "Could not write the file: \(error.localizedDescription)"))
             return
         }
         FilePicker.export(file) { saved in
@@ -1062,15 +1137,18 @@ private struct BackupSettings: View {
             let result = try SettingsFile.importFile(text, current: graph.settings.current)
             graph.settings.replace(result.settings)
             let added = graph.auth.importServers(result.servers)
-            var message = "Applied \(result.applied.count) settings"
-            if added > 0 { message += " and added \(added) server\(added == 1 ? "" : "s") (sign in to them in Servers)" }
-            message += "."
+            let applied = result.applied.count
+            var message = switch added {
+            case 0: String(localized: "Applied \(applied) settings.")
+            case 1: String(localized: "Applied \(applied) settings and added a server: sign in to it in Servers.")
+            default: String(localized: "Applied \(applied) settings and added \(added) servers: sign in to them in Servers.")
+            }
             if !result.skipped.isEmpty {
-                message += "\n\nSkipped:\n" + result.skipped.map { "• \($0.key) — \($0.reason)" }.joined(separator: "\n")
+                message += "\n\n" + String(localized: "Skipped:") + "\n" + result.skipped.map { "• \($0.key) — \($0.reason.loc)" }.joined(separator: "\n")
             }
             report = message
         } catch {
-            graph.messages.error((error as? LocalizedError)?.errorDescription ?? "That file could not be read.")
+            graph.messages.error((error as? LocalizedError)?.errorDescription ?? String(localized: "That file could not be read."))
         }
     }
 }
@@ -1091,7 +1169,7 @@ private struct PlaybackLogPage: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     // The latest lines only; sharing sends all of it.
-                    Text(text.isEmpty ? (loaded ? "Nothing yet. Play some music." : "") : latest)
+                    Text(text.isEmpty ? (loaded ? "Nothing yet. Play some music.".loc : "") : latest)
                         .font(.caption2.monospaced())
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1156,7 +1234,7 @@ private struct AboutSection: View {
                         switch await updates.checkNow() {
                         case .available(let release): AppGraph.shared.ui.update = release
                         case .upToDate: AppGraph.shared.messages.success("You have the latest version.")
-                        case .failed(let message): AppGraph.shared.messages.error("Could not check for updates. \(message)")
+                        case .failed(let message): AppGraph.shared.messages.error(String(localized: "Could not check for updates. \(message)"))
                         default: break
                         }
                     }
@@ -1165,7 +1243,7 @@ private struct AboutSection: View {
                         Image(systemName: "arrow.down.app").frame(width: 26).foregroundStyle(.tint)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Check for updates").foregroundStyle(Color.primary)
-                            Text(updates.available.map { "Kultr \($0.version) is available" } ?? "Kultr looks by itself twice a day, too")
+                            Text(updates.available.map { String(localized: "Kultr \($0.version) is available") } ?? String(localized: "Kultr looks by itself twice a day, too"))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -1223,8 +1301,8 @@ private struct AboutSection: View {
             HStack(spacing: 12) {
                 Image(systemName: icon).frame(width: 26).foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).foregroundStyle(Color.primary)
-                    Text(detail).font(.footnote).foregroundStyle(.secondary)
+                    Text(title.loc).foregroundStyle(Color.primary)
+                    Text(detail.loc).font(.footnote).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Image(systemName: "arrow.up.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)

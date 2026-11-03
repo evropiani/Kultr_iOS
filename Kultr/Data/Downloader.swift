@@ -70,7 +70,7 @@ final class Downloader: NSObject, URLSessionDownloadDelegate, @unchecked Sendabl
                 throw NetworkError(message: "HTTP \(http.statusCode)")
             }
             if let type = http?.value(forHTTPHeaderField: "Content-Type"), type.contains("json") || type.contains("xml") {
-                throw NetworkError(message: "The server refused the download.")
+                throw NetworkError(message: "The server refused the download.".loc)
             }
             let manager = FileManager.default
             if manager.fileExists(atPath: job.destination.path) { try manager.removeItem(at: job.destination) }
@@ -98,7 +98,7 @@ final class Downloader: NSObject, URLSessionDownloadDelegate, @unchecked Sendabl
         switch job.moved {
         case .success(let size): job.continuation.resume(returning: (size, task.response as? HTTPURLResponse))
         case .failure(let error): job.continuation.resume(throwing: error)
-        case nil: job.continuation.resume(throwing: NetworkError(message: "The download did not finish."))
+        case nil: job.continuation.resume(throwing: NetworkError(message: "The download did not finish.".loc))
         }
     }
 }

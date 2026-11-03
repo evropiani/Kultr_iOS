@@ -225,25 +225,25 @@ final class LibrarySync {
         }
 
         do {
-            emit(.connecting, "Contacting your server…", 0, 1, 0)
+            emit(.connecting, Words.t("Contacting your server…"), 0, 1, 0)
             let info = try await client.ping()
 
             // ------------------------------------------------------ artists --
-            emit(.artists, "Reading artists…", 0, 1, Self.wArtists)
+            emit(.artists, Words.t("Reading artists…"), 0, 1, Self.wArtists)
             let artists = try await client.getArtists()
             try await store.putArtists(artists)
-            emit(.artists, "\(Format.number(artists.count)) artists", 1, 1, Self.wArtists)
+            emit(.artists, Format.count(artists.count, "artist"), 1, 1, Self.wArtists)
             base += Self.wArtists
 
             // ------------------------------------------------------- albums --
-            emit(.albums, "Reading albums…", 0, 1, Self.wAlbums)
+            emit(.albums, Words.t("Reading albums…"), 0, 1, Self.wAlbums)
             var albums: [Album] = []
             var offset = 0
             while true {
                 try Task.checkCancellation()
                 let page = try await client.getAlbumList2(.alphabeticalByName, size: Self.albumPage, offset: offset)
                 albums += page
-                emit(.albums, "Reading albums… \(Format.number(albums.count))", albums.count, albums.count + Self.albumPage, Self.wAlbums)
+                emit(.albums, Words.t("Reading albums… %@", Format.number(albums.count)), albums.count, albums.count + Self.albumPage, Self.wAlbums)
                 if page.count < Self.albumPage { break }
                 offset += Self.albumPage
                 // A misbehaving server that always returns a full page must not spin forever.
@@ -266,7 +266,7 @@ final class LibrarySync {
             }.count
             let albumsUpdated = max(0, stale.count - albumsAdded - albumsPlayed)
 
-            emit(.songs, stale.isEmpty ? "Tracks already up to date" : "Reading tracks…", 0, max(1, stale.count), Self.wSongs)
+            emit(.songs, stale.isEmpty ? Words.t("Tracks already up to date") : Words.t("Reading tracks…"), 0, max(1, stale.count), Self.wSongs)
             let shared = SongBuffer()
             let client = self.client
             let store = self.store
@@ -278,7 +278,7 @@ final class LibrarySync {
                     onProgress(
                         SyncProgress(
                             phase: .songs,
-                            message: "Reading tracks… \(Format.number(seen)) from \(Format.number(done))/\(Format.number(total)) albums",
+                            message: Words.t("Reading tracks… %@ from %@/%@ albums", Format.number(seen), Format.number(done), Format.number(total)),
                             current: done,
                             total: max(1, total),
                             percent: min(1, songsBase + fraction * LibrarySync.wSongs)
@@ -318,7 +318,7 @@ final class LibrarySync {
             base += Self.wSongs
 
             // ---------------------------------------------------- playlists --
-            emit(.playlists, "Reading playlists…", 0, 1, Self.wPlaylists)
+            emit(.playlists, Words.t("Reading playlists…"), 0, 1, Self.wPlaylists)
             var playlists = try await client.getPlaylists()
             if includePlaylistContents && !playlists.isEmpty {
                 var detailed = playlists
@@ -329,9 +329,9 @@ final class LibrarySync {
                     } catch is CancellationError {
                         throw CancellationError()
                     } catch {
-                        errors.append("Playlist \(playlist.name): \(describeError(error))")
+                        errors.append(Words.t("Playlist %@: %@", playlist.name, describeError(error)))
                     }
-                    emit(.playlists, "Reading playlists… \(i + 1)/\(playlists.count)", i + 1, playlists.count, Self.wPlaylists)
+                    emit(.playlists, Words.t("Reading playlists… %@/%@", String(i + 1), String(playlists.count)), i + 1, playlists.count, Self.wPlaylists)
                 }
                 playlists = detailed
             }
@@ -339,12 +339,12 @@ final class LibrarySync {
             base += Self.wPlaylists
 
             // ------------------------------------------------------- genres --
-            emit(.genres, "Reading genres…", 0, 1, Self.wGenres)
+            emit(.genres, Words.t("Reading genres…"), 0, 1, Self.wGenres)
             try await store.replaceGenres(try await client.getGenres())
             base += Self.wGenres
 
             // ------------------------------------------------------ cleanup --
-            emit(.cleanup, "Tidying up…", 1, 1, 0)
+            emit(.cleanup, Words.t("Tidying up…"), 1, 1, 0)
             let albumIds = Set(albums.map { $0.id })
             let albumsRemoved = try await store.deleteAlbumsNotIn(albumIds)
             _ = try await store.deleteArtistsNotIn(Set(artists.map { $0.id }))
@@ -361,7 +361,7 @@ final class LibrarySync {
             state.serverType = info.type
             state.newestAlbumCreated = newest
             try await store.setSyncState(state)
-            onProgress(SyncProgress(phase: .done, message: "Library up to date", current: 1, total: 1, percent: 1))
+            onProgress(SyncProgress(phase: .done, message: Words.t("Library up to date"), current: 1, total: 1, percent: 1))
             return SyncSummary(
                 mode: mode,
                 startedAt: startedAt,
@@ -376,7 +376,7 @@ final class LibrarySync {
                 albumsPlayed: albumsPlayed
             )
         } catch is CancellationError {
-            onProgress(SyncProgress(phase: .cancelled, message: "Sync cancelled", current: 0, total: 1, percent: 0))
+            onProgress(SyncProgress(phase: .cancelled, message: Words.t("Sync cancelled"), current: 0, total: 1, percent: 0))
             throw CancellationError()
         } catch {
             onProgress(SyncProgress(phase: .error, message: describeError(error), current: 0, total: 1, percent: 0))
@@ -397,17 +397,17 @@ final class LibrarySync {
         let state = try await store.syncState()
         let newest = try await client.getAlbumList2(.newest, size: 1).first?.created
         if let newest, let known = state.newestAlbumCreated, newest > known {
-            return QuickCheck(changed: true, reason: "New albums were added to your server.")
+            return QuickCheck(changed: true, reason: Words.t("New albums were added to your server."))
         }
         if newest != nil && state.newestAlbumCreated == nil {
-            return QuickCheck(changed: true, reason: "The library on this phone has never been synced.")
+            return QuickCheck(changed: true, reason: Words.t("The library on this phone has never been synced."))
         }
         do {
             let scan = try await client.getScanStatus()
             if let count = scan.count, state.counts.songs > 0, count != Int64(state.counts.songs) {
                 return QuickCheck(
                     changed: true,
-                    reason: "Server reports \(Format.number(Int(count))) tracks, this phone has \(Format.number(state.counts.songs))."
+                    reason: Words.t("Server reports %@ tracks, this phone has %@.", Format.number(Int(count)), Format.number(state.counts.songs))
                 )
             }
         } catch is CancellationError {
@@ -415,6 +415,6 @@ final class LibrarySync {
         } catch {
             // getScanStatus needs admin rights on some setups; ignore.
         }
-        return QuickCheck(changed: false, reason: "Everything matches.")
+        return QuickCheck(changed: false, reason: Words.t("Everything matches."))
     }
 }

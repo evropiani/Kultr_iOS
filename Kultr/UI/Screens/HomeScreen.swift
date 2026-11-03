@@ -17,8 +17,8 @@ struct HomeScreen: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(
                         sync.running
-                            ? (sync.progress?.message ?? "Syncing…")
-                            : "\(Format.count(counts.songs, "track")) · \(Format.count(counts.albums, "album")) · checked \(Format.relative(syncState.lastCheck))"
+                            ? (sync.progress?.message ?? "Syncing…".loc)
+                            : String(localized: "\(Format.count(counts.songs, "track")) · \(Format.count(counts.albums, "album")) · checked \(Format.relative(syncState.lastCheck))")
                     )
                     .font(KFont.bodySmall)
                     .foregroundStyle(c.ink3)
@@ -43,7 +43,7 @@ struct HomeScreen: View {
                 .padding(.top, 2)
                 .padding(.bottom, 8)
 
-                if loaded && counts.albums > 0 {
+                if loaded && counts.albums > 0 && theme.settings.showHomeWidgets {
                     HomeWidgetsGrid()
                 }
 
@@ -201,7 +201,7 @@ private struct HomeShelf: View {
                 }
             } label: {
                 HStack(spacing: 4) {
-                    Text(tile.title)
+                    Text(tile.title.loc)
                         .font(.title3.bold())
                         .foregroundStyle(theme.colors.ink)
                         .lineLimit(1)
@@ -276,7 +276,7 @@ private struct LocalEmptyState: View {
             title: scanning ? "Reading your music…" : folders.isEmpty ? "Where is your music?" : "No music found yet",
             message: folders.isEmpty
                 ? "Choose the folders your music is in. Kultr reads them and builds a library of your albums, artists and covers."
-                : "Kultr looked through \(folders.map(\.name).joined(separator: ", ")) and found nothing it can play yet. Add another folder, or scan again after copying music in."
+                : String(localized: "Kultr looked through \(folders.map(\.name).joined(separator: ", ")) and found nothing it can play yet. Add another folder, or scan again after copying music in.")
         ) {
             if folders.isEmpty {
                 Pill("Choose a folder", icon: "folder.badge.plus", accent: true) { picking = true }

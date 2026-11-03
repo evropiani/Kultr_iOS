@@ -25,7 +25,7 @@ struct UpdateScreen: View {
                             .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Kultr \(release.version)").font(.system(size: 24, weight: .bold)).foregroundStyle(c.ink)
-                            Text("You have \(appVersion)\(published.map { " · released \($0)" } ?? "")")
+                            Text(published.map { String(localized: "You have \(appVersion) · released \($0)") } ?? String(localized: "You have \(appVersion)"))
                                 .font(.system(size: 14))
                                 .foregroundStyle(c.ink2)
                         }
@@ -35,7 +35,7 @@ struct UpdateScreen: View {
                     VStack(spacing: 10) {
                         if let ipa = release.ipaUrl {
                             ForEach(installers, id: \.name) { installer in
-                                WideButton(title: "Update with \(installer.name)", icon: "arrow.down.app.fill", prominent: true) {
+                                WideButton(title: String(localized: "Update with \(installer.name)"), icon: "arrow.down.app.fill", prominent: true) {
                                     if let link = installer.link(for: ipa) { openURL(link) }
                                 }
                             }

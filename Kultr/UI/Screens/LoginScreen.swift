@@ -127,7 +127,7 @@ struct LoginScreen: View {
     private func field(_ title: String, text: Binding<String>, icon: String? = nil, placeholder: String) -> some View {
         box(title) {
             if let icon { Image(systemName: icon).foregroundStyle(theme.colors.ink3) }
-            TextField("", text: text, prompt: Text(placeholder).foregroundStyle(theme.colors.ink4))
+            TextField("", text: text, prompt: Text(placeholder.loc).foregroundStyle(theme.colors.ink4))
         }
     }
 
@@ -157,7 +157,7 @@ struct LoginScreen: View {
     private func box<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
         let c = theme.colors
         return VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(KFont.labelMedium).foregroundStyle(c.ink2)
+            Text(title.loc).font(KFont.labelMedium).foregroundStyle(c.ink2)
             HStack(spacing: 10) { content() }
                 .foregroundStyle(c.ink)
                 .autocorrectionDisabled()

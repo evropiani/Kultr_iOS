@@ -65,10 +65,10 @@ struct PlannerScreen: View {
                     Menu {
                         Button("Your whole library") { source = nil }
                         ForEach(graph.stations.all) { station in
-                            Button(station.name) { source = station }
+                            Button(station.title) { source = station }
                         }
                     } label: {
-                        PillLabel(text: source?.name ?? "Your whole library", icon: "chevron.up.chevron.down")
+                        PillLabel(text: source?.title ?? "Your whole library", icon: "chevron.up.chevron.down")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -88,10 +88,10 @@ struct PlannerScreen: View {
                     HStack(spacing: 12) {
                         WideButton(title: "Play the set", icon: "play.fill", prominent: true) {
                             graph.actions.play(songs)
-                            graph.messages.show("Playing your set: \(Format.count(songs.count, "track"))")
+                            graph.messages.show(String(localized: "Playing your set: \(Format.count(songs.count, "track"))"))
                         }
                         WideButton(title: "Save", icon: "text.badge.plus", prominent: false) {
-                            name = "Set, \(Format.duration(Int64(length)))"
+                            name = String(localized: "Set, \(Format.duration(Int64(length)))")
                             saving = true
                         }
                     }
@@ -126,7 +126,7 @@ struct PlannerScreen: View {
                 let title = name.trimmingCharacters(in: .whitespaces)
                 let songs = plan.map(\.song)
                 Task {
-                    if let error = await graph.library.createPlaylist(title, songs) { graph.messages.error(error) } else { graph.messages.show("Saved “\(title)”", .success) }
+                    if let error = await graph.library.createPlaylist(title, songs) { graph.messages.error(error) } else { graph.messages.show(String(localized: "Saved “\(title)”"), .success) }
                 }
             }
             .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -263,7 +263,7 @@ private struct EnergyCanvas: View {
         let start = Int((curve.points.first ?? 0) * 10)
         let peak = Int((curve.points.max() ?? 0) * 10)
         let end = Int((curve.points.last ?? 0) * 10)
-        return "Starts at \(start), peaks at \(peak), ends at \(end), out of 10"
+        return String(localized: "Starts at \(start), peaks at \(peak), ends at \(end), out of 10")
     }
 }
 

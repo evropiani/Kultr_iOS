@@ -162,7 +162,7 @@ private final class LocalScanner: @unchecked Sendable {
     func run() async throws -> SyncSummary {
         let startedAt = Format.nowMs()
         let store = DatabaseLibraryStore(db)
-        onProgress(SyncProgress(phase: .connecting, message: "Looking through your folders…", current: 0, total: 1, percent: 0))
+        onProgress(SyncProgress(phase: .connecting, message: "Looking through your folders…".loc, current: 0, total: 1, percent: 0))
 
         // ------------------------------------------------------------ walk --
         var files: [Found] = []
@@ -171,10 +171,10 @@ private final class LocalScanner: @unchecked Sendable {
             try Task.checkCancellation()
             guard let root, walk(folder: folder, root: root, into: &files) else {
                 unreadable += 1
-                errors.append("Kultr can no longer open “\(folder.name)”. Choose it again in Settings → Music on this phone.")
+                errors.append(String(localized: "Kultr can no longer open “\(folder.name)”. Choose it again in Settings → Music on this iPhone."))
                 continue
             }
-            onProgress(SyncProgress(phase: .artists, message: "Found \(files.count) tracks…", current: 0, total: 1, percent: 0.05))
+            onProgress(SyncProgress(phase: .artists, message: String(localized: "Found \(files.count) tracks…"), current: 0, total: 1, percent: 0.05))
         }
 
         // ------------------------------------------------------------ tags --
@@ -216,7 +216,7 @@ private final class LocalScanner: @unchecked Sendable {
         let catalog = LocalCatalogBuilder.build(tracks.compactMap { $0 }, covers: folderCovers) { known[$0] }
 
         // Albums without a cover image in their folder use the picture in their first track, if any.
-        onProgress(SyncProgress(phase: .albums, message: "Finding covers…", current: 0, total: 1, percent: 0.88))
+        onProgress(SyncProgress(phase: .albums, message: "Finding covers…".loc, current: 0, total: 1, percent: 0.88))
         let urlByPath = Dictionary(files.map { ($0.track.path, $0.url) }, uniquingKeysWith: { a, _ in a })
         var embedded: [String: String] = [:]
         for album in catalog.albums where album.coverArt == nil {
@@ -248,7 +248,7 @@ private final class LocalScanner: @unchecked Sendable {
         }
 
         // ----------------------------------------------------------- store --
-        onProgress(SyncProgress(phase: .cleanup, message: "Saving your library…", current: 1, total: 1, percent: 0.95))
+        onProgress(SyncProgress(phase: .cleanup, message: "Saving your library…".loc, current: 1, total: 1, percent: 0.95))
         try await store.putArtists(artists)
         try await store.putAlbums(albums)
         try await store.replaceAlbumSongs(Dictionary(grouping: songs) { $0.albumId ?? "" })
@@ -272,10 +272,12 @@ private final class LocalScanner: @unchecked Sendable {
         state.serverVersion = nil
         state.newestAlbumCreated = albums.compactMap { $0.created }.max()
         try await store.setSyncState(state)
-        onProgress(SyncProgress(phase: .done, message: "Library up to date", current: 1, total: 1, percent: 1))
+        onProgress(SyncProgress(phase: .done, message: "Library up to date".loc, current: 1, total: 1, percent: 1))
 
         if waitingForICloud > 0 {
-            errors.append("\(Format.count(waitingForICloud, "file")) in iCloud \(waitingForICloud == 1 ? "is" : "are") still downloading to this iPhone. Scan again in a little while.")
+            errors.append(waitingForICloud == 1
+                ? "1 file in iCloud is still downloading to this iPhone. Scan again in a little while.".loc
+                : String(localized: "\(waitingForICloud) files in iCloud are still downloading to this iPhone. Scan again in a little while."))
         }
         let added = albums.filter { previousAlbums[$0.id] == nil }.count
         let readIds = Set(read.compactMap { $0 }.map { LocalCatalogBuilder.songId($0.path) })
@@ -392,7 +394,7 @@ private final class LocalScanner: @unchecked Sendable {
                 if done % 10 == 0 || done == total {
                     onProgress(SyncProgress(
                         phase: .songs,
-                        message: "Reading tags… \(done) of \(total)",
+                        message: String(localized: "Reading tags… \(done) of \(total)"),
                         current: done,
                         total: total,
                         percent: 0.1 + 0.75 * Double(done) / Double(max(1, total))

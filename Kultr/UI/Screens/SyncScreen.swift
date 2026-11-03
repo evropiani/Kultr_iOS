@@ -38,7 +38,7 @@ struct SyncScreen: View {
                                         .font(KFont.bodySmall)
                                         .foregroundStyle(c.success)
                                     if !s.errors.isEmpty {
-                                        Text(local ? s.errors.prefix(3).joined(separator: " ") : "\(s.errors.count) albums could not be read: \(s.errors.prefix(3).joined(separator: "; "))")
+                                        Text(local ? s.errors.prefix(3).joined(separator: " ") : String(localized: "\(s.errors.count) albums could not be read: \(s.errors.prefix(3).joined(separator: "; "))"))
                                             .font(KFont.bodySmall)
                                             .foregroundStyle(c.warning)
                                     }
@@ -76,7 +76,7 @@ struct SyncScreen: View {
                                 }
                                 SettingRow(
                                     "Check in the background",
-                                    hint: settings.autoSyncMinutes > 0 ? "When iOS lets Kultr run, about every \(settings.autoSyncMinutes) minutes." : "Off."
+                                    hint: settings.autoSyncMinutes > 0 ? String(localized: "When iOS lets Kultr run, about every \(settings.autoSyncMinutes) minutes.") : "Off."
                                 ) {
                                     KultrSwitch(isOn: settings.autoSyncMinutes > 0) { v in
                                         graph.settings.update { $0.autoSyncMinutes = v ? 60 : 0 }

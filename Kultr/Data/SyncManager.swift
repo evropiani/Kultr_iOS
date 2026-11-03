@@ -55,10 +55,10 @@ final class SyncManager {
      */
     @discardableResult
     func runNow(_ mode: SyncMode, quiet: Bool = false) async -> String? {
-        guard let db = graph.library.db else { return "Not signed in." }
+        guard let db = graph.library.db else { return "Not signed in.".loc }
         let local = graph.isLocal
         let client = graph.auth.client
-        if !local && client == nil { return "Not signed in." }
+        if !local && client == nil { return "Not signed in.".loc }
         if running { return nil }
         running = true
         error = nil
@@ -82,7 +82,7 @@ final class SyncManager {
                 )
             }
         } else {
-            return "Not signed in."
+            return "Not signed in.".loc
         }
         do {
             let summary = try await withTaskCancellationHandler {
@@ -95,11 +95,11 @@ final class SyncManager {
                 if summary.upToDate {
                     graph.messages.success("Everything is up to date.")
                 } else if summary.mode == .full && local {
-                    graph.messages.success("Found \(summary.counts.songs) tracks in \(summary.counts.albums) albums.")
+                    graph.messages.success(String(localized: "Found \(summary.counts.songs) tracks in \(summary.counts.albums) albums."))
                 } else if summary.mode == .full {
-                    graph.messages.success("Library synced: \(summary.counts.songs) tracks in \(summary.counts.albums) albums.")
+                    graph.messages.success(String(localized: "Library synced: \(summary.counts.songs) tracks in \(summary.counts.albums) albums."))
                 } else {
-                    graph.messages.success("Updated: \(summary.albumsAdded) new, \(summary.albumsUpdated) changed, \(summary.albumsRemoved) removed.")
+                    graph.messages.success(String(localized: "Updated: \(summary.albumsAdded) new, \(summary.albumsUpdated) changed, \(summary.albumsRemoved) removed."))
                 }
                 if local, let problem = summary.errors.first { graph.messages.error(problem) }
             }
@@ -112,7 +112,7 @@ final class SyncManager {
         } catch {
             let message = describeError(error)
             self.error = message
-            if !quiet { graph.messages.error("Sync failed: \(message)") }
+            if !quiet { graph.messages.error(String(localized: "Sync failed: \(message)")) }
             return message
         }
     }

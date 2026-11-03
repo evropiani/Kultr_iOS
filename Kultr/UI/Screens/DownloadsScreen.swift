@@ -103,14 +103,14 @@ private struct DownloadQueue: View {
                             Pill("Retry all", icon: "arrow.clockwise") {
                                 Task {
                                     let count = await offline.retryFailed()
-                                    graph.messages.show("Trying \(Format.count(count, "track")) again.")
+                                    graph.messages.show(String(localized: "Trying \(Format.count(count, "track")) again."))
                                 }
                             }
                             Pill("Clear") { Task { await offline.clearFailed() } }
                         }
                     }
                     ForEach(failed, id: \.songId) { row in
-                        QueuedRow(song: songs[row.songId], songId: row.songId, error: row.error ?? "Failed") {
+                        QueuedRow(song: songs[row.songId], songId: row.songId, error: row.error ?? "Failed".loc) {
                             Task { await offline.dequeue([row.songId]) }
                         }
                     }
@@ -143,9 +143,9 @@ private struct DownloadQueue: View {
                 Text("Downloading \(min(p.total, p.done + p.failed + 1)) of \(p.total)").font(KFont.titleMedium).foregroundStyle(c.ink)
                 ProgressBar(value: Double(p.done + p.failed) / Double(p.total))
                 Text(
-                    "\(p.done) done · \(Format.bytes(p.bytes))"
-                        + (p.failed > 0 ? " · \(p.failed) failed" : "")
-                        + (queued > 0 ? " · \(queued) to go" : "")
+                    String(localized: "\(p.done) done") + " · \(Format.bytes(p.bytes))"
+                        + (p.failed > 0 ? " · " + String(localized: "\(p.failed) failed") : "")
+                        + (queued > 0 ? " · " + String(localized: "\(queued) to go") : "")
                 )
                 .font(KFont.bodySmall)
                 .foregroundStyle(c.ink3)
@@ -199,10 +199,10 @@ struct DownloadAllPills: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 Pill("Download favourites", icon: "arrow.down.circle") {
-                    Task { await graph.offline.download(await graph.library.starredSongs(), label: "Your favourites") }
+                    Task { await graph.offline.download(await graph.library.starredSongs(), label: "Your favourites".loc) }
                 }
                 Pill("Download everything", icon: "arrow.down.circle") {
-                    Task { await graph.offline.download(await graph.library.allSongs(), label: "Your library") }
+                    Task { await graph.offline.download(await graph.library.allSongs(), label: "Your library".loc) }
                 }
                 if openDownloads { Pill("Open downloads") { graph.actions.openDownloads() } }
             }
@@ -221,7 +221,7 @@ private struct ActiveRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.song.title).font(KFont.bodyLarge.weight(.semibold)).foregroundStyle(c.ink).lineLimit(1)
                 ProgressBar(value: item.fraction)
-                Text(item.total > 0 ? "\(Format.bytes(item.bytes)) of \(Format.bytes(item.total))" : Format.bytes(item.bytes))
+                Text(item.total > 0 ? String(localized: "\(Format.bytes(item.bytes)) of \(Format.bytes(item.total))") : Format.bytes(item.bytes))
                     .font(KFont.labelSmall)
                     .foregroundStyle(c.ink3)
             }
@@ -341,7 +341,7 @@ struct OfflineContent: View {
             Button("Remove all", role: .destructive) {
                 Task {
                     let removed = await graph.offline.removeAll()
-                    graph.messages.show("Removed \(removed) downloads.")
+                    graph.messages.show(String(localized: "Removed \(removed) downloads."))
                 }
             }
         } message: {
@@ -422,10 +422,10 @@ struct DownloadIndicator: View {
         case .running(let p, _):
             let current = active.values.first?.song.title
             if let p, p.total > 0, let current { return "\(min(p.total, p.done + p.failed + 1))/\(p.total) · \(current)" }
-            if let p, p.total > 0 { return "Downloading \(p.done + p.failed)/\(p.total)" }
-            return "Downloading…"
+            if let p, p.total > 0 { return String(localized: "Downloading \(p.done + p.failed)/\(p.total)") }
+            return "Downloading…".loc
         case .waiting(let queued, let forWifi):
-            return forWifi ? "\(Format.count(queued, "download")) waiting for Wi-Fi" : "\(Format.count(queued, "download")) waiting for a connection"
+            return forWifi ? String(localized: "\(Format.count(queued, "download")) waiting for Wi-Fi") : String(localized: "\(Format.count(queued, "download")) waiting for a connection")
         case .idle:
             return ""
         }

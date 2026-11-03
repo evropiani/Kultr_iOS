@@ -143,30 +143,30 @@ struct Station: Codable, Hashable, Identifiable {
     var summary: String {
         var parts: [String] = []
         if let bpm, !bpm.isOpen { parts.append(Self.range(bpm, unit: " BPM") { String(Int($0.rounded())) }) }
-        if let energy, !energy.isOpen { parts.append("energy " + Self.range(energy) { String(Int(($0 * 10).rounded())) }) }
-        if let keys, !keys.isEmpty { parts.append(keys.count <= 3 ? keys.joined(separator: ", ") : "\(keys.count) keys") }
-        if let genres, !genres.isEmpty { parts.append(genres.count <= 2 ? genres.joined(separator: ", ") : "\(genres.count) genres") }
+        if let energy, !energy.isOpen { parts.append(Words.t("energy %@", Self.range(energy) { String(Int(($0 * 10).rounded())) })) }
+        if let keys, !keys.isEmpty { parts.append(keys.count <= 3 ? keys.joined(separator: ", ") : Words.t("%@ keys", String(keys.count))) }
+        if let genres, !genres.isEmpty { parts.append(genres.count <= 2 ? genres.joined(separator: ", ") : Words.t("%@ genres", String(genres.count))) }
         if let years, !years.isOpen { parts.append(Self.range(years) { String(Int($0)) }) }
-        if unplayed { parts.append("never played") }
-        if favourites { parts.append("favourites") }
-        if let minRating, minRating > 0 { parts.append("\(minRating)★ and up") }
-        if let tags, !tags.isEmpty { parts.append("tagged " + tags.joined(separator: ", ")) }
-        if let addedDays { parts.append(addedDays == 365 ? "added this year" : "added in the last \(addedDays) days") }
-        return parts.isEmpty ? "Your whole library" : parts.joined(separator: " · ")
+        if unplayed { parts.append(Words.t("never played")) }
+        if favourites { parts.append(Words.t("favourites")) }
+        if let minRating, minRating > 0 { parts.append(Words.t("%@★ and up", String(minRating))) }
+        if let tags, !tags.isEmpty { parts.append(Words.t("tagged %@", tags.joined(separator: ", "))) }
+        if let addedDays { parts.append(addedDays == 365 ? Words.t("added this year") : Words.t("added in the last %@ days", String(addedDays))) }
+        return parts.isEmpty ? Words.t("Your whole library") : parts.joined(separator: " · ")
     }
 
     private static func range(_ bounds: Bounds, unit: String = "", _ text: (Double) -> String) -> String {
         switch (bounds.min, bounds.max) {
         case let (low?, high?): return "\(text(low))–\(text(high))\(unit)"
-        case let (low?, nil): return "\(text(low))\(unit) and up"
-        case let (nil, high?): return "up to \(text(high))\(unit)"
-        default: return "any"
+        case let (low?, nil): return Words.t("%@ and up", "\(text(low))\(unit)")
+        case let (nil, high?): return Words.t("up to %@", "\(text(high))\(unit)")
+        default: return Words.t("any")
         }
     }
 
     /** A station per decade, made from the years in the library. */
     static func decade(_ start: Int) -> Station {
-        Station(id: "decade-\(start)", name: "\(start)s", icon: "calendar", years: Bounds(Double(start), Double(start + 9)))
+        Station(id: "decade-\(start)", name: Words.t("%@s", String(start)), icon: "calendar", years: Bounds(Double(start), Double(start + 9)))
     }
 }
 

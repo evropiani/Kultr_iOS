@@ -21,7 +21,8 @@ final class UiMessages {
     @ObservationIgnored private var hideTask: Task<Void, Never>?
 
     func show(_ text: String, _ kind: MessageKind = .info, long: Bool = false) {
-        let message = UiMessage(text: text, kind: kind, long: long)
+        // Kultr's own lines are translated here; one made with String(localized:) already is.
+        let message = UiMessage(text: text.loc, kind: kind, long: long)
         current = message
         hideTask?.cancel()
         hideTask = Task { [weak self] in

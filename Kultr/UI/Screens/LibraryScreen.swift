@@ -100,7 +100,7 @@ private struct SectionFilter: ViewModifier {
         if tab == .favourites || tab == .downloads {
             content
         } else {
-            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Filter \(tab.label.lowercased())")
+            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: ("Filter " + tab.rawValue).loc)
         }
     }
 }
@@ -138,7 +138,7 @@ struct PillLabel: View {
             if let icon {
                 Image(systemName: icon).font(.system(size: 15, weight: .semibold)).frame(width: 18, height: 18)
             }
-            Text(text).font(KFont.labelLarge).lineLimit(1)
+            Text(text.loc).font(KFont.labelLarge).lineLimit(1)
         }
         .foregroundStyle(theme.colors.accent)
         .padding(.horizontal, 16)
@@ -160,7 +160,7 @@ struct EmptyLibrary: View {
         case .albums: return ("No albums yet", fill)
         case .artists: return ("No artists yet", fill)
         case .songs: return ("No tracks yet", fill)
-        case .genres: return ("No genres yet", "Genres come from the tags in your music. " + fill)
+        case .genres: return ("No genres yet", "Genres come from the tags in your music.".loc + " " + fill.loc)
         default: return ("Nothing here yet", fill)
         }
     }
@@ -202,7 +202,7 @@ private struct AlbumsTab: View {
                                     HStack {
                                         Text(Format.count(shown.count, "album")).foregroundStyle(theme.colors.ink3)
                                         Spacer()
-                                        SortMenu(current: sort, options: AlbumSort.allCases, label: { $0.rawValue }) { sort = $0 }
+                                        SortMenu(current: sort, options: AlbumSort.allCases, label: { $0.rawValue.loc }) { sort = $0 }
                                     }
                                     .padding(.vertical, 4)
                                 }
@@ -301,7 +301,7 @@ private struct SongsTab: View {
                                 HStack(spacing: 8) {
                                     Pill("Play", icon: "play.fill", accent: true) { graph.actions.play(Array(shown.prefix(1000))) }
                                     Pill("Shuffle", icon: "shuffle") { graph.actions.shuffle(Array(shown.shuffled().prefix(1000))) }
-                                    SortMenu(current: sort, options: SongSort.allCases, label: { $0.rawValue }) { sort = $0 }
+                                    SortMenu(current: sort, options: SongSort.allCases, label: { $0.rawValue.loc }) { sort = $0 }
                                     Text(Format.count(shown.count, "track")).font(KFont.bodySmall).foregroundStyle(theme.colors.ink3)
                                 }
                                 .padding(.horizontal, 16)
@@ -462,7 +462,7 @@ private struct GenresTab: View {
                                             .foregroundStyle(c.ink3)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    IconButton(icon: "shuffle", tint: c.ink2, label: "Shuffle \(genre.value)") {
+                                    IconButton(icon: "shuffle", tint: c.ink2, label: String(localized: "Shuffle \(genre.value)")) {
                                         Task { graph.actions.shuffle(await graph.library.songsOfGenre(genre.value)) }
                                     }
                                 }
@@ -501,7 +501,7 @@ private struct FavouritesTab: View {
                 EmptyState(
                     icon: "heart",
                     title: "No favourites yet",
-                    message: "Tap the heart on a track, an album or an artist, or double-tap the cover in the player. What you heart shows up here, and on your server."
+                    message: "Tap the heart on a track, an album or an artist. What you heart shows up here, and on your server."
                 )
                 .frame(maxHeight: .infinity)
             } else if !loaded {

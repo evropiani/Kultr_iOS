@@ -581,7 +581,7 @@ struct RadioStation: Codable, Hashable, Identifiable {
 
     /** Radio stations are played through the same queue as library tracks. */
     func asSong() -> Song {
-        Song(id: "radio:\(id)", title: name, album: homePageUrl, artist: "Internet radio", kultrStreamUrl: streamUrl)
+        Song(id: "radio:\(id)", title: name, album: homePageUrl, artist: Words.t("Internet radio"), kultrStreamUrl: streamUrl)
     }
 }
 

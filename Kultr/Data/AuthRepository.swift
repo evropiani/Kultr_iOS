@@ -134,7 +134,7 @@ final class AuthRepository {
         saveActive(profile.id)
         if previous != profile.id { notify() }
         guard client != nil else {
-            connection = .offline("Sign in again: the saved password could not be read.")
+            connection = .offline("Sign in again: the saved password could not be read.".loc)
             return
         }
         if ping { refreshConnection() }
@@ -166,10 +166,10 @@ final class AuthRepository {
     /** Check the credentials against the server and, if they work, sign in. Returns an error message on failure. */
     func login(_ input: LoginInput) async -> String? {
         let url = normalizeServerUrl(input.serverUrl)
-        if url.isEmpty { return "Enter your server’s address." }
-        if !isValidServerUrl(url) { return "“\(input.serverUrl)” is not a valid address." }
+        if url.isEmpty { return "Enter your server’s address.".loc }
+        if !isValidServerUrl(url) { return String(localized: "“\(input.serverUrl)” is not a valid address.") }
         let username = input.username.trimmingCharacters(in: .whitespaces)
-        if username.isEmpty { return "Enter your username." }
+        if username.isEmpty { return "Enter your username.".loc }
         let id = profileId(url, username)
         let client = SubsonicClient(
             credentials: Credentials(serverUrl: url, username: username, password: input.password, authMode: input.authMode),

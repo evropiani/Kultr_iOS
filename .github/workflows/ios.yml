@@ -50,6 +50,14 @@ jobs:
             | tee build.log | grep -E "error:|warning: unre|BUILD (SUCCEEDED|FAILED)" || true
           grep -q "BUILD SUCCEEDED" build.log
 
+      - name: Lines without German
+        if: github.ref != 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          python3 .github/scripts/strings.py build
+          git diff --quiet -- Shared/Localizable.xcstrings || echo "::warning::Shared/Localizable.xcstrings is out of date: run .github/scripts/strings.py build"
+          python3 .github/scripts/strings.py check build
+
       - name: Screenshots in the simulator
         if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/KultrPre'
         continue-on-error: true

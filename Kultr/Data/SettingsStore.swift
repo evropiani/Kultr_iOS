@@ -54,6 +54,10 @@ final class SettingsStore {
         let key = "look.cream"
         guard !UserDefaults.standard.bool(forKey: key) else { return }
         UserDefaults.standard.set(true, forKey: key)
+        // Settings from before 1.4.0: What's new has 1.4.0 to tell this person about, too.
+        if UserDefaults.standard.data(forKey: Self.key) != nil {
+            UserDefaults.standard.set(true, forKey: "ui.cameFromBeforeCream")
+        }
         let fresh = Settings()
         update { s in
             if s.accent.lowercased() == "#7c8cff" { s.accent = fresh.accent }

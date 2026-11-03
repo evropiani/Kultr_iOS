@@ -18,6 +18,9 @@ struct SearchScreen: View {
         let useServer = !local && (serverSearch || counts.songs == 0)
         // The field itself lives in the tab bar (see Chrome), where it expands out of the search button.
         let trimmed = graph.ui.searchQuery.trimmingCharacters(in: .whitespaces)
+        // A command searches for what it names ("shuffle love" → "love"), or for nothing.
+        let command = CommandRunner.parse(trimmed)
+        let lookFor = command.map(Self.subject) ?? trimmed
         VStack(alignment: .leading, spacing: 0) {
             if !local {
                 HStack {
@@ -51,8 +54,10 @@ struct SearchScreen: View {
                         SkeletonRows(count: 8)
                     } else if let error {
                         EmptyState(icon: "icloud.slash", title: "Search failed", message: error)
+                    } else if results.isEmpty && command != nil {
+                        EmptyView()
                     } else if results.isEmpty {
-                        EmptyState(icon: "magnifyingglass", title: "Nothing matches “\(trimmed)”", message: "Check the spelling, or try fewer words.")
+                        EmptyState(icon: "magnifyingglass", title: String(localized: "Nothing matches “\(trimmed)”"), message: "Check the spelling, or try fewer words.")
                     } else {
                         if !results.artists.isEmpty {
                             SectionHeader("Artists")
@@ -82,7 +87,8 @@ struct SearchScreen: View {
             }
         }
         .task(id: graph.library.version) { counts = await graph.library.counts() }
-        .task(id: "\(trimmed)|\(useServer)") {
+        .task(id: "\(lookFor)|\(useServer)") {
+            let trimmed = lookFor
             guard trimmed.count >= 2 else {
                 results = SearchResults()
                 error = nil
@@ -108,6 +114,14 @@ struct SearchScreen: View {
                 results = SearchResults()
             }
             loading = false
+        }
+    }
+
+    /** What a command names, to show search results for it under its row. */
+    private static func subject(_ command: KultrCommand) -> String {
+        switch command {
+        case .play(let what), .shuffle(let what): return what
+        default: return ""
         }
     }
 

@@ -42,13 +42,13 @@ struct StationsScreen: View {
 
                     Group {
                         if playing?.id == current.id {
-                            WideButton(title: "End \(current.name)", icon: "stop.fill", prominent: false) {
+                            WideButton(title: String(localized: "End \(current.title)"), icon: "stop.fill", prominent: false) {
                                 graph.player.endStation()
                                 graph.messages.show("Station ended")
                             }
                         } else {
                             WideButton(
-                                title: playing == nil ? "Play \(current.name)" : "Switch to \(current.name)",
+                                title: playing == nil ? String(localized: "Play \(current.title)") : String(localized: "Switch to \(current.title)"),
                                 icon: playing == nil ? "play.fill" : "arrow.triangle.merge",
                                 prominent: true,
                                 enabled: (graph.stations.counts[current.id] ?? 1) > 0
@@ -84,7 +84,7 @@ struct StationsScreen: View {
                 }
                 HStack(spacing: 8) {
                     Pill("New station", icon: "plus", accent: true) {
-                        editing = StationDraft(station: Station(name: "New station", icon: "dot.radiowaves.left.and.right", bpm: Bounds(100, 120)), isNew: true)
+                        editing = StationDraft(station: Station(name: "New station".loc, icon: "dot.radiowaves.left.and.right", bpm: Bounds(100, 120)), isNew: true)
                     }
                     Spacer()
                 }
@@ -168,8 +168,8 @@ struct StationsScreen: View {
     }
 
     private func countText(_ station: Station) -> String {
-        guard let count = AppGraph.shared.stations.counts[station.id] else { return "Counting tracks…" }
-        return count == 0 ? "No tracks fit yet" : "\(Format.count(count, "track")) fit"
+        guard let count = AppGraph.shared.stations.counts[station.id] else { return "Counting tracks…".loc }
+        return count == 0 ? "No tracks fit yet".loc : String(localized: "\(Format.count(count, "track")) fit")
     }
 
     private func select(_ station: Station, in stations: [Station]) {
@@ -181,7 +181,7 @@ struct StationsScreen: View {
     private func copy(of station: Station) -> Station {
         var copy = station
         copy.id = UUID().uuidString
-        copy.name = station.name + " (copy)"
+        copy.name = String(localized: "\(station.title) (copy)")
         return copy
     }
 }
@@ -274,7 +274,7 @@ private struct StationDial: View {
                         Image(systemName: stations[selected].icon)
                             .font(.system(size: size * 0.09, weight: .semibold))
                             .foregroundStyle(c.accent)
-                        Text(stations[selected].name)
+                        Text(stations[selected].title)
                             .font(.title2.bold())
                             .foregroundStyle(c.ink)
                             .lineLimit(2)
@@ -321,7 +321,7 @@ private struct StationDial: View {
         .onAppear { angle = target(for: selected) }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Station dial")
-        .accessibilityValue(stations.indices.contains(selected) ? stations[selected].name : "")
+        .accessibilityValue(stations.indices.contains(selected) ? stations[selected].title : "")
         .accessibilityAdjustableAction { direction in
             guard !stations.isEmpty else { return }
             switch direction {
@@ -369,7 +369,7 @@ private struct StationRow: View {
                 .frame(width: 44, height: 44)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(selected ? c.accentSoft : c.sand))
             VStack(alignment: .leading, spacing: 2) {
-                Text(station.name)
+                Text(station.title)
                     .font(KFont.bodyLarge.weight(selected ? .semibold : .regular))
                     .foregroundStyle(c.ink)
                     .lineLimit(1)
@@ -390,7 +390,7 @@ private struct StationRow: View {
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel("More for \(station.name)")
+            .accessibilityLabel("More for \(station.title)")
         }
         .padding(.leading, 16)
         .padding(.trailing, 4)
@@ -418,7 +418,7 @@ struct MixStationCard: View {
                     .font(.title2)
                     .foregroundStyle(c.accent)
                 Spacer(minLength: 0)
-                Text(station.name)
+                Text(station.title)
                     .font(.headline)
                     .foregroundStyle(c.ink)
                     .lineLimit(1)
@@ -436,13 +436,13 @@ struct MixStationCard: View {
         .contextMenu {
             Button { graph.actions.navigate(.stations) } label: { Label("Open Stations", systemImage: "dial.medium") }
         }
-        .accessibilityLabel("Play the station \(station.name)")
+        .accessibilityLabel("Play the station \(station.title)")
     }
 
     private func cardLine(_ count: Int?) -> String {
         guard let count else { return station.summary }
         if count > 0 { return Format.count(count, "track") }
-        return station.needsAnalysis || (station.bpm.map { !$0.isOpen } ?? false) ? "Needs InjeKt analysis" : "No tracks yet"
+        return station.needsAnalysis || (station.bpm.map { !$0.isOpen } ?? false) ? "Needs InjeKt analysis".loc : "No tracks yet".loc
     }
 }
 
@@ -597,14 +597,14 @@ struct StationEditor: View {
                         ForEach(1...5, id: \.self) { Text("\($0)★ and up").tag($0) }
                     }
                 } footer: {
-                    Text(count.map { $0 == 0 ? "No tracks fit these rules yet." : "\(Format.count($0, "track")) fit these rules." } ?? "Counting…")
+                    Text(count.map { $0 == 0 ? "No tracks fit these rules yet.".loc : String(localized: "\(Format.count($0, "track")) fit these rules.") } ?? "Counting…".loc)
                         .font(KFont.bodyMedium.weight(.semibold))
                         .foregroundStyle(c.accent)
                 }
             }
             .scrollContentBackground(.hidden)
             .background(c.background)
-            .navigationTitle(isNew ? "New \(noun)" : "Edit \(noun)")
+            .navigationTitle((isNew ? "New " + noun : "Edit " + noun).loc)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
@@ -649,7 +649,7 @@ private struct BoundsEditor: View {
 
     var body: some View {
         let open = bounds?.isOpen ?? true
-        Toggle("Any \(label.lowercased())", isOn: Binding(get: { open }, set: { bounds = $0 ? nil : initial }))
+        Toggle(("Any " + label.lowercased()).loc, isOn: Binding(get: { open }, set: { bounds = $0 ? nil : initial }))
             .tint(theme.colors.accent)
         if !open {
             let low = bounds?.min ?? range.lowerBound
@@ -677,7 +677,7 @@ private struct ChoicePicker: View {
         let shown = filter.isEmpty ? all : all.filter { $0.localizedCaseInsensitiveContains(filter) }
         List {
             if all.isEmpty {
-                Text(empty).foregroundStyle(theme.colors.ink3)
+                Text(empty.loc).foregroundStyle(theme.colors.ink3)
             }
             ForEach(shown, id: \.self) { genre in
                 let on = chosen.contains(genre)
@@ -693,8 +693,8 @@ private struct ChoicePicker: View {
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
-        .searchable(text: $filter, prompt: "Filter \(title.lowercased())")
-        .navigationTitle(title)
+        .searchable(text: $filter, prompt: ("Filter " + title.lowercased()).loc)
+        .navigationTitle(title.loc)
         .toolbar {
             if !chosen.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) { Button("Clear") { chosen = [] } }

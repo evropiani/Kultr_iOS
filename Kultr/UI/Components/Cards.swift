@@ -151,7 +151,7 @@ struct CollectionMenuItems: View {
         Task { @MainActor in
             let list = await songs().filter { !$0.isRadio }
             if list.isEmpty {
-                AppGraph.shared.messages.show("“\(name)” has no tracks here yet.")
+                AppGraph.shared.messages.show(String(localized: "“\(name)” has no tracks here yet."))
             } else {
                 body(list)
             }
