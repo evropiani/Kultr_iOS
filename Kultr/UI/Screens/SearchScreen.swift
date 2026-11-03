@@ -57,7 +57,7 @@ struct SearchScreen: View {
                     } else if results.isEmpty && command != nil {
                         EmptyView()
                     } else if results.isEmpty {
-                        EmptyState(icon: "magnifyingglass", title: "Nothing matches “\(trimmed)”", message: "Check the spelling, or try fewer words.")
+                        EmptyState(icon: "magnifyingglass", title: String(localized: "Nothing matches “\(trimmed)”"), message: "Check the spelling, or try fewer words.")
                     } else {
                         if !results.artists.isEmpty {
                             SectionHeader("Artists")

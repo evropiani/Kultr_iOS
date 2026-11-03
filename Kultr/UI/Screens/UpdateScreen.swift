@@ -35,7 +35,7 @@ struct UpdateScreen: View {
                     VStack(spacing: 10) {
                         if let ipa = release.ipaUrl {
                             ForEach(installers, id: \.name) { installer in
-                                WideButton(title: "Update with \(installer.name)", icon: "arrow.down.app.fill", prominent: true) {
+                                WideButton(title: String(localized: "Update with \(installer.name)"), icon: "arrow.down.app.fill", prominent: true) {
                                     if let link = installer.link(for: ipa) { openURL(link) }
                                 }
                             }

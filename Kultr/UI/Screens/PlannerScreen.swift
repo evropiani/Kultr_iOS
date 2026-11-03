@@ -65,7 +65,7 @@ struct PlannerScreen: View {
                     Menu {
                         Button("Your whole library") { source = nil }
                         ForEach(graph.stations.all) { station in
-                            Button(station.name) { source = station }
+                            Button(station.title) { source = station }
                         }
                     } label: {
                         PillLabel(text: source?.name ?? "Your whole library", icon: "chevron.up.chevron.down")

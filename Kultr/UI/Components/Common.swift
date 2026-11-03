@@ -62,7 +62,7 @@ struct Pill: View {
                     .font(.system(size: 14, weight: .semibold))
                     .frame(width: 18, height: 18)
             }
-            Text(text)
+            Text(text.loc)
                 .font(KFont.labelLarge)
                 .lineLimit(1)
             if let badge {
@@ -100,7 +100,7 @@ struct SectionHeader<Action: View>: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Text(title)
+            Text(title.loc)
                 .font(.title3.bold())
                 .foregroundStyle(theme.colors.ink)
                 .lineLimit(1)
@@ -136,7 +136,7 @@ struct Eyebrow: View {
     }
 
     var body: some View {
-        Text(text)
+        Text(text.loc)
             .font(.subheadline.weight(.semibold))
             .foregroundStyle(theme.colors.ink3)
             .lineLimit(1)
@@ -159,12 +159,12 @@ struct EmptyState<Action: View>: View {
                     .foregroundStyle(theme.colors.accent)
             }
             .frame(width: 64, height: 64)
-            Text(title)
+            Text(title.loc)
                 .font(KFont.titleLarge)
                 .foregroundStyle(theme.colors.ink)
                 .multilineTextAlignment(.center)
             if let message {
-                Text(message)
+                Text(message.loc)
                     .font(KFont.bodyMedium)
                     .foregroundStyle(theme.colors.ink2)
                     .multilineTextAlignment(.center)
@@ -310,7 +310,7 @@ struct NoMatches: View {
     var body: some View {
         EmptyState(
             icon: "line.3.horizontal.decrease.circle",
-            title: "No \(what) match “\(query)”",
+            title: String(localized: "No \(what) match “\(query)”"),
             message: "Check the spelling, or try part of a name."
         )
         .padding(.top, 24)
@@ -328,11 +328,11 @@ struct SettingRow<Control: View>: View {
     var body: some View {
         let row = HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(label)
+                Text(label.loc)
                     .font(KFont.bodyLarge)
                     .foregroundStyle(theme.colors.ink)
                 if let hint {
-                    Text(hint)
+                    Text(hint.loc)
                         .font(KFont.bodySmall)
                         .foregroundStyle(theme.colors.ink3)
                         .fixedSize(horizontal: false, vertical: true)

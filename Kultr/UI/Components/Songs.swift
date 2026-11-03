@@ -83,7 +83,7 @@ struct SongMenuItems: View {
         if !extra.isEmpty {
             Divider()
             ForEach(extra) { item in
-                Button(action: item.action) { Label(item.label, systemImage: item.icon) }
+                Button(action: item.action) { Label(item.label.loc, systemImage: item.icon) }
             }
         }
     }
@@ -341,7 +341,7 @@ struct SelectionBar: View {
                 .frame(width: 44, height: 44)
         }
         .buttonStyle(PressScaleStyle())
-        .accessibilityLabel(label)
+        .accessibilityLabel(label.loc)
     }
 }
 
@@ -363,6 +363,6 @@ struct IconButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(PressableStyle())
-        .accessibilityLabel(label)
+        .accessibilityLabel(label.loc)
     }
 }

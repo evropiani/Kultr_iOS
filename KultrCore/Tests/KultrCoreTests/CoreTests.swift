@@ -428,6 +428,29 @@ final class InjektTests: XCTestCase {
         XCTAssertNil(parseCommand("love"))
     }
 
+    func testCommandsInGerman() {
+        let stations = ["Night Drive", "Nachtfahrt"]
+        XCTAssertEqual(parseCommand("Spiele Nachtfahrt", stations: stations), .station("Nachtfahrt"))
+        XCTAssertEqual(parseCommand("spiel radiohead ab"), .play("radiohead"))
+        XCTAssertEqual(parseCommand("spiele etwas von Daft Punk"), .play("daft punk"))
+        XCTAssertEqual(parseCommand("Zufällig Daft Punk"), .shuffle("daft punk"))
+        XCTAssertEqual(parseCommand("alles zufällig"), .shuffleAll)
+        XCTAssertEqual(parseCommand("Schlaf in 30 Minuten"), .sleep(minutes: 30))
+        XCTAssertEqual(parseCommand("stopp in einer Stunde"), .sleep(minutes: 60))
+        XCTAssertEqual(parseCommand("schlaftimer 2 stunden"), .sleep(minutes: 120))
+        XCTAssertEqual(parseCommand("nach diesem Titel stoppen"), .sleepAfterTrack)
+        XCTAssertEqual(parseCommand("weiter"), .next)
+        XCTAssertEqual(parseCommand("zurück"), .previous)
+        XCTAssertEqual(parseCommand("jetzt mischen"), .mixNow)
+        XCTAssertEqual(parseCommand("Öffne Einstellungen"), .open(.settings))
+        XCTAssertEqual(parseCommand("zeig meine Kisten"), .open(.crates))
+        XCTAssertEqual(parseCommand("geh zum Monatsrückblick"), .open(.recap))
+        XCTAssertEqual(parseCommand("plane eine Stunde"), .plan(minutes: 60))
+        XCTAssertEqual(parseCommand("Set planen"), .plan(minutes: nil))
+        XCTAssertEqual(parseCommand("öffne Training", crates: ["Training"]), .crate("Training"))
+        XCTAssertEqual(parseCommand("pause"), .pause)
+    }
+
     func testStudioTemplatesStylesAndWidgets() {
         let values = ["year": "2019", "genre": "", "format": "FLAC", "bitrate": "1024"]
         XCTAssertEqual(renderTemplate("{year}{?genre: · {genre}} · {format}{?bitrate: · {bitrate} kbps}", values), "2019 · FLAC · 1024 kbps")

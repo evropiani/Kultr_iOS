@@ -72,7 +72,7 @@ struct HomeWidgetsGrid: View {
                     }
                     .buttonStyle(.plain)
                     .offset(x: -8, y: -8)
-                    .accessibilityLabel("Remove \(widget.kind.label)")
+                    .accessibilityLabel("Remove \(widget.kind.label.loc)")
                 }
             }
             .dropDestination(for: String.self) { ids, _ in
@@ -103,7 +103,7 @@ struct HomeWidgetsGrid: View {
                             Button {
                                 withAnimation(theme.ease) { resize(widget.id, size) }
                             } label: {
-                                if widget.size == size { Label(size.label, systemImage: "checkmark") } else { Text(size.label) }
+                                if widget.size == size { Label(size.label.loc, systemImage: "checkmark") } else { Text(size.label.loc) }
                             }
                         }
                     } label: {
@@ -182,7 +182,7 @@ private struct TileLabel: View {
     let text: String
 
     var body: some View {
-        Label(text, systemImage: icon)
+        Label(text.loc, systemImage: icon)
             .font(KFont.labelSmall.weight(.semibold))
             .foregroundStyle(theme.colors.accent)
             .lineLimit(1)
@@ -277,7 +277,7 @@ private struct ListeningTile: View {
         Button { graph.actions.navigate(.stats) } label: {
             VStack(alignment: .leading, spacing: 6) {
                 TileLabel(icon: "chart.bar.fill", text: "This week")
-                Text(week > 0 ? Format.duration(week) : "Nothing yet")
+                Text(week > 0 ? Format.duration(week) : "Nothing yet".loc)
                     .font(size == .small ? .title2.bold() : .title.bold())
                     .foregroundStyle(c.ink)
                     .minimumScaleFactor(0.7)
@@ -395,7 +395,7 @@ private struct StationTile: View {
                     .foregroundStyle(c.accent)
                 Spacer(minLength: 0)
                 Text(station?.name ?? "Station gone").font(.headline).foregroundStyle(c.ink).lineLimit(1)
-                Text(station.map { graph.stations.counts[$0.id].map { Format.count($0, "track") } ?? $0.summary } ?? "Tap to choose another")
+                Text(station.map { graph.stations.counts[$0.id].map { Format.count($0, "track") } ?? $0.summary } ?? "Tap to choose another".loc)
                     .font(.caption)
                     .foregroundStyle(c.ink3)
                     .lineLimit(2)
@@ -405,7 +405,7 @@ private struct StationTile: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(station.map { "Play the station \($0.name)" } ?? "Station gone")
+        .accessibilityLabel(station.map { String(localized: "Play the station \($0.title)") } ?? String(localized: "Station gone"))
     }
 }
 
@@ -440,8 +440,8 @@ private struct CrateTile: View {
                 VStack(alignment: .leading, spacing: 6) {
                     TileLabel(icon: crate?.icon ?? "shippingbox", text: "Crate")
                     Spacer(minLength: 0)
-                    Text(crate?.name ?? "Crate gone").font(.headline).foregroundStyle(c.ink).lineLimit(2)
-                    Text(crate.map { $0.byRules ? ($0.rules?.summary ?? "") : $0.contents } ?? "It was deleted")
+                    Text(crate?.name ?? "Crate gone".loc).font(.headline).foregroundStyle(c.ink).lineLimit(2)
+                    Text(crate.map { $0.byRules ? ($0.rules?.summary ?? "") : $0.contents } ?? "It was deleted".loc)
                         .font(.caption)
                         .foregroundStyle(c.ink3)
                         .lineLimit(2)
@@ -475,7 +475,7 @@ private struct ShortcutTile: View {
         let what = command.map(CommandRunner.describe) ?? (icon: "questionmark", text: "“\(words)”")
         Button {
             guard let command else {
-                AppGraph.shared.messages.show("Kultr doesn't know how to do “\(words)” any more.")
+                AppGraph.shared.messages.show(String(localized: "Kultr doesn't know how to do “\(words)” any more."))
                 return
             }
             Haptics.tap()
@@ -510,12 +510,16 @@ private let SHORTCUTS = [
 func homeWidgetTitle(_ widget: HomeWidget) -> String {
     let graph = AppGraph.shared
     switch widget.kind {
-    case .station: return "Station: " + (graph.stations.all.first { $0.id == widget.ref }?.name ?? "gone")
-    case .crate: return "Crate: " + (graph.crates.all.first { $0.id == widget.ref }?.name ?? "gone")
+    case .station:
+        let name = graph.stations.all.first { $0.id == widget.ref }?.title ?? "gone".loc
+        return String(localized: "Station: \(name)")
+    case .crate:
+        let name = graph.crates.all.first { $0.id == widget.ref }?.name ?? "gone".loc
+        return String(localized: "Crate: \(name)")
     case .shortcut:
         let words = widget.ref ?? ""
-        return CommandRunner.parse(words).map { CommandRunner.describe($0).text } ?? "Shortcut: “\(words)”"
-    default: return widget.kind.label
+        return CommandRunner.parse(words).map { CommandRunner.describe($0).text } ?? String(localized: "Shortcut: “\(words)”")
+    default: return widget.kind.label.loc
     }
 }
 
@@ -542,8 +546,8 @@ struct AddWidgetSheet: View {
                             HStack(spacing: 12) {
                                 Image(systemName: option.icon).foregroundStyle(c.accent).frame(width: 28)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(option.label).foregroundStyle(c.ink)
-                                    Text(option.note).font(KFont.bodySmall).foregroundStyle(c.ink3)
+                                    Text(option.label.loc).foregroundStyle(c.ink)
+                                    Text(option.note.loc).font(KFont.bodySmall).foregroundStyle(c.ink3)
                                 }
                                 Spacer()
                                 if kind == option { Image(systemName: "checkmark").foregroundStyle(c.accent) }
@@ -554,7 +558,7 @@ struct AddWidgetSheet: View {
                 }
                 Section("Size") {
                     Picker("Size", selection: $size) {
-                        ForEach(HomeWidget.Size.allCases, id: \.self) { Text($0.label).tag($0) }
+                        ForEach(HomeWidget.Size.allCases, id: \.self) { Text($0.label.loc).tag($0) }
                     }
                     .pickerStyle(.segmented)
                 }
@@ -562,7 +566,7 @@ struct AddWidgetSheet: View {
                 case .station:
                     Section("Which station") {
                         Picker("Station", selection: $ref) {
-                            ForEach(graph.stations.all) { Text($0.name).tag($0.id) }
+                            ForEach(graph.stations.all) { Text($0.title).tag($0.id) }
                         }
                         .pickerStyle(.inline)
                         .labelsHidden()
@@ -593,7 +597,7 @@ struct AddWidgetSheet: View {
                     } header: {
                         Text("Which shortcut")
                     } footer: {
-                        Text(CommandRunner.parse(ref).map { "Does: " + CommandRunner.describe($0).text } ?? "Kultr doesn't understand those words yet.")
+                        Text(CommandRunner.parse(ref).map { String(localized: "Does: \(CommandRunner.describe($0).text)") } ?? "Kultr doesn't understand those words yet.".loc)
                     }
                 default:
                     EmptyView()

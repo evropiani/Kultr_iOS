@@ -27,6 +27,8 @@ final class AppGraph {
     private(set) lazy var crates = CrateLibrary(graph: self)
 
     private init() {
+        // KultrCore's own lines (counts, durations, station summaries) in the iPhone's language.
+        Words.lookup = { $0.loc }
         _ = (library, scrobbles, sync, offline, analysis, player, actions, stations, crates)
 
         library.activate(auth.active?.id)

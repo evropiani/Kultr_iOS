@@ -174,7 +174,7 @@ final class AnalysisManager {
             }
             self.bulkProgress = nil
             self.bulkTask = nil
-            if done > 0 && !Task.isCancelled { self.graph.messages.success("InjeKt analysis finished (\(done) tracks).") }
+            if done > 0 && !Task.isCancelled { self.graph.messages.success(String(localized: "InjeKt analysis finished (\(done) tracks).")) }
         }
     }
 

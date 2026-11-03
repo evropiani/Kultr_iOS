@@ -558,11 +558,11 @@ final class PlayerController: EngineHost {
     }
 
     func playNext(_ songs: [Song]) {
-        add(songs, at: engine.index + 1, songs.count == 1 ? "“\(songs[0].title)” plays next" : "\(songs.count) tracks play next")
+        add(songs, at: engine.index + 1, songs.count == 1 ? String(localized: "“\(songs[0].title)” plays next") : String(localized: "\(songs.count) tracks play next"))
     }
 
     func enqueue(_ songs: [Song]) {
-        add(songs, at: engine.queue.count, songs.count == 1 ? "Added “\(songs[0].title)” to the queue" : "Added \(songs.count) tracks to the queue")
+        add(songs, at: engine.queue.count, songs.count == 1 ? String(localized: "Added “\(songs[0].title)” to the queue") : String(localized: "Added \(songs.count) tracks to the queue"))
     }
 
     /** Into the queue at [index]; into an empty queue, playing. */
@@ -715,7 +715,7 @@ final class PlayerController: EngineHost {
         self.station = station
         scheduleWidgetUpdate()
         if engine.repeatMode != .off { engine.setRepeat(.off) }
-        graph.messages.show("Station: \(station.name)")
+        graph.messages.show(String(localized: "Station: \(station.title)"))
         return true
     }
 
@@ -746,7 +746,7 @@ final class PlayerController: EngineHost {
         engine.addItems(at: engine.index + 1, engine.newItems(picks, karousel: true))
         mixNow()
         scheduleWidgetUpdate()
-        graph.messages.show("Station: \(station.name)")
+        graph.messages.show(String(localized: "Station: \(station.title)"))
     }
 
     /** End the station; the music plays on to the end of the queue as usual. */
@@ -774,8 +774,8 @@ final class PlayerController: EngineHost {
 
     private static func emptyStation(_ station: Station) -> String {
         station.needsAnalysis
-            ? "Nothing fits “\(station.name)” yet. It needs InjeKt's analysis: open Sync and tap Analyse missing."
-            : "Nothing in your library fits “\(station.name)”."
+            ? String(localized: "Nothing fits “\(station.title)” yet. It needs InjeKt's analysis: open Sync and tap Analyse missing.")
+            : String(localized: "Nothing in your library fits “\(station.title)”.")
     }
 
     // ------------------------------------------------------ sleep timer --

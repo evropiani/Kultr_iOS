@@ -106,14 +106,12 @@ struct Crate: Codable, Hashable, Identifiable {
     /** "3 albums · 12 tracks", for a crate filled by hand. */
     var contents: String {
         let parts = [
-            albums.isEmpty ? nil : count(albums.count, "album"),
-            artists.isEmpty ? nil : count(artists.count, "artist"),
-            songs.isEmpty ? nil : count(songs.count, "track"),
+            albums.isEmpty ? nil : Format.count(albums.count, "album"),
+            artists.isEmpty ? nil : Format.count(artists.count, "artist"),
+            songs.isEmpty ? nil : Format.count(songs.count, "track"),
         ].compactMap { $0 }
-        return parts.isEmpty ? "Empty" : parts.joined(separator: " · ")
+        return parts.isEmpty ? Words.t("Empty") : parts.joined(separator: " · ")
     }
-
-    private func count(_ n: Int, _ word: String) -> String { "\(n) \(word)\(n == 1 ? "" : "s")" }
 
     func contains(album id: String) -> Bool { albums.contains(id) }
     func contains(artist id: String) -> Bool { artists.contains(id) }

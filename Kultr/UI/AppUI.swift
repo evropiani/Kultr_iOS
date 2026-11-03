@@ -6,7 +6,7 @@ import SwiftUI
 enum LibraryTab: String, CaseIterable, Hashable {
     case playlists, crates, artists, albums, songs, genres, tags, favourites, downloads, radio
 
-    var label: String { rawValue.capitalized }
+    var label: String { rawValue.capitalized.loc }
 
     var icon: String {
         switch self {
@@ -41,14 +41,14 @@ extension LibraryTab {
 enum DownloadsPage: String, CaseIterable, Hashable {
     case now, offline
 
-    var label: String { self == .now ? "Downloading" : "On this phone" }
+    var label: String { (self == .now ? "Downloading" : "On this phone").loc }
 }
 
 /** The tabs. Search is last: iOS 26 shows it as its own round button beside the bar. */
 enum MainTab: String, CaseIterable, Hashable {
     case home, library, settings, search
 
-    var label: String { rawValue.capitalized }
+    var label: String { rawValue.capitalized.loc }
 
     var icon: String {
         switch self {
@@ -307,20 +307,20 @@ final class AppActions {
             songs.map { $0.id },
             starred,
             { await self.graph.library.setStarred(songs, starred) },
-            success: starred ? "Added \(songs.count) to favourites" : "Removed \(songs.count) from favourites"
+            success: starred ? String(localized: "Added \(songs.count) to favourites") : String(localized: "Removed \(songs.count) from favourites")
         )
     }
 
     func setAlbumFavourite(_ album: Album, _ starred: Bool) {
-        star([album.id], starred, { await self.graph.library.setAlbumStarred(album, starred) }, success: starred ? "Added “\(album.name)” to favourites" : nil)
+        star([album.id], starred, { await self.graph.library.setAlbumStarred(album, starred) }, success: starred ? String(localized: "Added “\(album.name)” to favourites") : nil)
     }
 
     func setArtistFavourite(_ artist: Artist, _ starred: Bool) {
-        star([artist.id], starred, { await self.graph.library.setArtistStarred(artist, starred) }, success: starred ? "Added “\(artist.name)” to favourites" : nil)
+        star([artist.id], starred, { await self.graph.library.setArtistStarred(artist, starred) }, success: starred ? String(localized: "Added “\(artist.name)” to favourites") : nil)
     }
 
     func setRating(_ song: Song, _ rating: Int) {
-        Task { report(await graph.library.setRating(song, rating), rating > 0 ? "Rated \(rating) ★" : "Rating cleared") }
+        Task { report(await graph.library.setRating(song, rating), rating > 0 ? String(localized: "Rated \(rating) ★") : "Rating cleared") }
     }
 
     func download(_ songs: [Song], _ label: String? = nil) {
@@ -330,7 +330,7 @@ final class AppActions {
     func removeDownloads(_ songs: [Song]) {
         Task {
             let removed = await graph.offline.remove(songs.map { $0.id })
-            messages.show(removed > 0 ? "Removed \(removed) download\(removed == 1 ? "" : "s")." : "Nothing to remove.")
+            messages.show(removed > 0 ? String(localized: "Removed \(Format.count(removed, "download")).") : "Nothing to remove.")
         }
     }
 

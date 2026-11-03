@@ -94,8 +94,8 @@ func gaplessPlan(_ durationA: Double) -> TransitionPlan {
         type: .gapless, duration: 0, startAt: max(0, durationA), inStartOffset: 0,
         incomingRate: 1, outgoingRate: 1,
         bassSwap: false, sweep: false, curve: .linear,
-        label: "Gapless",
-        reason: "Tracks run straight into each other with no silence between them."
+        label: Words.t("Gapless"),
+        reason: Words.t("Tracks run straight into each other with no silence between them.")
     )
 }
 
@@ -105,8 +105,8 @@ func hardCutPlan(_ durationA: Double) -> TransitionPlan {
         type: .cut, duration: 0, startAt: max(0, durationA), inStartOffset: 0,
         incomingRate: 1, outgoingRate: 1,
         bassSwap: false, sweep: false, curve: .linear,
-        label: "No crossfade",
-        reason: "Crossfade and gapless are both off, so tracks simply follow one another."
+        label: Words.t("No crossfade"),
+        reason: Words.t("Crossfade and gapless are both off, so tracks simply follow one another.")
     )
 }
 
@@ -117,8 +117,8 @@ func crossfadePlan(_ durationA: Double, seconds: Double, curve: CrossfadeCurve) 
         type: .crossfade, duration: duration, startAt: max(0, durationA - duration), inStartOffset: 0,
         incomingRate: 1, outgoingRate: 1,
         bassSwap: false, sweep: false, curve: curve,
-        label: "Crossfade · \(shown)s",
-        reason: "The outgoing track fades out over \(shown) seconds while the next one fades in."
+        label: Words.t("Crossfade · %@ s", shown),
+        reason: Words.t("The outgoing track fades out over %@ seconds while the next one fades in.", shown)
     )
 }
 
@@ -211,21 +211,20 @@ func planTransition(
 
     var details: [String] = []
     if beatMatch {
-        let inDir = incomingRate >= 1 ? "up" : "down"
-        details.append(
-            "Beat-matched at \(fmt(meetBpm)) BPM — the next track \(inDir) \(fmt(abs(incomingRate - 1) * 100, 1))%, " +
-                "and it stays at that tempo, so no track changes speed while it plays"
-        )
+        let shift = fmt(abs(incomingRate - 1) * 100, 1) + "%"
+        details.append(incomingRate >= 1
+            ? Words.t("Beat-matched at %@ BPM — the next track up %@, and it stays at that tempo, so no track changes speed while it plays", fmt(meetBpm), shift)
+            : Words.t("Beat-matched at %@ BPM — the next track down %@, and it stays at that tempo, so no track changes speed while it plays", fmt(meetBpm), shift))
     } else {
-        details.append("\(fmt(meetBpm)) BPM into \(fmt(bpmB)) BPM, tempos too far apart to match")
+        details.append(Words.t("%@ BPM into %@ BPM, tempos too far apart to match", fmt(meetBpm), fmt(bpmB)))
     }
-    details.append("keys \(analysisA.camelot) → \(analysisB.camelot)")
-    if harmonicClash { details.append("keys clash, so the outgoing track is filtered out instead of blended") }
-    if inStartOffset > 1 { details.append("intro skipped to \(fmt(inStartOffset, 1))s") }
+    details.append(Words.t("keys %@ → %@", analysisA.camelot, analysisB.camelot))
+    if harmonicClash { details.append(Words.t("keys clash, so the outgoing track is filtered out instead of blended")) }
+    if inStartOffset > 1 { details.append(Words.t("intro skipped to %@ s", fmt(inStartOffset, 1))) }
 
     let label = beatMatch
-        ? "InjeKt · \(fmt(bpmA))⇄\(fmt(bpmB)) @ \(fmt(meetBpm)) BPM · \(bars) bars"
-        : "InjeKt · \(fmt(duration, 1))s \(harmonicClash ? "sweep" : "blend")"
+        ? Words.t("InjeKt · %@⇄%@ @ %@ BPM · %@ bars", fmt(bpmA), fmt(bpmB), fmt(meetBpm), String(bars))
+        : harmonicClash ? Words.t("InjeKt · %@ s sweep", fmt(duration, 1)) : Words.t("InjeKt · %@ s blend", fmt(duration, 1))
 
     return TransitionPlan(
         type: type,

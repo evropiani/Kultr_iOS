@@ -276,7 +276,7 @@ private struct LocalEmptyState: View {
             title: scanning ? "Reading your music…" : folders.isEmpty ? "Where is your music?" : "No music found yet",
             message: folders.isEmpty
                 ? "Choose the folders your music is in. Kultr reads them and builds a library of your albums, artists and covers."
-                : "Kultr looked through \(folders.map(\.name).joined(separator: ", ")) and found nothing it can play yet. Add another folder, or scan again after copying music in."
+                : String(localized: "Kultr looked through \(folders.map(\.name).joined(separator: ", ")) and found nothing it can play yet. Add another folder, or scan again after copying music in.")
         ) {
             if folders.isEmpty {
                 Pill("Choose a folder", icon: "folder.badge.plus", accent: true) { picking = true }

@@ -46,7 +46,7 @@ enum SettingsFile {
 
     struct InvalidFileError: LocalizedError {
         let message: String
-        var errorDescription: String? { message }
+        var errorDescription: String? { Words.t(message) }
     }
 
     static func jsonObject(of settings: Settings) -> [String: Any] {

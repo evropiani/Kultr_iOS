@@ -169,7 +169,7 @@ final class OfflineManager {
             }
         }.value
         if pending.isEmpty {
-            graph.messages.success(label.map { "\($0) is already downloaded." } ?? "Everything is already downloaded.")
+            graph.messages.success(label.map { String(localized: "\($0) is already downloaded.") } ?? "Everything is already downloaded.")
             return
         }
         let now = Format.nowMs()
@@ -183,9 +183,9 @@ final class OfflineManager {
         refreshCounts()
         startWorker()
         let skipped = wanted.count - pending.count
-        var text = "Downloading \(pending.count) track\(pending.count == 1 ? "" : "s")"
-        if skipped > 0 { text += " · \(skipped) already here" }
-        if graph.settings.current.offlineWifiOnly && graph.network.isMetered { text += " · waiting for Wi-Fi" }
+        var text = String(localized: "Downloading \(Format.count(pending.count, "track"))")
+        if skipped > 0 { text += " · " + String(localized: "\(skipped) already here") }
+        if graph.settings.current.offlineWifiOnly && graph.network.isMetered { text += " · " + String(localized: "waiting for Wi-Fi") }
         graph.messages.show(text)
     }
 
@@ -293,7 +293,7 @@ final class OfflineManager {
         }
         if done + failed > 0 && !Task.isCancelled {
             graph.messages.show(
-                failed == 0 ? "Downloaded \(done) track\(done == 1 ? "" : "s")." : "Downloaded \(done), \(failed) failed.",
+                failed == 0 ? String(localized: "Downloaded \(Format.count(done, "track")).") : String(localized: "Downloaded \(done), \(failed) failed."),
                 failed == 0 ? .success : .warning
             )
         }

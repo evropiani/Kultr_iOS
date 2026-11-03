@@ -92,7 +92,7 @@ struct AnnotationSection: View {
             .disabled(newTag.trimmingCharacters(in: .whitespaces).isEmpty)
         } message: {
             let existing = tagCounts(theme.settings.annotations).prefix(6).map(\.tag).filter { tag in !annotation.tags.contains(tag) }
-            Text(existing.isEmpty ? "A word of your own, like “gym” or “rainy day”." : "Tags you use: " + existing.joined(separator: ", "))
+            Text(existing.isEmpty ? "A word of your own, like “gym” or “rainy day”.".loc : String(localized: "Tags you use: \(existing.joined(separator: ", "))"))
         }
         .sheet(isPresented: $editingNote) {
             NoteEditor(name: name, text: annotation.note) { text in
@@ -148,7 +148,7 @@ struct TagsTab: View {
             if tags.isEmpty {
                 EmptyState(
                     icon: "tag",
-                    title: query.isEmpty ? "No tags yet" : "No tags match “\(query)”",
+                    title: query.isEmpty ? "No tags yet" : String(localized: "No tags match “\(query)”"),
                     message: "Open an album or an artist and tap + Tag under Your notes."
                 )
                 .padding(.top, 24)
@@ -188,7 +188,7 @@ struct TagScreen: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
                 if loaded && albums.isEmpty && artists.isEmpty {
-                    EmptyState(icon: "tag", title: "Nothing tagged “\(tag)”", message: "The tag was taken off everything that had it.")
+                    EmptyState(icon: "tag", title: String(localized: "Nothing tagged “\(tag)”"), message: "The tag was taken off everything that had it.")
                         .padding(.top, 24)
                 } else if !loaded {
                     SkeletonGrid(count: 6)
@@ -207,7 +207,7 @@ struct TagScreen: View {
                         SectionHeader("Artists")
                         Shelf(items: artists, cardWidth: 130) { ArtistCard(artist: $0) }
                     }
-                    Pill("Make a crate of everything tagged “\(tag)”", icon: "shippingbox") {
+                    Pill(String(localized: "Make a crate of everything tagged “\(tag)”"), icon: "shippingbox") {
                         let crate = Crate(name: tag.capitalized, rules: Station(name: tag.capitalized, icon: "tag.fill", tags: [tag]))
                         graph.crates.save(crate)
                         graph.actions.openCrate(crate.id)
@@ -270,7 +270,7 @@ struct CratesTab: View {
                             creating = true
                         } label: { Label("Fill it by hand", systemImage: "hand.point.up.left") }
                         Button {
-                            rulesDraft = StationDraft(station: Station(name: "New crate", icon: "shippingbox.fill", minRating: 4, addedDays: 365), isNew: true, noun: "crate")
+                            rulesDraft = StationDraft(station: Station(name: "New crate".loc, icon: "shippingbox.fill", minRating: 4, addedDays: 365), isNew: true, noun: "crate")
                         } label: { Label("Fill it by rules", systemImage: "slider.horizontal.3") }
                     } label: {
                         PillLabel(text: "New crate", icon: "plus")
@@ -281,7 +281,7 @@ struct CratesTab: View {
                 if crates.isEmpty {
                     EmptyState(
                         icon: "shippingbox",
-                        title: query.isEmpty ? "No crates yet" : "No crates match “\(query)”",
+                        title: query.isEmpty ? "No crates yet" : String(localized: "No crates match “\(query)”"),
                         message: "A crate holds albums, artists and tracks you choose: hold any of them and tap Add to crate. Or let rules fill it, like “4 stars and up, added this year”."
                     )
                     .padding(.top, 24)
@@ -299,7 +299,7 @@ struct CratesTab: View {
             Button("Create") {
                 let crate = Crate(name: newName.trimmingCharacters(in: .whitespaces))
                 graph.crates.save(crate)
-                graph.messages.show("Hold an album, artist or track and tap Add to crate to fill “\(crate.name)”.")
+                graph.messages.show(String(localized: "Hold an album, artist or track and tap Add to crate to fill “\(crate.name)”."))
             }
             .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
         }
@@ -397,7 +397,7 @@ struct CrateScreen: View {
                             Text(crate.byRules ? (crate.rules?.summary ?? "") : crate.contents)
                                 .font(KFont.bodyMedium)
                                 .foregroundStyle(c.ink2)
-                            Text(loaded ? Format.count(songs.count, "track") : "Counting…")
+                            Text(loaded ? Format.count(songs.count, "track") : "Counting…".loc)
                                 .font(KFont.bodySmall)
                                 .foregroundStyle(c.ink3)
                         }
@@ -413,7 +413,7 @@ struct CrateScreen: View {
                                 var changed = crate
                                 changed.syncPlaylist = on
                                 graph.crates.save(changed)
-                                if on { graph.messages.show("“\(crate.name)” will be kept as a playlist") }
+                                if on { graph.messages.show(String(localized: "“\(crate.name)” will be kept as a playlist")) }
                             })) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Keep as a playlist").font(KFont.bodyLarge).foregroundStyle(c.ink)
@@ -477,7 +477,7 @@ struct CrateScreen: View {
                                     station.name = crate.name
                                     station.icon = crate.icon
                                     graph.stations.save(station)
-                                    graph.messages.show("“\(crate.name)” is a station too now")
+                                    graph.messages.show(String(localized: "“\(crate.name)” is a station too now"))
                                 } label: { Label("Make it a station", systemImage: "dial.medium") }
                             }
                             if crate.syncPlaylist {
@@ -564,7 +564,7 @@ struct AddToCrateSheet: View {
         let graph = AppGraph.shared
         let c = theme.colors
         let crates = theme.settings.crates.filter { !$0.byRules }
-        SheetScaffold(title: "Add “\(item.title)” to a crate") {
+        SheetScaffold(title: String(localized: "Add “\(item.title)” to a crate")) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     Button {

@@ -2,6 +2,11 @@ import Foundation
 import Observation
 import SwiftUI
 
+extension Station {
+    /** The name to show: a starting station's in the iPhone's language, your own as you wrote it. */
+    var title: String { name.loc }
+}
+
 /**
  * Stations: yours (from Settings), plus one per decade the library has enough
  * music from, and the tracks that fit each. Matching reads the whole library

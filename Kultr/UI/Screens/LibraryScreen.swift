@@ -100,7 +100,7 @@ private struct SectionFilter: ViewModifier {
         if tab == .favourites || tab == .downloads {
             content
         } else {
-            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: "Filter \(tab.label.lowercased())")
+            content.searchable(text: $text, placement: .navigationBarDrawer(displayMode: .always), prompt: ("Filter " + tab.rawValue).loc)
         }
     }
 }
@@ -138,7 +138,7 @@ struct PillLabel: View {
             if let icon {
                 Image(systemName: icon).font(.system(size: 15, weight: .semibold)).frame(width: 18, height: 18)
             }
-            Text(text).font(KFont.labelLarge).lineLimit(1)
+            Text(text.loc).font(KFont.labelLarge).lineLimit(1)
         }
         .foregroundStyle(theme.colors.accent)
         .padding(.horizontal, 16)
@@ -572,7 +572,7 @@ private struct RadioTab: View {
                     )
                     .frame(maxHeight: .infinity)
                 } else {
-                    let shown = stations.filter { matches(query, $0.name) }
+                    let shown = stations.filter { matches(query, $0.title) }
                         .enumerated()
                         .sorted { lhs, rhs in
                             let a = favourites.contains(lhs.element.id), b = favourites.contains(rhs.element.id)
@@ -584,9 +584,9 @@ private struct RadioTab: View {
                             ForEach(shown) { station in
                                 let favourite = favourites.contains(station.id)
                                 HStack(spacing: 12) {
-                                    Artwork(coverId: nil, size: 44, label: station.name)
+                                    Artwork(coverId: nil, size: 44, label: station.title)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(station.name).font(KFont.bodyLarge).foregroundStyle(c.ink).lineLimit(1)
+                                        Text(station.title).font(KFont.bodyLarge).foregroundStyle(c.ink).lineLimit(1)
                                         Text(station.homePageUrl ?? station.streamUrl).font(KFont.bodySmall).foregroundStyle(c.ink3).lineLimit(1)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)

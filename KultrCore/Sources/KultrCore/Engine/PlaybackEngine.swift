@@ -912,8 +912,8 @@ final class PlaybackEngine: DeckListener {
             to.play()
             activeSlot = slotOf(to)
             var plan = crossfadePlan(Double(fadeMs) / 1000 / 0.4, seconds: Double(fadeMs) / 1000, curve: .equalPower)
-            plan.label = "Skip"
-            plan.reason = "A short fade instead of a hard cut."
+            plan.label = Words.t("Skip")
+            plan.reason = Words.t("A short fade instead of a hard cut.")
             crossing = Crossing(
                 plan: plan,
                 from: from,

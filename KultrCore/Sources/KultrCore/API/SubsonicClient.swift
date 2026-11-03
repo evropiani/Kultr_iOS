@@ -22,42 +22,42 @@ struct NetworkError: LocalizedError, Equatable {
 func describeError(_ error: Error) -> String {
     if let err = error as? SubsonicError {
         switch err.code {
-        case 0: return err.message.trimmingCharacters(in: .whitespaces).isEmpty ? "The server reported a generic error." : err.message
-        case 10: return "The server is missing a required parameter."
-        case 20: return "Your server is too old for this client."
-        case 30: return "This client is too old for your server."
-        case 40: return "Wrong username or password."
-        case 41: return "Token authentication is disabled on this server. Switch to “Plain password” in the advanced options (and use HTTPS!)."
-        case 50: return "Your account is not allowed to do that."
-        case 60: return "This feature needs a Subsonic Premium subscription (not applicable to Navidrome)."
-        case 70: return "Not found."
-        default: return err.message.trimmingCharacters(in: .whitespaces).isEmpty ? "Server error \(err.code)." : err.message
+        case 0: return err.message.trimmingCharacters(in: .whitespaces).isEmpty ? Words.t("The server reported a generic error.") : err.message
+        case 10: return Words.t("The server is missing a required parameter.")
+        case 20: return Words.t("Your server is too old for this client.")
+        case 30: return Words.t("This client is too old for your server.")
+        case 40: return Words.t("Wrong username or password.")
+        case 41: return Words.t("Token authentication is disabled on this server. Switch to “Plain password” in the advanced options (and use HTTPS!).")
+        case 50: return Words.t("Your account is not allowed to do that.")
+        case 60: return Words.t("This feature needs a Subsonic Premium subscription (not applicable to Navidrome).")
+        case 70: return Words.t("Not found.")
+        default: return err.message.trimmingCharacters(in: .whitespaces).isEmpty ? Words.t("Server error %@.", String(err.code)) : err.message
         }
     }
     if let err = error as? NetworkError { return err.message }
     if let err = error as? URLError {
         switch err.code {
         case .cannotFindHost, .dnsLookupFailed:
-            return "Could not find that server. Check the address."
+            return Words.t("Could not find that server. Check the address.")
         case .cannotConnectToHost, .networkConnectionLost:
-            return "Could not connect to the server. Is it running, and reachable from this phone?"
+            return Words.t("Could not connect to the server. Is it running, and reachable from this phone?")
         case .notConnectedToInternet:
-            return "This phone is not connected to the internet."
+            return Words.t("This phone is not connected to the internet.")
         case .timedOut:
-            return "The server took too long to answer."
+            return Words.t("The server took too long to answer.")
         case .secureConnectionFailed, .serverCertificateUntrusted, .serverCertificateHasBadDate,
              .serverCertificateNotYetValid, .serverCertificateHasUnknownRoot, .clientCertificateRejected,
              .clientCertificateRequired:
-            return "A secure connection could not be made: \(err.localizedDescription)"
+            return Words.t("A secure connection could not be made: %@", err.localizedDescription)
         case .appTransportSecurityRequiresSecureConnection:
-            return "This address needs HTTPS."
+            return Words.t("This address needs HTTPS.")
         case .cancelled:
-            return "Cancelled."
+            return Words.t("Cancelled.")
         default:
             return err.localizedDescription
         }
     }
-    if error is CancellationError { return "Cancelled." }
+    if error is CancellationError { return Words.t("Cancelled.") }
     if let err = error as? LocalizedError, let text = err.errorDescription { return text }
     return (error as NSError).localizedDescription
 }
@@ -253,7 +253,7 @@ final class SubsonicClient: @unchecked Sendable {
      */
     func buildUrl(_ endpoint: String, _ params: [(String, Any?)] = [], stable: Bool = false) throws -> URL {
         guard var components = base else {
-            throw NetworkError(message: "“\(baseUrl)” is not a valid server address.")
+            throw NetworkError(message: Words.t("“%@” is not a valid server address.", baseUrl))
         }
         var path = components.percentEncodedPath
         while path.hasSuffix("/") { path.removeLast() }
@@ -276,7 +276,7 @@ final class SubsonicClient: @unchecked Sendable {
             .map { SubsonicClient.encode($0.0) + "=" + SubsonicClient.encode($0.1) }
             .joined(separator: "&")
         guard let url = components.url else {
-            throw NetworkError(message: "“\(baseUrl)” is not a valid server address.")
+            throw NetworkError(message: Words.t("“%@” is not a valid server address.", baseUrl))
         }
         return url
     }
@@ -299,16 +299,16 @@ final class SubsonicClient: @unchecked Sendable {
             (data, response) = try await session.data(for: request)
         } catch let error as URLError {
             if error.code == .cancelled { throw CancellationError() }
-            if error.code == .timedOut { throw NetworkError(message: "The server did not answer within \(Int(timeout))s.") }
+            if error.code == .timedOut { throw NetworkError(message: Words.t("The server did not answer within %@ s.", String(Int(timeout)))) }
             throw NetworkError(message: describeError(error))
         }
         if Task.isCancelled { throw CancellationError() }
         guard let http = response as? HTTPURLResponse else {
-            throw NetworkError(message: "The server sent no HTTP response.")
+            throw NetworkError(message: Words.t("The server sent no HTTP response."))
         }
         guard (200..<300).contains(http.statusCode) else {
             let reason = HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
-            throw NetworkError(message: "Server responded with HTTP \(http.statusCode) \(reason).")
+            throw NetworkError(message: Words.t("Server responded with HTTP %@ %@.", String(http.statusCode), reason))
         }
         let decoder = JSONDecoder()
         decoder.userInfo[.subsonicPath] = path
@@ -316,13 +316,13 @@ final class SubsonicClient: @unchecked Sendable {
         do {
             envelope = try decoder.decode(SubsonicEnvelope<T>.self, from: data)
         } catch {
-            throw NetworkError(message: "The server sent something that is not a Subsonic JSON response. Is the address pointing at Navidrome?")
+            throw NetworkError(message: Words.t("The server sent something that is not a Subsonic JSON response. Is the address pointing at Navidrome?"))
         }
         guard envelope.hasEnvelope else {
-            throw NetworkError(message: "Malformed response: no “subsonic-response” envelope.")
+            throw NetworkError(message: Words.t("Malformed response: no “subsonic-response” envelope."))
         }
         if envelope.failed {
-            throw SubsonicError(code: envelope.errorCode, message: envelope.errorMessage ?? "Unknown error")
+            throw SubsonicError(code: envelope.errorCode, message: envelope.errorMessage ?? Words.t("Unknown error"))
         }
         return envelope.payload
     }
