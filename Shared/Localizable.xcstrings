@@ -628,6 +628,17 @@
         }
       }
     },
+    "%lld min": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Min."
+          }
+        }
+      }
+    },
     "%lld minutes": {
       "extractionState": "manual",
       "localizations": {
@@ -635,6 +646,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld Minuten"
+          }
+        }
+      }
+    },
+    "%lld of %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld von %lld"
           }
         }
       }
@@ -4775,6 +4797,17 @@
         }
       }
     },
+    "InjeKt": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "InjeKt"
+          }
+        }
+      }
+    },
     "InjeKt analysis": {
       "extractionState": "manual",
       "localizations": {
@@ -5123,6 +5156,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "die Tonarten passen nicht zusammen, daher wird der alte Titel weggefiltert statt überblendet"
+          }
+        }
+      }
+    },
+    "Kultr": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr"
+          }
+        }
+      }
+    },
+    "Kultr %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kultr %@"
           }
         }
       }
@@ -7059,6 +7114,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kiste %@ öffnen"
+          }
+        }
+      }
+    },
+    "Open the player": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Player öffnen"
           }
         }
       }
