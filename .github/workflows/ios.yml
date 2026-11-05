@@ -29,6 +29,10 @@ jobs:
           xcodebuild -version
           swift --version
 
+      # The German in .github/l10n/de.json, as the catalog the app reads; a German line can be fixed by editing that file alone.
+      - name: Translations
+        run: python3 .github/scripts/strings.py build
+
       - name: Core tests
         id: tests
         continue-on-error: true
@@ -54,8 +58,6 @@ jobs:
         if: github.ref != 'refs/heads/main'
         continue-on-error: true
         run: |
-          python3 .github/scripts/strings.py build
-          git diff --quiet -- Shared/Localizable.xcstrings || echo "::warning::Shared/Localizable.xcstrings is out of date: run .github/scripts/strings.py build"
           python3 .github/scripts/strings.py check build
 
       - name: Screenshots in the simulator
