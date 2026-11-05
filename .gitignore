@@ -7,3 +7,4 @@ xcuserdata/
 .swiftpm/
 *.ipa
 *.dSYM.zip
+__pycache__/

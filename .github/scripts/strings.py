@@ -33,8 +33,20 @@ SKIP_FILES = {"UpdateLog.generated.swift", "ScreenshotDriver.swift"}
 
 def load():
     with open(SOURCE, encoding="utf-8") as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except ValueError as error:
+            sys.exit(f"::error file=.github/l10n/de.json,line={error.lineno}::de.json is not valid JSON here "
+                     f"(a missing quote or comma?): {error.msg}")
     return {k: v for k, v in data.items() if not k.startswith("//")}
+
+
+SPECIFIERS = re.compile(r"%(?:\d+\$)?(lld|llu|ld|lu|lf|d|u|f|@)")
+
+
+def placeholders_match(key, value):
+    """The German keeps the English line's %@ and %lld, the same number of each."""
+    return sorted(SPECIFIERS.findall(key)) == sorted(SPECIFIERS.findall(value))
 
 
 def unit(value):
@@ -43,6 +55,12 @@ def unit(value):
 
 def build():
     data = load()
+    wrong = [(k, v) for k, v in data.items() for t in ([v] if isinstance(v, str) else v.values()) if not placeholders_match(k, t)]
+    for key, value in wrong:
+        print(f"::error file=.github/l10n/de.json::The German for {json.dumps(key, ensure_ascii=False)} needs the same "
+              f"placeholders (%@, %lld) as the English: {json.dumps(value, ensure_ascii=False)}")
+    if wrong:
+        sys.exit(1)
     strings = {}
     for key in sorted(data, key=lambda k: k.lower()):
         value = data[key]
