@@ -475,7 +475,7 @@ struct PlaylistScreen: View {
                         }
                     ) { graph.actions.play(songs, $0) }
                     // Suggested songs, as on Spotify, for playlists that can be changed.
-                    if editable, let suggestions {
+                    if editable || ScreenshotState.shared.suggestAnyway, let suggestions {
                         PlaylistSuggestionsSection(model: suggestions, playlist: songs) { song in
                             suggestions.adding = song.id
                             Task {

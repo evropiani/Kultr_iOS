@@ -99,6 +99,13 @@ enum ScreenshotDriver {
                 actions.selectTab(.library)
                 actions.openLibrary(.crates)
             }
+        case "playlist":
+            // The shortest playlist with songs in it, so its suggestions show without scrolling.
+            let playlists = await library.playlists().filter { ($0.songCount ?? 0) > 0 }
+            if let playlist = playlists.min(by: { ($0.songCount ?? 0) < ($1.songCount ?? 0) }) {
+                ScreenshotState.shared.suggestAnyway = true
+                actions.openPlaylist(playlist.id)
+            }
         case "sync": actions.navigate(.sync)
         case "downloads": actions.openDownloads(.now)
         case "album":
@@ -175,6 +182,8 @@ final class ScreenshotState {
     var showWidgets = false
     var showLargeWidgets = false
     var showUpdateLog = false
+    /** Suggestions under a playlist the demo account cannot change, so the screenshot shows them. */
+    var suggestAnyway = false
 }
 
 /** The large widget as an iPhone shows it, and the extra-large one as an iPad would, scaled to fit. */
