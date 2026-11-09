@@ -419,6 +419,8 @@ struct PlaylistScreen: View {
     @State private var newName = ""
     @State private var deleting = false
     @State private var selection = SongSelection()
+    /** Suggested songs under the playlist, made once its songs are known. */
+    @State private var suggestions: PlaylistSuggestionModel?
 
     var body: some View {
         let graph = AppGraph.shared
@@ -452,7 +454,11 @@ struct PlaylistScreen: View {
                         }
                     }
                     if songs.isEmpty {
-                        EmptyState(icon: "music.note.list", title: "This playlist is empty", message: "Add tracks from any track's menu.")
+                        EmptyState(
+                            icon: "music.note.list",
+                            title: "This playlist is empty",
+                            message: editable ? "Add songs from the suggestions below, or from any track's menu." : "Add tracks from any track's menu."
+                        )
                     }
                     SongRows(
                         songs: songs,
@@ -468,6 +474,23 @@ struct PlaylistScreen: View {
                             ]
                         }
                     ) { graph.actions.play(songs, $0) }
+                    // Suggested songs, as on Spotify, for playlists that can be changed.
+                    if editable, let suggestions {
+                        PlaylistSuggestionsSection(model: suggestions, playlist: songs) { song in
+                            suggestions.adding = song.id
+                            Task {
+                                let error = await graph.library.addToPlaylist(id, [song])
+                                suggestions.adding = nil
+                                if let error {
+                                    graph.messages.error(error)
+                                } else {
+                                    graph.messages.success("Added to “\(d.playlist.name)”")
+                                    suggestions.remove(song)
+                                    suggestions.load(songs.contains { $0.id == song.id } ? songs : songs + [song], added: song)
+                                }
+                            }
+                        }
+                    }
                 } actions: {
                     DownloadToolbarButton(songs: songs, label: d.playlist.name)
                     Menu {
@@ -520,6 +543,11 @@ struct PlaylistScreen: View {
         .task(id: "\(id):\(graph.library.version)") {
             detail = await graph.library.playlist(id)
             loaded = true
+            if suggestions == nil, let d = detail {
+                let model = PlaylistSuggestionModel(graph: graph)
+                suggestions = model
+                model.load(d.songs, added: nil)
+            }
             // Contents may not have been synced; fetch them once if the list looks short.
             if let d = detail, !refreshedOnce, d.songs.count < (d.playlist.songCount ?? 0) {
                 refreshedOnce = true

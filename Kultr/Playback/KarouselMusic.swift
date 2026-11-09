@@ -52,6 +52,16 @@ final class KarouselMusic: KarouselSources {
         !song.isRadio && (graph.isLocal || online || graph.offline.downloadedIds.contains(song.id))
     }
 
+    /**
+     * Songs to suggest under a playlist: like [added] once one has been added
+     * from the suggestions, otherwise like the playlist itself.
+     */
+    func suggest(playlist: [Song], added: Song?, leaveOut: [Song] = []) async -> [Song] {
+        online = await reachServer()
+        deadline = Date().addingTimeInterval(Self.serverBudget)
+        return await PlaylistSuggestions.suggest(sources: self, playlist: playlist, added: added, leaveOut: leaveOut)
+    }
+
     /** Songs like [seeds] (the track playing first) to follow [queued], leaving out what played in the last few hours. */
     func next(seeds: [Song], queued: [Song], count: Int = 10) async -> [Song] {
         let started = Date()

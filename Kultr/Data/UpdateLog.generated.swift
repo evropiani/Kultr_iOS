@@ -4,6 +4,34 @@
 let UPDATE_LOG_JSON = ####"""
 [
  {
+  "version": "2.1.0",
+  "date": "2026-11-09",
+  "sections": [
+   {
+    "title": "What's new",
+    "lines": [
+     {
+      "kind": "bullet",
+      "text": "**Suggested songs under a playlist.** At the bottom of a playlist you can change, a few songs that would fit, each with a **+**. Add one and it goes to the end of the playlist, and the suggestions turn to songs like the one you just added (\"More like …\"). **Refresh** offers different ones. An empty playlist starts from what you play most. Suggestions come from the same picker as Karousel: your server's similar songs and artists when it has them, then your own library's artists, genres and favourites, never a song already in the playlist. It works for the music on your iPhone too."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Like, shuffle and repeat from CarPlay, Apple Watch and Siri.** Kultr now answers the like, shuffle and repeat controls iOS offers outside the app, and shows which are on. iOS has no room for an app's own buttons beside the Lock Screen's controls, so those stay play, skip and back."
+     }
+    ]
+   },
+   {
+    "title": "Under the hood",
+    "lines": [
+     {
+      "kind": "bullet",
+      "text": "The suggestion rules are shared with Kultr for Android and the web, with the same tests."
+     }
+    ]
+   }
+  ]
+ },
+ {
   "version": "2.0.1",
   "date": "2026-11-02",
   "sections": [

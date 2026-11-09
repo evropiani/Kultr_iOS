@@ -933,6 +933,63 @@ final class PlayerController: EngineHost {
             MainActor.assumeIsolated { self?.seekTo(ms) }
             return .success
         }
+        // Like, shuffle and repeat, wherever iOS offers them: CarPlay, Apple
+        // Watch, Siri. iOS has no room for an app's own buttons beside the
+        // Lock Screen's controls.
+        center.likeCommand.localizedTitle = "Like"
+        center.likeCommand.localizedShortTitle = "Like"
+        center.likeCommand.addTarget { [weak self] _ in
+            MainActor.assumeIsolated { self?.toggleLikeFromRemote() }
+            return .success
+        }
+        center.changeShuffleModeCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangeShuffleModeCommandEvent else { return .commandFailed }
+            let on = event.shuffleType != .off
+            MainActor.assumeIsolated { self?.setShuffleFromRemote(on) }
+            return .success
+        }
+        center.changeRepeatModeCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangeRepeatModeCommandEvent else { return .commandFailed }
+            let mode: RepeatMode
+            switch event.repeatType {
+            case .one: mode = .one
+            case .all: mode = .all
+            default: mode = .off
+            }
+            MainActor.assumeIsolated { self?.setRepeatFromRemote(mode) }
+            return .success
+        }
+    }
+
+    /** Like from CarPlay, Apple Watch or Siri: the song playing, or take the like back. */
+    private func toggleLikeFromRemote() {
+        guard let song = state.current, !song.isRadio else { return }
+        graph.actions.setFavourite(song, !graph.ui.isStarred(song))
+        updateNowPlaying()
+    }
+
+    private func setShuffleFromRemote(_ on: Bool) {
+        if !on && graph.settings.current.karousel { graph.settings.update { $0.karousel = false } }
+        engine.setShuffle(on)
+        updateNowPlaying()
+    }
+
+    private func setRepeatFromRemote(_ mode: RepeatMode) {
+        engine.setRepeat(mode)
+        updateNowPlaying()
+    }
+
+    /** What iOS shows for like, shuffle and repeat, kept in step with the player. */
+    private func updateRemoteModes(_ song: Song) {
+        let center = MPRemoteCommandCenter.shared()
+        center.likeCommand.isEnabled = !song.isRadio
+        center.likeCommand.isActive = graph.ui.isStarred(song)
+        center.changeShuffleModeCommand.currentShuffleType = engine.shuffle ? .items : .off
+        switch engine.repeatMode {
+        case .off: center.changeRepeatModeCommand.currentRepeatType = .off
+        case .all: center.changeRepeatModeCommand.currentRepeatType = .all
+        case .one: center.changeRepeatModeCommand.currentRepeatType = .one
+        }
     }
 
     /**
@@ -973,6 +1030,7 @@ final class PlayerController: EngineHost {
             }
         }
         if let artwork { info[MPMediaItemPropertyArtwork] = artwork }
+        updateRemoteModes(song)
         center.nowPlayingInfo = info
         center.playbackState = state.isPlaying ? .playing : .paused
     }

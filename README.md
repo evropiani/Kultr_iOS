@@ -64,6 +64,9 @@ and Control Center controls, AirPlay, and downloads for offline listening.
   hand or by rules ("4 stars and up, added this year"), each kept as a
   playlist on your server if you like; private notes and tags on any album or
   artist.
+- **Playlist suggestions.** At the bottom of a playlist, a few songs that would
+  fit, each with a **+**. Add one and the suggestions turn to songs like it, so
+  a playlist builds itself the way it does on Spotify. Refresh for others.
 - **Kultr Studio.** The whole look in one place: start from Cream, Night,
   Ember, Paper or Console, change colours, corners and glass, put the player
   together from blocks with an info line you write yourself, and share the
