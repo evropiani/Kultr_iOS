@@ -410,6 +410,15 @@ struct ArtistScreen: View {
 // ------------------------------------------------------------- playlist --
 
 struct PlaylistScreen: View {
+    /** In the CI screenshots, suggestions show under a playlist the demo account cannot change. */
+    private static var suggestAnyway: Bool {
+        #if DEBUG
+        ScreenshotState.shared.suggestAnyway
+        #else
+        false
+        #endif
+    }
+
     @Environment(\.kultr) private var theme
     let id: String
     @State private var detail: PlaylistDetail?
@@ -475,7 +484,7 @@ struct PlaylistScreen: View {
                         }
                     ) { graph.actions.play(songs, $0) }
                     // Suggested songs, as on Spotify, for playlists that can be changed.
-                    if editable || ScreenshotState.shared.suggestAnyway, let suggestions {
+                    if editable || Self.suggestAnyway, let suggestions {
                         PlaylistSuggestionsSection(model: suggestions, playlist: songs) { song in
                             suggestions.adding = song.id
                             Task {
