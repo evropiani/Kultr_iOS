@@ -582,6 +582,11 @@ final class PlayerController: EngineHost {
         } else if engine.status == .ended {
             engine.seekTo(0, positionMs: 0, manual: false)
             setPlaying(true)
+        } else if engine.playWhenReady && silenceExpired && !engine.isAudible {
+            // Supposed to be playing, but silent so long that iOS put Kultr to
+            // sleep: the button means play, not pause.
+            activateSession()
+            engine.revive()
         } else if engine.playWhenReady {
             pause()
         } else {
@@ -597,6 +602,12 @@ final class PlayerController: EngineHost {
     func resume() {
         if engine.queue.isEmpty && !loadSavedSession() { return }
         engine.prepare()
+        if engine.playWhenReady {
+            // Already supposed to be playing: if nothing is heard, the track is stuck.
+            activateSession()
+            engine.revive()
+            return
+        }
         setPlaying(true)
     }
 
@@ -849,6 +860,29 @@ final class PlayerController: EngineHost {
         center.addObserver(forName: AVAudioSession.routeChangeNotification, object: session, queue: .main) { [weak self] note in
             let info = note.userInfo
             MainActor.assumeIsolated { self?.handleRouteChange(info) }
+        }
+        center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.handleMediaReset() }
+        }
+    }
+
+    /**
+     * iOS restarted its audio system. The session's settings are gone and the
+     * players are dead: set the session up again, make new players, and put
+     * the track back where it was, playing if it was playing.
+     */
+    private func handleMediaReset() {
+        guard engine != nil else { return }
+        let wasPlaying = engine.playWhenReady
+        PlaybackLog.note("Starting the players over after iOS restarted its audio system\(wasPlaying ? "; playing on" : "")")
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, policy: .longFormAudio)
+        if !engine.queue.isEmpty { engine.stop() }
+        decks.forEach { $0.replacePlayer() }
+        guard !engine.queue.isEmpty else { return }
+        engine.prepare()
+        if wasPlaying {
+            activateSession()
+            if !engine.playWhenReady { engine.setPlayWhenReady(true) }
         }
     }
 

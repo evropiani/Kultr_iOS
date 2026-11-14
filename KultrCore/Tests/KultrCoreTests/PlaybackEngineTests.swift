@@ -23,6 +23,8 @@ final class FakeDeck: Deck {
     /** Asking it to play again does not bring it back; only loading the track again does. */
     var deaf = false
     private(set) var silenced = false
+    /** Ran out of audio mid-track and waits for more that never comes; only loading again helps. */
+    private(set) var stalled = false
     private(set) var loads = 0
     private weak var listener: DeckListener?
 
@@ -41,6 +43,7 @@ final class FakeDeck: Deck {
     func load(_ item: QueueItem, startMs: Int64) {
         loads += 1
         silenced = false
+        stalled = false
         deaf = false
         self.item = item
         base = startMs
@@ -62,6 +65,23 @@ final class FakeDeck: Deck {
         freeze()
         since = nil
         silenced = true
+    }
+
+    /** The stream ran dry without failing: the player waits, silently, for ever. */
+    func stall() {
+        freeze()
+        since = nil
+        stalled = true
+        status = .buffering
+        listener?.onStatusChanged(self)
+    }
+
+    /** The track fails while it plays, like a connection that drops. */
+    func fail() {
+        freeze()
+        since = nil
+        status = .error
+        listener?.onError(self, message: "boom")
     }
 
     func pause() {
@@ -105,7 +125,7 @@ final class FakeDeck: Deck {
     /** Advance the simulation: finish loading, reach the end, move on gaplessly. */
     func update() {
         if status == .buffering {
-            if holdLoading { return }
+            if holdLoading || stalled { return }
             if failNextLoad {
                 failNextLoad = false
                 status = .error
@@ -658,6 +678,100 @@ final class PlaybackEngineTests: XCTestCase, EngineHost {
         await advance(40_000)
         XCTAssertEqual(engine.status, .ended)
         XCTAssertTrue(recoveries.isEmpty, "\(recoveries)")
+    }
+
+    func testATrackThatRunsDryMidSongIsLoadedAgainWhereItWas() async {
+        await start(["1", "2"], seconds: 300)
+        await advance(20_000)
+        a.stall()
+        await advance(11_000)
+        XCTAssertFalse(a.isPlaying)
+        XCTAssertEqual(a.loads, 1, "asked to play first, which does not help")
+        await advance(2_000)
+        XCTAssertEqual(a.loads, 2)
+        XCTAssertTrue(a.isPlaying)
+        XCTAssertEqual(engine.currentItem?.song.id, "1")
+        XCTAssertLessThan(abs(engine.positionMs - 21_000), 1_500, "position \(engine.positionMs)")
+    }
+
+    func testAReloadThatStaysSilentIsTriedOnceMore() async {
+        await start(["1", "2"], seconds: 300)
+        await advance(20_000)
+        a.stall()
+        // The first reload gets nothing either (the connection is still away).
+        a.holdLoading = true
+        await advance(12_500)
+        XCTAssertEqual(a.loads, 2)
+        await advance(7_000)
+        XCTAssertEqual(a.loads, 2)
+        await advance(2_500)
+        XCTAssertEqual(a.loads, 3)
+        a.holdLoading = false
+        await advance(100)
+        XCTAssertTrue(a.isPlaying)
+        XCTAssertLessThan(abs(engine.positionMs - 20_000), 500, "position \(engine.positionMs)")
+        // And no more than that: a third reload would only start the wait over.
+        a.stall()
+        a.holdLoading = true
+        await advance(60_000)
+        XCTAssertEqual(a.loads, 5)
+    }
+
+    func testATrackThatFailsMidSongIsPickedUpWhereItWas() async {
+        await start(["1", "2"], seconds: 300)
+        await advance(20_000)
+        a.fail()
+        await advance(200)
+        XCTAssertEqual(engine.currentItem?.song.id, "1", "not skipped")
+        XCTAssertTrue(a.isPlaying)
+        XCTAssertEqual(a.loads, 2)
+        XCTAssertLessThan(abs(engine.positionMs - 20_000), 500, "position \(engine.positionMs)")
+        XCTAssertTrue(errors.isEmpty, "nothing to tell the listener: \(errors)")
+    }
+
+    func testATrackThatKeepsFailingGivesWayToTheNext() async {
+        await start(["1", "2"], seconds: 300)
+        await advance(20_000)
+        for _ in 0..<PlaybackEngine.sameTrackRetries {
+            a.fail()
+            await advance(200)
+            XCTAssertEqual(engine.currentItem?.song.id, "1")
+        }
+        a.fail()
+        await advance(200)
+        XCTAssertEqual(engine.currentItem?.song.id, "2")
+        XCTAssertTrue(activeDeck.isPlaying)
+        XCTAssertEqual(errors, ["boom"])
+    }
+
+    func testPlayBringsBackATrackThatFailed() async {
+        // The only track fails: nothing to skip to, so playback stops there.
+        a.failNextLoad = true
+        engine.setQueue(engine.newItems(songs(["1"], seconds: 300)), startIndex: 0, startPositionMs: 0)
+        engine.setPlayWhenReady(true)
+        await advance(500)
+        XCTAssertFalse(engine.playWhenReady)
+        XCTAssertFalse(a.isPlaying)
+        // Play (the Lock Screen, headphones, the app) loads it again.
+        engine.setPlayWhenReady(true)
+        await advance(100)
+        XCTAssertEqual(a.loads, 2)
+        XCTAssertTrue(a.isPlaying)
+    }
+
+    func testPlayWhileStuckLoadsTheTrackAgain() async {
+        await start(["1", "2"], seconds: 300)
+        await advance(20_000)
+        XCTAssertFalse(engine.revive(), "nothing to do while it plays")
+        a.stall()
+        await advance(1_000)
+        XCTAssertTrue(engine.revive())
+        await advance(100)
+        XCTAssertEqual(a.loads, 2)
+        XCTAssertTrue(a.isPlaying)
+        XCTAssertLessThan(abs(engine.positionMs - 20_000), 500, "position \(engine.positionMs)")
+        engine.setPlayWhenReady(false)
+        XCTAssertFalse(engine.revive(), "paused on purpose stays paused")
     }
 
     func testAFailedTrackIsSkipped() async {

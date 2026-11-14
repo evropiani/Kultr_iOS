@@ -4,6 +4,37 @@
 let UPDATE_LOG_JSON = ####"""
 [
  {
+  "version": "2.1.1",
+  "date": "2026-11-14",
+  "sections": [
+   {
+    "title": "What's fixed",
+    "lines": [
+     {
+      "kind": "bullet",
+      "text": "**Play brings the music back after it stopped by itself.** When a track failed or got stuck in the background, pressing play on the Lock Screen or on your headphones did nothing, or paused something that was already silent. The only way out was to open Kultr and pick a song. Now play loads the track again where it stopped."
+     },
+     {
+      "kind": "bullet",
+      "text": "**A song that runs dry mid-way is picked up again.** A stream that stalled without failing left Kultr waiting for ever; after half a minute of quiet iOS put it to sleep. Kultr now loads the song again where it was after 12 seconds, and once more after 21, both before iOS steps in."
+     },
+     {
+      "kind": "bullet",
+      "text": "**A dropped connection no longer costs you the song.** When the connection dropped mid-song (leaving Wi-Fi, for instance), Kultr skipped ahead through up to four songs in a few seconds and then stopped. It now tries the same song again where it was, twice, before moving on."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Kultr survives iOS restarting its audio system.** That left the players dead until Kultr was closed and opened again. It now starts them over and plays on."
+     },
+     {
+      "kind": "text",
+      "text": "This makes Kultr recover from the stops I could find in its code. If the music still stops by itself, please send me the playback log (**Settings → About → Playback log**, then the share button) right after it happens: it records what iOS did to Kultr at that moment."
+     }
+    ]
+   }
+  ]
+ },
+ {
   "version": "2.1.0",
   "date": "2026-11-09",
   "sections": [

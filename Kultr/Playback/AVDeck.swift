@@ -64,7 +64,7 @@ final class DeckSources {
 @MainActor
 final class AVDeck: NSObject, Deck {
     let name: String
-    let player = AVQueuePlayer()
+    private(set) var player = AVQueuePlayer()
     private let params = DeckParams()
     private let eq: EqState
     private let sources: DeckSources
@@ -95,18 +95,37 @@ final class AVDeck: NSObject, Deck {
         self.sources = sources
         self.eq = eq
         super.init()
-        player.actionAtItemEnd = .pause
-        player.automaticallyWaitsToMinimizeStalling = true
-        playerObservers.append(player.observe(\.timeControlStatus, options: [.new]) { [weak self] _, _ in
-            DispatchQueue.main.async { MainActor.assumeIsolated { self?.timeControlChanged() } }
-        })
-        playerObservers.append(player.observe(\.currentItem, options: [.new]) { [weak self] _, _ in
-            DispatchQueue.main.async { MainActor.assumeIsolated { self?.currentItemChanged() } }
-        })
+        attachPlayer()
         let center = NotificationCenter.default
         center.addObserver(self, selector: #selector(itemEnded(_:)), name: .AVPlayerItemDidPlayToEndTime, object: nil)
         center.addObserver(self, selector: #selector(itemFailed(_:)), name: .AVPlayerItemFailedToPlayToEndTime, object: nil)
         center.addObserver(self, selector: #selector(itemStalled(_:)), name: .AVPlayerItemPlaybackStalled, object: nil)
+    }
+
+    private func attachPlayer() {
+        player.actionAtItemEnd = .pause
+        player.automaticallyWaitsToMinimizeStalling = true
+        player.volume = isRadio ? min(1, level) : 1
+        playerObservers = [
+            player.observe(\.timeControlStatus, options: [.new]) { [weak self] _, _ in
+                DispatchQueue.main.async { MainActor.assumeIsolated { self?.timeControlChanged() } }
+            },
+            player.observe(\.currentItem, options: [.new]) { [weak self] _, _ in
+                DispatchQueue.main.async { MainActor.assumeIsolated { self?.currentItemChanged() } }
+            },
+        ]
+    }
+
+    /**
+     * iOS restarted its audio system: every player made before that is dead
+     * and stays silent whatever it is told. Start over with a new one; the
+     * engine loads the track again.
+     */
+    func replacePlayer() {
+        stop()
+        playerObservers = []
+        player = AVQueuePlayer()
+        attachPlayer()
     }
 
     // ----------------------------------------------------------- state --
@@ -358,6 +377,12 @@ final class AVDeck: NSObject, Deck {
 
     private func startPlayer() {
         player.defaultRate = rate
+        // A player that waits although it has audio in hand (it can misjudge a
+        // stream fed through Kultr's cache) is told to get on with it.
+        if player.timeControlStatus == .waitingToPlayAtSpecifiedRate, bufferedPositionMs - positionMs > 5_000 {
+            player.playImmediately(atRate: rate)
+            return
+        }
         player.play()
         if abs(player.rate - rate) > 0.0001 && player.rate != 0 { player.rate = rate }
     }

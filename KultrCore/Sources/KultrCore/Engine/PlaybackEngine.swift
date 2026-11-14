@@ -95,6 +95,14 @@ final class PlaybackEngine: DeckListener {
      * the background before suspending it, when the music could not come back.
      */
     static let reloadAfterMs: Int64 = 12_000
+    /** Still nothing after that: once more, before iOS's half minute is up. */
+    static let secondReloadAfterMs: Int64 = 21_000
+    /**
+     * A track that fails after it has been playing (the connection dropped,
+     * the phone moved from Wi-Fi to mobile data) is tried again where it was
+     * this many times before the engine moves on to the next one.
+     */
+    static let sameTrackRetries = 2
     /** A Karousel search that found nothing is tried again this much later, while the last track plays. */
     static let karouselRetryMs: Int64 = 15_000
     static let bassCutDb = -26.0
@@ -189,6 +197,10 @@ final class PlaybackEngine: DeckListener {
     private var planTask: Task<Void, Never>?
     private var crossing: Crossing?
     private var errorStreak = 0
+    /** The track last heard, and how far into it: where to pick it up again if it stalls or fails. */
+    private var heard: (uid: Int64, positionMs: Int64)?
+    /** How often the track in [heard] has been loaded again after failing. */
+    private var retried: (uid: Int64, count: Int)?
     /** Karousel's search for more music, in flight; whoever needs more music waits on this one. */
     private var extendTask: Task<Bool, Never>?
     private var extendGeneration = 0
@@ -311,7 +323,12 @@ final class PlaybackEngine: DeckListener {
                 host.onStateChanged()
                 return
             }
-            if stopped { loadCurrent(stoppedPositionMs) }
+            if stopped {
+                loadCurrent(stoppedPositionMs)
+            } else if crossing == nil, needsReload {
+                // The track failed, or was never loaded: pressing play loads it again.
+                reloadCurrent()
+            }
             active.play()
             if let crossing, crossing.from.item != nil { crossing.from.play() }
         } else {
@@ -319,6 +336,47 @@ final class PlaybackEngine: DeckListener {
             crossing?.from.pause()
         }
         host.onStateChanged()
+    }
+
+    /** The active deck has nothing playable for the current track: it failed, or holds something else. */
+    private var needsReload: Bool {
+        guard let item = currentItem, !ended else { return false }
+        return active.status == .error || active.status == .idle || active.item?.uid != item.uid
+    }
+
+    /** Where the current track was last heard, or 0. */
+    private var heardPositionMs: Int64 {
+        guard let heard, heard.uid == currentItem?.uid else { return 0 }
+        return heard.positionMs
+    }
+
+    /** Load the current track again where it was last heard, at the tempo it had. */
+    private func reloadCurrent() {
+        let position = active.item?.uid == currentItem?.uid && active.status == .ready ? active.positionMs : heardPositionMs
+        let rate = rates[activeSlot]
+        clearPending()
+        lastError = nil
+        errorStreak = 0
+        loadCurrent(position)
+        // Steady tempo: back at the speed it was matched to, set before it starts.
+        if rate != 1 { setDeckRate(active, rate) }
+    }
+
+    /**
+     * Play was pressed (in the app, on the Lock Screen, on headphones) while
+     * playback is already wanted but nothing is heard: the track is stuck.
+     * Load it again where it was. False if there is nothing to do.
+     */
+    @discardableResult
+    func revive() -> Bool {
+        guard playWhenReady, !stopped, !ended, crossing == nil, currentItem != nil, !isAudible else { return false }
+        host.onRecovery("Play pressed while nothing was heard (\(active.name): \(active.status)); loading the track again at \(heardPositionMs / 1000) s.")
+        silentSince = -1
+        silenceStep = 0
+        reloadCurrent()
+        active.play()
+        host.onStateChanged()
+        return true
     }
 
     /** Make sure something is loaded, after [stop] or on a fresh start. */
@@ -573,6 +631,7 @@ final class PlaybackEngine: DeckListener {
         keepGoing(item)
 
         let position = deck.positionMs
+        if deck.isPlaying { heard = (item.uid, position) }
 
         let duration = durationMs
         if duration <= 0 { return }
@@ -609,6 +668,17 @@ final class PlaybackEngine: DeckListener {
      * (which changes nothing while it waits for data); only a track that is
      * loaded, ready and still silent is loaded again.
      */
+    /**
+     * A silent track may be loaded again when it is ready and still makes no
+     * sound, or when it was playing and then ran dry (a stream that stalled
+     * without failing waits for ever otherwise). A track still loading for
+     * the first time is left to it.
+     */
+    private var canReloadSilent: Bool {
+        if active.status == .ready { return true }
+        return active.status == .buffering && heard?.uid == currentItem?.uid
+    }
+
     private func watchSilence() {
         let wanted = playWhenReady && !stopped && !ended && currentItem != nil
         if !wanted || isAudible {
@@ -626,15 +696,12 @@ final class PlaybackEngine: DeckListener {
             host.onRecovery("Silent for \(silent / 1000) s while playing (\(active.name): \(active.status)); asked it to play again.")
             active.play()
             if let crossing, crossing.from.item != nil { crossing.from.play() }
-        } else if silenceStep == 1 && silent >= Self.reloadAfterMs && crossing == nil && active.status == .ready {
-            silenceStep = 2
-            let position = active.item?.uid == currentItem?.uid ? active.positionMs : 0
-            host.onRecovery("Still silent after \(silent / 1000) s; loading the track again at \(position / 1000) s.")
-            let rate = rates[activeSlot]
-            clearPending()
-            loadCurrent(position)
-            // Steady tempo: back at the speed it was matched to, set before it starts.
-            if rate != 1 { setDeckRate(active, rate) }
+        } else if crossing == nil, canReloadSilent,
+                  (silenceStep == 1 && silent >= Self.reloadAfterMs) || (silenceStep == 2 && silent >= Self.secondReloadAfterMs) {
+            silenceStep += 1
+            let position = active.status == .ready ? active.positionMs : heardPositionMs
+            host.onRecovery("Still silent after \(silent / 1000) s (\(active.name): \(active.status)); loading the track again at \(position / 1000) s.")
+            reloadCurrent()
             active.play()
             host.onStateChanged()
         }
@@ -1033,6 +1100,25 @@ final class PlaybackEngine: DeckListener {
                 clearPending()
             }
             return
+        }
+        // A track that was playing and then failed: most often the connection
+        // dropped for a moment. Pick it up where it was before giving up on it.
+        if let current = currentItem, heard?.uid == current.uid, playWhenReady, crossing == nil {
+            let count = retried?.uid == current.uid ? retried!.count : 0
+            if count < Self.sameTrackRetries {
+                retried = (current.uid, count + 1)
+                let delay = errorSkipDelayMs * Int64(count * 3 + 1)
+                host.onRecovery("“\(current.song.title)” failed \(heardPositionMs / 1000) s in (\(message)); trying it again.")
+                Task { [weak self] in
+                    if delay > 0 { try? await Task.sleep(nanoseconds: UInt64(delay) * 1_000_000) }
+                    guard let self, self.currentItem?.uid == current.uid, self.playWhenReady, !self.stopped, self.needsReload else { return }
+                    self.reloadCurrent()
+                    self.active.play()
+                    self.host.onStateChanged()
+                }
+                host.onStateChanged()
+                return
+            }
         }
         lastError = message
         host.onError(message)
