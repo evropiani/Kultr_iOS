@@ -4,6 +4,46 @@
 let UPDATE_LOG_JSON = ####"""
 [
  {
+  "version": "2.1.2",
+  "date": "2026-11-17",
+  "sections": [
+   {
+    "title": "What's fixed",
+    "lines": [
+     {
+      "kind": "bullet",
+      "text": "**Found why the music stops after a song or two: iOS closed Kultr for using too much processor time.** Your playback log had iOS's own report: Kultr used 48 seconds of processor time in under a minute, and iOS closes a background app that busy. The time went into one loop. The player reported \"nothing changed\" hundreds of times a second, often after an InjeKt blend left a song at a slightly different tempo, and every report made Kultr update the Lock Screen and the widget all over again. iOS then closed Kultr, which is also why play on the Lock Screen and your AirPods couldn't bring it back."
+     },
+     {
+      "kind": "bullet",
+      "text": "**Kultr now ignores reports that change nothing.** It updates the Lock Screen and the widget only when the song, its position or the play state really changes, and reuses the widget's cover links instead of building them each time."
+     },
+     {
+      "kind": "bullet",
+      "text": "**The playback check keeps running.** Every player update used to restart Kultr's own timer, so in a flood of updates it never fired. That timer watches for silence and writes the log's \"still running\" marks."
+     }
+    ]
+   },
+   {
+    "title": "Under the hood",
+    "lines": [
+     {
+      "kind": "bullet",
+      "text": "If the player floods Kultr with updates again, the playback log notes it once, with where they came from."
+     },
+     {
+      "kind": "bullet",
+      "text": "iOS's processor reports in the log now show the whole path through Kultr's code, including what started it."
+     },
+     {
+      "kind": "bullet",
+      "text": "2.1.1's \"start playing at once\" nudge is gone. It changed the player's rate behind its back, and nothing showed it helped."
+     }
+    ]
+   }
+  ]
+ },
+ {
   "version": "2.1.1",
   "date": "2026-11-14",
   "sections": [

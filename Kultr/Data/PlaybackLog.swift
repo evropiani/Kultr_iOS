@@ -241,7 +241,11 @@ private final class ExitReports: NSObject, MXMetricManagerSubscriber {
                 path.append(busiest)
             }
             let share = samples(root) * 100 / total
-            return "[\(share)% of samples] " + path.suffix(18).reversed().map(name).joined(separator: " < ")
+            // Innermost first. Long paths keep both ends: where the time went,
+            // and what started it.
+            let frames = path.reversed().map(name)
+            let shown = frames.count <= 40 ? frames : Array(frames.prefix(16)) + ["…"] + Array(frames.suffix(24))
+            return "[\(share)% of samples] " + shown.joined(separator: " < ")
         }
         return paths.isEmpty ? "?" : paths.joined(separator: "  ")
     }

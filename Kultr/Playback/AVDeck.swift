@@ -170,8 +170,57 @@ final class AVDeck: NSObject, Deck {
         player.currentItem != nil && player.timeControlStatus == .playing
     }
 
-    private func changed() {
+    /** What the engine was last told about this deck; the same again is not news. */
+    private struct Reported: Equatable {
+        var uid: Int64?
+        var status: DeckStatus
+        var isPlaying: Bool
+        var hasDuration: Bool
+    }
+
+    private var reported: Reported?
+    /** Updates in the current one-second window: all of them, and those that changed something. */
+    private var windowStart = Date()
+    private var windowCalls = 0
+    private var windowKvo = 0
+    private var windowNews = 0
+    private var lastStormNote = Date.distantPast
+
+    /**
+     * Tells the engine, but only when something it cares about changed. AVPlayer
+     * can report its play state many hundreds of times a second while nothing
+     * changes (seen after a beat-matched blend), and passing each one on made
+     * Kultr redo its Lock Screen and widget work every time, until iOS closed
+     * it for using too much processor time. [force]: a seek finished, so the
+     * position jumped even though nothing else did.
+     */
+    private func changed(force: Bool = false, fromPlayer: Bool = false) {
+        noteRate(fromPlayer: fromPlayer)
+        let now = Reported(uid: item?.uid, status: status, isPlaying: isPlaying, hasDuration: durationMs > 0)
+        if !force, now == reported { return }
+        reported = now
+        windowNews += 1
         listener?.onStatusChanged(self)
+    }
+
+    /** For the playback log: say so when updates come in a flood, and from where. */
+    private func noteRate(fromPlayer: Bool) {
+        let now = Date()
+        if now.timeIntervalSince(windowStart) >= 1 {
+            if windowCalls >= 40, now.timeIntervalSince(lastStormNote) >= 30 {
+                lastStormNote = now
+                PlaybackLog.note(
+                    "\(name): \(windowCalls) player updates in a second (\(windowKvo) from AVPlayer's play state), "
+                        + "\(windowNews) of them news · rate \(player.rate), \(diagnosis)"
+                )
+            }
+            windowStart = now
+            windowCalls = 0
+            windowKvo = 0
+            windowNews = 0
+        }
+        windowCalls += 1
+        if fromPlayer { windowKvo += 1 }
     }
 
     /** For the playback log: what this deck is doing right now. */
@@ -207,7 +256,7 @@ final class AVDeck: NSObject, Deck {
                 break
             }
         }
-        changed()
+        changed(fromPlayer: true)
     }
 
     // --------------------------------------------------------- loading --
@@ -377,12 +426,6 @@ final class AVDeck: NSObject, Deck {
 
     private func startPlayer() {
         player.defaultRate = rate
-        // A player that waits although it has audio in hand (it can misjudge a
-        // stream fed through Kultr's cache) is told to get on with it.
-        if player.timeControlStatus == .waitingToPlayAtSpecifiedRate, bufferedPositionMs - positionMs > 5_000 {
-            player.playImmediately(atRate: rate)
-            return
-        }
         player.play()
         if abs(player.rate - rate) > 0.0001 && player.rate != 0 { player.rate = rate }
     }
@@ -420,7 +463,7 @@ final class AVDeck: NSObject, Deck {
                     guard let self, self.token == expected else { return }
                     self.pendingSeekMs = nil
                     if self.wantPlay { self.startPlayer() }
-                    self.changed()
+                    self.changed(force: true)
                 }
             }
         }

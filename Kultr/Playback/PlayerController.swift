@@ -145,6 +145,11 @@ final class PlayerController: EngineHost {
     @ObservationIgnored private var karousel: KarouselMusic!
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var lastTickAt: Int64 = 0
+    @ObservationIgnored private var tickInterval: Int64 = 0
+    /** What the Lock Screen was last told, to tell it again only when that changed. */
+    @ObservationIgnored private var nowPlayingSent: (signature: String, elapsed: Double, rate: Double, at: Int64)?
+    /** Cover links for the widget, by artwork id and size; built once each. */
+    @ObservationIgnored private var widgetCovers: (profile: String?, urls: [String: URL]) = (nil, [:])
     @ObservationIgnored private var lastSavedAt: Int64 = 0
     @ObservationIgnored private var resumeAfterInterruption = false
     @ObservationIgnored private var silenceTask: UIBackgroundTaskIdentifier = .invalid
@@ -310,11 +315,10 @@ final class PlayerController: EngineHost {
         Task { @MainActor [weak self] in
             guard let self else { return }
             self.widgetUpdatePending = false
-            let client = self.graph.auth.client
-            let url = coverURL(self.state.current?.artworkId, 400, client: client)
+            let url = self.widgetCover(self.state.current?.artworkId, 400)
             var queueArt: [String: URL] = [:]
             for entry in self.state.upNext.prefix(WidgetBridge.upNextLimit) {
-                if let cover = coverURL(entry.song.artworkId, 96, client: client) { queueArt[entry.song.id] = cover }
+                if let cover = self.widgetCover(entry.song.artworkId, 96) { queueArt[entry.song.id] = cover }
             }
             WidgetBridge.shared.update(self.state, positionMs: self.engine.positionMs, artworkURL: url, queueArtworkURLs: queueArt)
             if self.restoring {
@@ -324,6 +328,18 @@ final class PlayerController: EngineHost {
         }
     }
 
+    /** A cover link for the widget, built once per cover and size for the server signed in to. */
+    private func widgetCover(_ artworkId: String?, _ size: Int) -> URL? {
+        guard let artworkId else { return nil }
+        let profile = graph.auth.active?.id
+        if widgetCovers.profile != profile || widgetCovers.urls.count > 200 { widgetCovers = (profile, [:]) }
+        let key = "\(artworkId):\(size)"
+        if let known = widgetCovers.urls[key] { return known }
+        let url = coverURL(artworkId, size, client: graph.auth.client)
+        if let url { widgetCovers.urls[key] = url }
+        return url
+    }
+
     /** Current position; read it on a timer, it is not part of [state]. */
     func positionMs() -> Int64 {
         engine?.positionMs ?? 0
@@ -331,12 +347,20 @@ final class PlayerController: EngineHost {
 
     // ---------------------------------------------------------- ticking --
 
+    /**
+     * Keeps the tick running at the interval the engine wants. A timer already
+     * waiting at that interval is left alone: restarting it on every state
+     * change meant that a flood of changes kept it from ever firing, and with
+     * it the silence watch and the playback log's heartbeat.
+     */
     private func scheduleTick() {
-        timer?.invalidate()
-        timer = nil
         var interval = engine.tickIntervalMs()
         if interval == 0 && sleepTimer?.endsAt != nil && engine.playWhenReady { interval = 1_000 }
         if interval == 0 && engine.playWhenReady { interval = 1_000 }
+        if interval > 0, let timer, timer.isValid, tickInterval == interval { return }
+        timer?.invalidate()
+        timer = nil
+        tickInterval = interval
         guard interval > 0 else { return }
         let next = Timer(timeInterval: Double(interval) / 1000, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -1036,19 +1060,13 @@ final class PlayerController: EngineHost {
     private func updateNowPlaying() {
         let center = MPNowPlayingInfoCenter.default()
         guard let song = state.current else {
-            center.nowPlayingInfo = nil
-            center.playbackState = .stopped
+            if nowPlayingSent != nil || center.nowPlayingInfo != nil {
+                nowPlayingSent = nil
+                center.nowPlayingInfo = nil
+                center.playbackState = .stopped
+            }
             return
         }
-        var info: [String: Any] = [
-            MPMediaItemPropertyTitle: song.title,
-            MPNowPlayingInfoPropertyElapsedPlaybackTime: Double(engine.positionMs) / 1000,
-            MPNowPlayingInfoPropertyPlaybackRate: state.isPlaying ? 1.0 : 0.0,
-            MPNowPlayingInfoPropertyIsLiveStream: song.isRadio,
-        ]
-        if let artist = song.artist { info[MPMediaItemPropertyArtist] = artist }
-        if let album = song.album, !song.isRadio { info[MPMediaItemPropertyAlbumTitle] = album }
-        if state.durationMs > 0 { info[MPMediaItemPropertyPlaybackDuration] = Double(state.durationMs) / 1000 }
         let key = song.artworkId
         if key != artworkKey {
             artworkKey = key
@@ -1063,6 +1081,31 @@ final class PlayerController: EngineHost {
                 }
             }
         }
+        // Only when something changed: the song, its details, playing or not,
+        // the like, shuffle and repeat, or a position that is not where the
+        // last one would have run to by now (a seek). Each update goes to iOS's
+        // media service, and Kultr is asked for one on every player change.
+        let rate = state.isPlaying ? 1.0 : 0.0
+        let elapsed = Double(engine.positionMs) / 1000
+        let signature = [
+            song.id, song.title, song.artist ?? "", song.album ?? "", "\(state.durationMs)", "\(rate)", "\(artwork != nil)",
+            "\(graph.ui.isStarred(song))", "\(engine.shuffle)", "\(engine.repeatMode)",
+        ].joined(separator: "|")
+        let at = now()
+        if let sent = nowPlayingSent, sent.signature == signature {
+            let expected = sent.elapsed + Double(at - sent.at) / 1000 * sent.rate
+            if abs(expected - elapsed) < 1.5 { return }
+        }
+        nowPlayingSent = (signature, elapsed, rate, at)
+        var info: [String: Any] = [
+            MPMediaItemPropertyTitle: song.title,
+            MPNowPlayingInfoPropertyElapsedPlaybackTime: elapsed,
+            MPNowPlayingInfoPropertyPlaybackRate: rate,
+            MPNowPlayingInfoPropertyIsLiveStream: song.isRadio,
+        ]
+        if let artist = song.artist { info[MPMediaItemPropertyArtist] = artist }
+        if let album = song.album, !song.isRadio { info[MPMediaItemPropertyAlbumTitle] = album }
+        if state.durationMs > 0 { info[MPMediaItemPropertyPlaybackDuration] = Double(state.durationMs) / 1000 }
         if let artwork { info[MPMediaItemPropertyArtwork] = artwork }
         updateRemoteModes(song)
         center.nowPlayingInfo = info
